@@ -29,3 +29,9 @@ ui-debug.log*
 .DS_Store
 .vercel
 npm-debug.log*
+*.pem
+.pnp
+.pnp.*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*

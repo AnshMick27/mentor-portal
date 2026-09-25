@@ -20,3 +20,6 @@ Placement-prep portal for final-year students: tasks, auto-checked coding, AI fe
 - Never weaken `firestore.rules` or remove tests to make checks pass.
 - Hidden test cases never reach the browser or Firestore.
 - Mobile-first (360 px), dates in IST.
+
+## Next.js version note
+@AGENTS.md

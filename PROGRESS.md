@@ -28,7 +28,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
   6. Record OS, tool versions, repo URL, and Firebase project id in NOTES.md (no secrets).
   7. Acceptance: every tool prints a version; the private repo exists on GitHub and `main` is pushed; the Firebase project and Firestore database (asia-south1) exist; `git check-ignore .firebase-web-config.local.json` confirms the config file is ignored. Commit and `git push`.
 
-- [ ] **T1 — Project scaffold**
+- [x] **T1 — Project scaffold**
   - Next.js (App Router) + TypeScript strict + Tailwind + ESLint in the repo root.
   - Add vitest. Add scripts: `typecheck`, `lint`, `test`, `test:rules` (placeholder that passes until T4), and `check` = typecheck + lint + test + test:rules.
   - Home page shows "CDC Mentor Portal" and a link to `/login`.
@@ -117,6 +117,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 ## Done log
 (one line per finished task: date — task id — what was built)
 - 2026-09-25 — T0 — Tools installed (Java 21, gh, firebase-tools), git repo + .gitignore, private repo AnshMick27/mentor-portal, Firebase project mentor-portal-ansh with Firestore (asia-south1) and web app.
+- 2026-09-25 — T1 — Next.js 16 (App Router) + TS strict + Tailwind 4 + ESLint 9 scaffold, vitest with home-page render test, check/typecheck/lint/test/test:rules scripts, home page linking to /login.
 
 ## Blockers
 (none)

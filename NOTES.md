@@ -16,3 +16,13 @@
 - `firebase firestore:databases:create` kept failing with 403 "Cloud Firestore API has not been used" even after enabling
   the API (likely a multi-account browser issue). Fallback that worked: create the DB in the Firebase console
   (Standard edition, asia-south1, production mode). Verify with `firebase firestore:databases:get "(default)"`.
+
+## Scaffold (T1)
+- Next.js **16.3** (App Router), React 19.2, Tailwind 4, ESLint 9 flat config, vitest 5. Next 16 differs from older docs:
+  read `node_modules/next/dist/docs/` before using unfamiliar APIs (see AGENTS.md). `next lint` no longer exists; `lint` = `eslint`.
+- `typecheck` runs `next typegen` first, which generates the global `LayoutProps`/`PageProps` route types that plain `tsc` needs.
+- `@types/node` is pinned to `^24` (matches Node 24); the scaffold's `^20` conflicted with vitest 5's peer range.
+- Vitest config is `vitest.config.mts` (a `.ts` config triggers a Vite CJS/ESM warning since package.json has no `"type": "module"`).
+  Unit tests live in `tests/**/*.test.{ts,tsx}`; `tests/rules/**` is excluded (run by `test:rules`). `@/` alias works in tests.
+- `next dev` rewrites the managed block in AGENTS.md; CLAUDE.md is left alone because AGENTS.md exists. Keep AGENTS.md committed.
+- No `next/font/google` (avoids a network fetch at build); system font stack in `globals.css`.
