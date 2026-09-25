@@ -13,7 +13,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
   3. Open https://console.firebase.google.com once with the college Google account and accept the terms if asked.
   4. Tick this item (`- [x]`), then open a terminal in the project folder, run `claude`, and type: `Follow LOOP.md`. Run T0 interactively (not with loop.sh) and approve each install command when asked.
 
-- [ ] **T0 — Machine and repo setup by Claude Code (interactive only; this task overrides `npm run check`, since no app exists yet)**
+- [x] **T0 — Machine and repo setup by Claude Code (interactive only; this task overrides `npm run check`, since no app exists yet)**
   1. Detect the OS. Check `node -v`, `git --version`, `java -version`, `gh --version`, `firebase --version`. For anything missing, propose the install command for this OS (Windows: `winget`; macOS: `brew`; Linux: `apt`) and run it only after Ansh approves: Node.js LTS, Git, Java 21 (Eclipse Temurin), GitHub CLI; then `npm install -g firebase-tools`. If a new terminal is needed for PATH changes, tell Ansh and stop there (`LOOP_STATUS: HUMAN_CHECKPOINT`).
   2. Logins: check `gh auth status` and `firebase login:list`. If not logged in, ask Ansh to run `gh auth login` and `firebase login` himself in a separate terminal (browser sign-in), and wait for him to confirm. Never ask for or handle passwords or tokens.
   3. Git: `git init` if needed; create `.gitignore` covering `.env*` (except `.env.example`), `.loop-logs/`, `*.local.json`, `*firebase-adminsdk*.json`, `*service-account*.json`, `STOP`; commit all files; branch `main`.
@@ -116,9 +116,10 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 
 ## Done log
 (one line per finished task: date — task id — what was built)
+- 2026-09-25 — T0 — Tools installed (Java 21, gh, firebase-tools), git repo + .gitignore, private repo AnshMick27/mentor-portal, Firebase project mentor-portal-ansh with Firestore (asia-south1) and web app.
 
 ## Blockers
 (none)
 
 ## Questions for Ansh
-(none)
+- T0: You gave the project id `Mentor-Portal-Ansh`. Firebase ids must be lowercase, so I used `mentor-portal-ansh`.
