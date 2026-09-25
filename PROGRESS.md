@@ -41,13 +41,13 @@ Goal: students and mentors can log in with college Google accounts, get the righ
   - Helper parsing `MENTOR_EMAILS` / `VIEWER_EMAILS` into lowercase sets.
   - Acceptance: unit tests for parsing and for missing-variable errors.
 
-- [ ] **H2 🔒 HUMAN — Console clicks and secrets (about 10 minutes)**
+- [x] **H2 🔒 HUMAN — Console clicks and secrets (about 10 minutes)**
   1. Firebase console → Authentication → Get started → Sign-in method → enable **Google**.
   2. Firebase console → Project settings → Service accounts → **Generate new private key**. Save the JSON file OUTSIDE the project folder. Never commit or share it.
   3. Copy `.env.example` to `.env.local` and fill in: the web config values (from `.firebase-web-config.local.json`), the service-account values (project id, client email, private key from the JSON file), `ALLOWED_EMAIL_DOMAIN`, and your own email in `MENTOR_EMAILS`. Leave AI and GitHub values empty for now.
   4. Confirm `git status` does not show `.env.local`, then tick H2 and say `Follow LOOP.md`.
 
-- [ ] **T3 — Firebase modules**
+- [x] **T3 — Firebase modules**
   - `lib/firebase/client.ts`: browser app, auth, firestore (singleton).
   - `lib/firebase/admin.ts`: Admin SDK (server-only), handles `\n` in the private key.
   - When `NEXT_PUBLIC_USE_EMULATOR=true` (dev only), both connect to local emulators.
@@ -119,6 +119,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-09-25 — T0 — Tools installed (Java 21, gh, firebase-tools), git repo + .gitignore, private repo AnshMick27/mentor-portal, Firebase project mentor-portal-ansh with Firestore (asia-south1) and web app.
 - 2026-09-25 — T1 — Next.js 16 (App Router) + TS strict + Tailwind 4 + ESLint 9 scaffold, vitest with home-page render test, check/typecheck/lint/test/test:rules scripts, home page linking to /login.
 - 2026-09-25 — T2 — .env.example (all SPEC §13 vars), zod-validated server env (server-only, lists missing vars), public env module, parseEmailList helper, 12 new unit tests.
+- 2026-09-25 — T3 — Firebase client (browser singleton) and Admin SDK (server-only) modules with emulator switch, private-key normaliser, 8 new unit tests; real service-account key verified.
 
 ## Blockers
 (none)
@@ -126,3 +127,4 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 ## Questions for Ansh
 - T0: You gave the project id `Mentor-Portal-Ansh`. Firebase ids must be lowercase, so I used `mentor-portal-ansh`.
 - T2: The public env object lives in `lib/config/publicEnv.ts`, not `env.ts`, because `env.ts` is server-only and the browser must be able to import the public values. Only Firebase admin vars and `ALLOWED_EMAIL_DOMAIN` are required at startup; AI, judge, cron and APP_BASE_URL values are optional until the features that use them (Loop 2/3) check for them. OK?
+- T3: Added `NEXT_PUBLIC_USE_EMULATOR` (not in SPEC §13) to `.env.example` and the public env, because T3 asks for an emulator switch. It is ignored in production builds.

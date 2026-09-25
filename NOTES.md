@@ -38,3 +38,14 @@
 ..."` arrives with
   REAL newlines; unquoted/Vercel values keep literal `
 ` — T3's key helper must handle both.
+
+## Firebase modules (T3)
+- firebase 12.19 (client), firebase-admin 14.5 (modular imports: `firebase-admin/app|auth|firestore`).
+- Server: `getAdminAuth()` / `getAdminDb()` from `lib/firebase/admin.ts` (named app `mentor-portal-admin`, server-only).
+  Browser: `getClientAuth()` / `getClientDb()` from `lib/firebase/client.ts` (cached on globalThis to survive HMR).
+- Emulator: `NEXT_PUBLIC_USE_EMULATOR=true` and NODE_ENV != production. Ports in `lib/firebase/emulator.ts`
+  (auth 9099, firestore 8080); T4's firebase.json must use the same ports. Admin in emulator mode sets
+  FIRESTORE_EMULATOR_HOST / FIREBASE_AUTH_EMULATOR_HOST and uses no credentials.
+- Don't name non-hook helpers `useX` (react-hooks lint rule treats them as hooks).
+- `npm audit`: 2 moderate (uuid<11 via firebase-admin → @google-cloud/storage → gaxios). No non-breaking fix; we never use
+  Storage and the bug needs uuid v3/v5/v6 with a buffer. Re-check when firebase-admin updates.

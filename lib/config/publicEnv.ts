@@ -9,6 +9,7 @@ const publicEnvSchema = z.object({
   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().trim().min(1),
   NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().trim().min(1),
   NEXT_PUBLIC_FIREBASE_APP_ID: z.string().trim().min(1),
+  NEXT_PUBLIC_USE_EMULATOR: z.string().trim().optional(),
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
@@ -34,6 +35,7 @@ export function getPublicEnv(): PublicEnv {
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
     NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
     NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    NEXT_PUBLIC_USE_EMULATOR: process.env.NEXT_PUBLIC_USE_EMULATOR,
   });
   return cached;
 }
