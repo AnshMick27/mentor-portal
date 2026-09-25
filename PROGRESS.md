@@ -35,7 +35,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
   - `.gitignore` covers `.env*` (but not `.env.example`), `.loop-logs/`, service-account JSON files.
   - Acceptance: `npm run check` and `npm run build` pass.
 
-- [ ] **T2 — Environment config**
+- [x] **T2 — Environment config**
   - `.env.example` with every variable from SPEC.md §13 (no real values, short comment each).
   - `lib/config/env.ts`: zod-validated server env (throws a clear error listing missing vars) and a separate public env object for `NEXT_PUBLIC_` values. Server env must be importable only on the server (`server-only`).
   - Helper parsing `MENTOR_EMAILS` / `VIEWER_EMAILS` into lowercase sets.
@@ -118,9 +118,11 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 (one line per finished task: date — task id — what was built)
 - 2026-09-25 — T0 — Tools installed (Java 21, gh, firebase-tools), git repo + .gitignore, private repo AnshMick27/mentor-portal, Firebase project mentor-portal-ansh with Firestore (asia-south1) and web app.
 - 2026-09-25 — T1 — Next.js 16 (App Router) + TS strict + Tailwind 4 + ESLint 9 scaffold, vitest with home-page render test, check/typecheck/lint/test/test:rules scripts, home page linking to /login.
+- 2026-09-25 — T2 — .env.example (all SPEC §13 vars), zod-validated server env (server-only, lists missing vars), public env module, parseEmailList helper, 12 new unit tests.
 
 ## Blockers
 (none)
 
 ## Questions for Ansh
 - T0: You gave the project id `Mentor-Portal-Ansh`. Firebase ids must be lowercase, so I used `mentor-portal-ansh`.
+- T2: The public env object lives in `lib/config/publicEnv.ts`, not `env.ts`, because `env.ts` is server-only and the browser must be able to import the public values. Only Firebase admin vars and `ALLOWED_EMAIL_DOMAIN` are required at startup; AI, judge, cron and APP_BASE_URL values are optional until the features that use them (Loop 2/3) check for them. OK?

@@ -26,3 +26,15 @@
   Unit tests live in `tests/**/*.test.{ts,tsx}`; `tests/rules/**` is excluded (run by `test:rules`). `@/` alias works in tests.
 - `next dev` rewrites the managed block in AGENTS.md; CLAUDE.md is left alone because AGENTS.md exists. Keep AGENTS.md committed.
 - No `next/font/google` (avoids a network fetch at build); system font stack in `globals.css`.
+
+## Env (T2)
+- Server env: `getServerEnv()` from `lib/config/env.ts` (server-only, cached). `MENTOR_EMAILS`/`VIEWER_EMAILS` are already
+  parsed into lowercase `Set`s there. Blank values (`KEY=`) count as missing. AI/judge/cron/APP_BASE_URL are optional:
+  code that needs them must check and fail clearly.
+- Public env: `getPublicEnv()` from `lib/config/publicEnv.ts`. Keep each `process.env.NEXT_PUBLIC_*` referenced literally (Next inlines them).
+- Vitest aliases `server-only` to `tests/stubs/server-only.ts`, so server modules are testable. The real guard still works:
+  importing `env.ts` from a client component fails `next build` (verified).
+- `@next/env` strips inline ` # comments` in .env files. A double-quoted `FIREBASE_ADMIN_PRIVATE_KEY="...
+..."` arrives with
+  REAL newlines; unquoted/Vercel values keep literal `
+` — T3's key helper must handle both.
