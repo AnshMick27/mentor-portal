@@ -1,0 +1,31 @@
+# Secrets and local config
+.env*
+!.env.example
+*.local.json
+*firebase-adminsdk*.json
+*service-account*.json
+
+# Loop tooling
+.loop-logs/
+STOP
+
+# Dependencies and build output
+node_modules/
+.next/
+out/
+build/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Firebase / emulator
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+*-debug.log
+
+# Misc
+.DS_Store
+.vercel
+npm-debug.log*
