@@ -59,7 +59,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
   - One sample test: an unauthenticated read of `users/x` is denied.
   - Acceptance: `npm run check` runs the rules tests for real and passes.
 
-- [ ] **T5 — Firestore security rules (SPEC.md §7)**
+- [x] **T5 — Firestore security rules (SPEC.md §7)**
   - Implement the read rules exactly as SPEC.md §7; deny all client writes; default deny.
   - Helper functions: `isSignedIn()`, `isProvisioned()`, `role()`, `isStaff()` (mentor or viewer).
   - Tests must cover at least: student reads own user doc ✔ / another student's ✘; student reads published task ✔ / draft ✘; student reads own submission ✔ / another's ✘; student reads own studentStats ✔ / another's ✘; student reads taskStats ✘; viewer and mentor read all ✔; any client write to any collection ✘ (including a student trying to set their own role or score); unprovisioned signed-in user reads anything ✘.
@@ -121,6 +121,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-09-25 — T2 — .env.example (all SPEC §13 vars), zod-validated server env (server-only, lists missing vars), public env module, parseEmailList helper, 12 new unit tests.
 - 2026-09-25 — T3 — Firebase client (browser singleton) and Admin SDK (server-only) modules with emulator switch, private-key normaliser, 8 new unit tests; real service-account key verified.
 - 2026-09-26 — T4 — firebase.json (auth 9099 / firestore 8080 emulators), deny-all firestore.rules, empty indexes, @firebase/rules-unit-testing harness in tests/rules run via emulators:exec (demo-mentor-portal), unauthenticated users/x read+write denied tests.
+- 2026-09-26 — T5 — firestore.rules read rules per SPEC §7 (isSignedIn/isProvisioned/role/isStaff helpers, all client writes denied, default deny), 65 rules tests across users/tasks/submissions/stats/denied, mutation-checked.
 
 ## Blockers
 (none)
@@ -129,3 +130,4 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - T0: You gave the project id `Mentor-Portal-Ansh`. Firebase ids must be lowercase, so I used `mentor-portal-ansh`.
 - T2: The public env object lives in `lib/config/publicEnv.ts`, not `env.ts`, because `env.ts` is server-only and the browser must be able to import the public values. Only Firebase admin vars and `ALLOWED_EMAIL_DOMAIN` are required at startup; AI, judge, cron and APP_BASE_URL values are optional until the features that use them (Loop 2/3) check for them. OK?
 - T3: Added `NEXT_PUBLIC_USE_EMULATOR` (not in SPEC §13) to `.env.example` and the public env, because T3 asks for an emulator switch. It is ignored in production builds.
+- T5: "The user themself" can read `users/{uid}` only once provisioned (the doc exists), so an unprovisioned signed-in user reads nothing, as the T5 tests require. The client should learn its profile from `POST /api/me` (T6), not by reading Firestore before provisioning. OK?

@@ -1,9 +1,66 @@
 rules_version = '2';
 
-// T4 placeholder: deny every read and write. Real read rules arrive in T5 (SPEC.md §7).
-// Clients never write to Firestore; all writes go through API routes with the Admin SDK.
+// SPEC.md §7. Clients only ever READ; every write goes through API routes with the Admin SDK
+// (which bypasses these rules). Anything not matched below is denied.
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    // A users/{uid} doc exists; the server creates it only after the domain check.
+    function isProvisioned() {
+      return isSignedIn() && exists(userPath());
+    }
+
+    // Role comes from the server-written user doc, never from the client or token claims.
+    function role() {
+      return get(userPath()).data.role;
+    }
+
+    function isStaff() {
+      return isProvisioned() && role() in ['mentor', 'viewer'];
+    }
+
+    function isSelf(uid) {
+      return isProvisioned() && request.auth.uid == uid;
+    }
+
+    match /users/{uid} {
+      allow read: if isSelf(uid) || isStaff();
+      allow write: if false;
+    }
+
+    match /tasks/{taskId} {
+      allow read: if isStaff() || (isProvisioned() && resource.data.status == 'published');
+      allow write: if false;
+    }
+
+    match /submissions/{submissionId} {
+      allow read: if isStaff() || (isProvisioned() && resource.data.uid == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /studentStats/{uid} {
+      allow read: if isSelf(uid) || isStaff();
+      allow write: if false;
+    }
+
+    match /taskStats/{taskId} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+
+    match /config/{docId} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

@@ -59,3 +59,10 @@
   write-denied tests is expected noise.
 - First run downloads the Firestore emulator jar (~cached in `~/.cache/firebase/emulators`). Needs Java 21 on PATH.
 - Harness sanity-checked: flipping the rules to `if true` makes both tests fail.
+
+## Security rules (T5)
+- Role is read from `users/{request.auth.uid}` inside the rules (one `get`/`exists` per request), never from token claims.
+- Client queries MUST carry the filter the rules check, or the whole query is denied: students query tasks with
+  `where("status","==","published")` and submissions with `where("uid","==",uid)`. Students cannot list users/studentStats.
+- Rules tests: `setupSeededRulesEnv()` + `dbAs(env(), uid)` from `tests/rules/fixtures.ts` (reseeds every collection before
+  each test; `UID.stranger` is signed in but unprovisioned). The `false for 'update' @ L..` stderr lines are expected noise.
