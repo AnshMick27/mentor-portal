@@ -84,3 +84,10 @@
 - `/login` is a server page that passes `ALLOWED_EMAIL_DOMAIN` to the client panel for the Google `hd` hint, so
   `next build` needs the server env (it prerenders /login).
 - No browser test runner is installed; UI tests use `renderToStaticMarkup` on presentational components.
+
+## Onboarding (T8)
+- `onboardingSchema` (`lib/validation/onboarding.ts`) is a zod `strictObject`: unknown fields → 400. Use strict schemas for
+  every client-submitted body so a client cannot smuggle `role`/`score` fields.
+- Initial `studentStats` shape comes from `initialStudentStats()` (`lib/stats/`); Loop 3's recompute should reuse its type.
+- Fake Admin SDK (`tests/auth/fakeAdmin.ts`) supports any collection, `where(==)`/`limit` queries and tx get/create/set/update.
+  Use `fakeAdmin.reset()` in `beforeEach` and `fakeAdmin.collection("name")` to inspect docs.

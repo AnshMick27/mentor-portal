@@ -1,9 +1,20 @@
 "use client";
 
 import { useSignedInProfile } from "@/components/auth/AuthProvider";
-import { ProfileCard } from "@/components/ProfileCard";
+import { OnboardingForm } from "@/components/OnboardingForm";
 
-/** Placeholder: T8 replaces this with the roll number and branch form. */
 export default function OnboardingPage() {
-  return <ProfileCard profile={useSignedInProfile()} title="Complete your profile" />;
+  const profile = useSignedInProfile();
+  return (
+    <section className="mx-auto flex w-full max-w-md flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-bold tracking-tight">Complete your profile</h1>
+        <p className="text-base opacity-80">
+          Hi {profile.name}, enter your roll number and branch once to get started. Ask a mentor if you need to change
+          them later.
+        </p>
+      </div>
+      <OnboardingForm />
+    </section>
+  );
 }

@@ -80,7 +80,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
   - Placeholder pages `/student` and `/mentor` showing the user's name and role.
   - Acceptance: typecheck/lint/tests pass; pages render at 360 px width.
 
-- [ ] **T8 — Onboarding**
+- [x] **T8 — Onboarding**
   - `/onboarding`: roll number (trim, uppercase, 6–15 alphanumeric) and branch dropdown (SPEC.md §6 list).
   - `POST /api/onboarding` (student only) validates with a shared zod schema, updates the user doc, sets `onboarded: true`, creates the initial `studentStats/{uid}` doc.
   - Acceptance: validation unit tests; after onboarding the student lands on `/student`.
@@ -124,6 +124,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-09-26 — T5 — firestore.rules read rules per SPEC §7 (isSignedIn/isProvisioned/role/isStaff helpers, all client writes denied, default deny), 65 rules tests across users/tasks/submissions/stats/denied, mutation-checked.
 - 2026-09-26 — T6 — requireUser/verifyIdentity (Bearer token, email_verified, exact-domain check, role from users/{uid}), transactional provisioning with list-based roles and staff upgrade, POST /api/me, shared user/role zod schemas, 28 new unit tests with a fake Admin SDK.
 - 2026-09-26 — T7 — AuthProvider (Google popup with hd hint → /api/me, sign out + message on failure), RouteGuard/ProtectedShell with pure guardRedirect rules, header sign-out, /login, placeholder /student, /mentor, /onboarding; 14 new unit tests.
+- 2026-09-26 — T8 — Shared strict onboarding zod schema, POST /api/onboarding (student only, one transaction: user doc + initial studentStats, 409 on re-onboarding or duplicate roll number), /onboarding form, generalised fake Admin SDK; 15 new unit tests.
 
 ## Blockers
 (none)
@@ -136,3 +137,4 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - T6: Removing someone from MENTOR_EMAILS/VIEWER_EMAILS does NOT demote them (T6 only asks for upgrades). To remove a mentor's access today you would edit their `users` doc in the Firebase console. Should login also demote staff who are no longer on either list?
 - T6: `/api/me` does not refresh `name`/`email` on later logins; they are set once at first login.
 - T7: Guards run in the browser (Firebase Auth has no server session here), so protected pages briefly show "Loading…" before redirecting. Real protection stays in Firestore rules and `requireUser`. `/onboarding` is a guarded placeholder until T8. If `/api/me` fails for any reason (including network errors), the user is signed out and shown the message.
+- T8: Not in the spec, added for data integrity: onboarding is one-time (a second POST gets 409; a mentor would fix a typo in the console for now), and a roll number already used by another account is refused (409). OK?
