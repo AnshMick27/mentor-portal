@@ -1,0 +1,80 @@
+import { fromIstInputValue, toIstInputValue } from "@/lib/dates/ist";
+import type { Language, TaskDto, TaskInput, TaskPatch, TaskStatus, TaskType, ValidTask } from "@/lib/validation/task";
+
+/** Everything the task form edits, as the inputs hold it (strings), before validation. */
+export type TaskFormState = {
+  title: string;
+  type: TaskType;
+  description: string;
+  /** `datetime-local` value, always meant as IST. */
+  dueAtLocal: string;
+  /** Blank = the per-type default. */
+  maxAttempts: string;
+  status: TaskStatus;
+  problemSlug: string;
+  languages: Language[];
+  sampleTests: { input: string; output: string }[];
+  timeLimitMs: string;
+};
+
+export function emptyTaskForm(): TaskFormState {
+  return {
+    title: "",
+    type: "coding",
+    description: "",
+    dueAtLocal: "",
+    maxAttempts: "",
+    status: "draft",
+    problemSlug: "",
+    languages: ["cpp", "java", "python"],
+    sampleTests: [{ input: "", output: "" }],
+    timeLimitMs: "2000",
+  };
+}
+
+export function taskToForm(task: TaskDto): TaskFormState {
+  const empty = emptyTaskForm();
+  return {
+    title: task.title,
+    type: task.type,
+    description: task.description,
+    dueAtLocal: toIstInputValue(task.dueAt),
+    maxAttempts: String(task.maxAttempts),
+    status: task.status,
+    problemSlug: task.coding?.problemSlug ?? empty.problemSlug,
+    languages: task.coding?.languages ?? empty.languages,
+    sampleTests: task.coding?.sampleTests ?? empty.sampleTests,
+    timeLimitMs: task.coding ? String(task.coding.timeLimitMs) : empty.timeLimitMs,
+  };
+}
+
+/** Blank → undefined; anything else → a number (NaN for junk, which the schema then rejects). */
+function optionalNumber(value: string): number | undefined {
+  return value.trim() === "" ? undefined : Number(value);
+}
+
+/** Form → body for `taskInputSchema` / POST. Validate the result with the schema before sending. */
+export function formToTaskInput(form: TaskFormState): TaskInput {
+  return {
+    title: form.title,
+    type: form.type,
+    description: form.description,
+    dueAt: fromIstInputValue(form.dueAtLocal) ?? "",
+    status: form.status,
+    maxAttempts: optionalNumber(form.maxAttempts),
+    coding:
+      form.type === "coding"
+        ? {
+            problemSlug: form.problemSlug,
+            languages: form.languages,
+            sampleTests: form.sampleTests,
+            timeLimitMs: optionalNumber(form.timeLimitMs) ?? Number.NaN,
+          }
+        : undefined,
+  };
+}
+
+/** PATCH body from a validated task: `coding: null` clears coding settings for non-coding tasks. */
+export function taskToPatch(task: ValidTask): TaskPatch {
+  return { ...task, coding: task.coding ?? null };
+}

@@ -90,7 +90,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
   - API: `POST /api/tasks` (create), `PATCH /api/tasks/[id]` (edit, publish/unpublish), `GET /api/tasks` (mentor/viewer list incl. drafts), `GET /api/tasks/[id]` (for the edit form). Mentor only for writes; viewer gets 403 on writes.
   - Acceptance: schema tests; API authorisation tests (student 403, viewer 403 on write, mentor OK).
 
-- [ ] **T9b — Mentor task UI** (split from T9)
+- [x] **T9b — Mentor task UI** (split from T9)
   - UI: `/mentor/tasks` list (status, type, due date IST), `/mentor/tasks/new` and `/mentor/tasks/[id]` form with markdown preview; coding fields appear only for type coding. Viewer sees the list without buttons.
   - Acceptance: typecheck/lint/tests pass; pages work at 360 px.
 
@@ -129,6 +129,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-09-26 — T7 — AuthProvider (Google popup with hd hint → /api/me, sign out + message on failure), RouteGuard/ProtectedShell with pure guardRedirect rules, header sign-out, /login, placeholder /student, /mentor, /onboarding; 14 new unit tests.
 - 2026-09-26 — T8 — Shared strict onboarding zod schema, POST /api/onboarding (student only, one transaction: user doc + initial studentStats, 409 on re-onboarding or duplicate roll number), /onboarding form, generalised fake Admin SDK; 15 new unit tests.
 - 2026-09-26 — T9a — Split T9 into T9a/T9b. Strict task zod schemas (create + patch, coding rules, per-type default attempts), task store with merge-then-revalidate PATCH, GET/POST /api/tasks and GET/PATCH /api/tasks/[id] (mentor writes, mentor/viewer reads), shared parseBody helper; 30 new unit tests.
+- 2026-09-26 — T9b — /mentor/tasks list (status, type, IST due date; viewers get no buttons), /mentor/tasks/new and /mentor/tasks/[id] TaskForm (markdown Write/Preview, coding fields only for coding, draft/published), safe Markdown component (react-markdown), IST date helpers, apiFetch + useApiQuery client helpers; 25 new unit tests.
 
 ## Blockers
 (none)
@@ -143,3 +144,4 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - T7: Guards run in the browser (Firebase Auth has no server session here), so protected pages briefly show "Loading…" before redirecting. Real protection stays in Firestore rules and `requireUser`. `/onboarding` is a guarded placeholder until T8. If `/api/me` fails for any reason (including network errors), the user is signed out and shown the message.
 - T8: Not in the spec, added for data integrity: onboarding is one-time (a second POST gets 409; a mentor would fix a typo in the console for now), and a roll number already used by another account is refused (409). OK?
 - T9a: Decisions the spec leaves open: `maxAttempts` may be 1–10; titles 3–120 chars; descriptions up to 20,000 chars; sample test input/output up to 2,000 chars each; `GET /api/tasks` returns at most 200 tasks (newest due date first) without paging. Added `GET /api/tasks/[id]` for the edit form. A task sent with a `hiddenTests` field is rejected. OK?
+- T9b: Added dependency `react-markdown` (not in SPEC §4) for the markdown preview and T10's sanitised descriptions; it drops raw HTML and `javascript:` links. Publishing is a Draft/Published choice in the form, saved with the other fields. Viewers see the task list only (titles are not links); there is no read-only task detail page for them yet. Mentors can still change a task's type after publishing; Loop 2 may need to lock that once submissions exist. OK?

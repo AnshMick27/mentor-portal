@@ -101,3 +101,12 @@
 - Route bodies: use `parseBody(request, schema)` from `lib/api/parseBody.ts`. Dynamic route context type: `RouteContext<"/api/tasks/[id]">`.
 - Avoid long bash heredoc chains that contain Python `'''` strings: a quoting slip makes bash skip the whole command.
   Use the Write tool for new files.
+
+## Mentor task UI (T9b)
+- Dependency added: `react-markdown` ^10 (SPEC §4 lists none for markdown; T9b preview and T10 need sanitised rendering).
+  Always render mentor text via `components/Markdown.tsx` (`skipHtml`, safe links). Styles: `.markdown` in globals.css.
+- Dates: `formatIst()` for display; `toIstInputValue`/`fromIstInputValue` for `<input type="datetime-local">` (always IST,
+  independent of the browser's zone) in `lib/dates/ist.ts`.
+- Client API calls: `apiFetch(getIdToken, path, { method, body })` (`lib/api/client.ts`) or the `useApiQuery(path, zodSchema)`
+  hook + `<QueryStatus>` for GETs. Validate replies with zod (`taskDtoSchema`).
+- Dynamic client pages read params with `use(params)` and type props as `PageProps<"/mentor/tasks/[id]">`.

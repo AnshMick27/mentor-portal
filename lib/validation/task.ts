@@ -116,10 +116,18 @@ export const taskPatchSchema = z
   .refine((patch) => Object.keys(patch).length > 0, "Nothing to update.");
 export type TaskPatch = z.infer<typeof taskPatchSchema>;
 
-/** A task as the API returns it: dates as ISO strings. */
-export type TaskDto = ValidTask & {
-  id: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-};
+/** A task as the API returns it: dates as ISO strings. Also used by the browser to validate API replies. */
+export const taskDtoSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  type: z.enum(TASK_TYPES),
+  description: z.string(),
+  dueAt: z.string(),
+  status: z.enum(TASK_STATUSES),
+  maxAttempts: z.number(),
+  coding: codingSchema.optional(),
+  createdBy: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type TaskDto = z.infer<typeof taskDtoSchema>;

@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { apiFetch } from "@/lib/api/client";
 import { onboardingSchema } from "@/lib/validation/onboarding";
 import { BRANCHES } from "@/lib/validation/user";
 
@@ -26,24 +27,10 @@ export function OnboardingForm() {
 
     setError(null);
     setSaving(true);
-    try {
-      const token = await getIdToken();
-      const response = await fetch("/api/onboarding", {
-        method: "POST",
-        headers: { authorization: `Bearer ${token ?? ""}`, "content-type": "application/json" },
-        body: JSON.stringify(parsed.data),
-      });
-      if (response.ok) {
-        await refreshProfile();
-        return;
-      }
-      const body = (await response.json().catch(() => ({}))) as { error?: unknown };
-      setError(typeof body.error === "string" ? body.error : "Could not save your details. Please try again.");
-    } catch {
-      setError("Could not reach the server. Check your connection and try again.");
-    } finally {
-      setSaving(false);
-    }
+    const result = await apiFetch(getIdToken, "/api/onboarding", { method: "POST", body: parsed.data });
+    if (result.ok) await refreshProfile();
+    else setError(result.message);
+    setSaving(false);
   }
 
   return (
