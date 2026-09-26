@@ -75,3 +75,12 @@
 - Tests mock the Admin SDK with `tests/auth/fakeAdmin.ts`: `vi.mock("@/lib/firebase/admin", async () => (await import("./fakeAdmin")).fakeAdmin.module)`
   and the env with `fakeEnv`. Fill `fakeAdmin.tokens` (token → decoded) and `fakeAdmin.users`; clear both in `beforeEach`.
   vi.mock factories are hoisted, so they must `await import(...)` rather than use top-level imports.
+
+## Client auth (T7)
+- `AuthProvider` (root layout) exposes `useAuth()` → `{ view, message, signIn, signOut, refreshProfile, getIdToken }`.
+  Call `refreshProfile()` after anything that changes the user doc (T8 onboarding). Use `getIdToken()` for `Authorization: Bearer`.
+- Guarded areas use a layout with `<ProtectedShell area="student|mentor|onboarding">`; pages inside call `useSignedInProfile()`.
+  Redirect rules are the pure `guardRedirect()` in `lib/auth/guards.ts` (unit-tested); add new areas there.
+- `/login` is a server page that passes `ALLOWED_EMAIL_DOMAIN` to the client panel for the Google `hd` hint, so
+  `next build` needs the server env (it prerenders /login).
+- No browser test runner is installed; UI tests use `renderToStaticMarkup` on presentational components.

@@ -73,7 +73,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
   - `POST /api/me`: verifies token + domain; on first login creates `users/{uid}` with role from MENTOR_EMAILS / VIEWER_EMAILS / else student, `onboarded` false for students (true for staff); if the email is later added to MENTOR_EMAILS, upgrade role on next login. Returns profile. Wrong domain → 403 with message "Please sign in with your college email."
   - Acceptance: unit tests for role decision logic and domain check (mock Admin SDK).
 
-- [ ] **T7 — Login, sign-out, route guards**
+- [x] **T7 — Login, sign-out, route guards**
   - `/login` with "Sign in with Google" (Google `hd` hint set to the domain). After sign-in calls `/api/me`; on 403 signs out and shows the message.
   - Auth context/provider on the client; sign-out button in the header.
   - Guards: `/student/*` students only; `/mentor/*` mentor or viewer only; not signed in → `/login`; student with `onboarded == false` → `/onboarding`.
@@ -123,6 +123,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-09-26 — T4 — firebase.json (auth 9099 / firestore 8080 emulators), deny-all firestore.rules, empty indexes, @firebase/rules-unit-testing harness in tests/rules run via emulators:exec (demo-mentor-portal), unauthenticated users/x read+write denied tests.
 - 2026-09-26 — T5 — firestore.rules read rules per SPEC §7 (isSignedIn/isProvisioned/role/isStaff helpers, all client writes denied, default deny), 65 rules tests across users/tasks/submissions/stats/denied, mutation-checked.
 - 2026-09-26 — T6 — requireUser/verifyIdentity (Bearer token, email_verified, exact-domain check, role from users/{uid}), transactional provisioning with list-based roles and staff upgrade, POST /api/me, shared user/role zod schemas, 28 new unit tests with a fake Admin SDK.
+- 2026-09-26 — T7 — AuthProvider (Google popup with hd hint → /api/me, sign out + message on failure), RouteGuard/ProtectedShell with pure guardRedirect rules, header sign-out, /login, placeholder /student, /mentor, /onboarding; 14 new unit tests.
 
 ## Blockers
 (none)
@@ -134,3 +135,4 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - T5: "The user themself" can read `users/{uid}` only once provisioned (the doc exists), so an unprovisioned signed-in user reads nothing, as the T5 tests require. The client should learn its profile from `POST /api/me` (T6), not by reading Firestore before provisioning. OK?ok
 - T6: Removing someone from MENTOR_EMAILS/VIEWER_EMAILS does NOT demote them (T6 only asks for upgrades). To remove a mentor's access today you would edit their `users` doc in the Firebase console. Should login also demote staff who are no longer on either list?
 - T6: `/api/me` does not refresh `name`/`email` on later logins; they are set once at first login.
+- T7: Guards run in the browser (Firebase Auth has no server session here), so protected pages briefly show "Loading…" before redirecting. Real protection stays in Firestore rules and `requireUser`. `/onboarding` is a guarded placeholder until T8. If `/api/me` fails for any reason (including network errors), the user is signed out and shown the message.
