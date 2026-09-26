@@ -49,3 +49,13 @@
 - Don't name non-hook helpers `useX` (react-hooks lint rule treats them as hooks).
 - `npm audit`: 2 moderate (uuid<11 via firebase-admin → @google-cloud/storage → gaxios). No non-breaking fix; we never use
   Storage and the bug needs uuid v3/v5/v6 with a buffer. Re-check when firebase-admin updates.
+
+## Rules tests (T4)
+- `npm run test:rules` = `firebase emulators:exec --only firestore --project demo-mentor-portal "vitest run --config vitest.rules.config.mts"`.
+  The `demo-` project id means no real Firebase resources are touched; `tests/rules/testEnv.ts` uses the same id.
+- Rules tests live in `tests/rules/**/*.test.ts` (excluded from the unit `vitest.config.mts`). Use `createRulesTestEnv()`,
+  `clearFirestore()` in `beforeEach`, `cleanup()` in `afterAll`. Seed data with `testEnv.withSecurityRulesDisabled(...)`.
+- Verbose reporter prints every test name (H3 reads them). The `GrpcConnection ... PERMISSION_DENIED` console line during
+  write-denied tests is expected noise.
+- First run downloads the Firestore emulator jar (~cached in `~/.cache/firebase/emulators`). Needs Java 21 on PATH.
+- Harness sanity-checked: flipping the rules to `if true` makes both tests fail.

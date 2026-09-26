@@ -53,7 +53,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
   - When `NEXT_PUBLIC_USE_EMULATOR=true` (dev only), both connect to local emulators.
   - Acceptance: typecheck passes; a tiny test confirms the private-key newline handling.
 
-- [ ] **T4 — Emulator and rules-test harness**
+- [x] **T4 — Emulator and rules-test harness**
   - `firebase.json` with Auth + Firestore emulators, `firestore.rules` (deny everything for now), `firestore.indexes.json`.
   - `tests/rules/` set up with `@firebase/rules-unit-testing`; `test:rules` runs them via `firebase emulators:exec --only firestore`.
   - One sample test: an unauthenticated read of `users/x` is denied.
@@ -120,6 +120,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-09-25 — T1 — Next.js 16 (App Router) + TS strict + Tailwind 4 + ESLint 9 scaffold, vitest with home-page render test, check/typecheck/lint/test/test:rules scripts, home page linking to /login.
 - 2026-09-25 — T2 — .env.example (all SPEC §13 vars), zod-validated server env (server-only, lists missing vars), public env module, parseEmailList helper, 12 new unit tests.
 - 2026-09-25 — T3 — Firebase client (browser singleton) and Admin SDK (server-only) modules with emulator switch, private-key normaliser, 8 new unit tests; real service-account key verified.
+- 2026-09-26 — T4 — firebase.json (auth 9099 / firestore 8080 emulators), deny-all firestore.rules, empty indexes, @firebase/rules-unit-testing harness in tests/rules run via emulators:exec (demo-mentor-portal), unauthenticated users/x read+write denied tests.
 
 ## Blockers
 (none)

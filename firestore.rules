@@ -1,0 +1,11 @@
+rules_version = '2';
+
+// T4 placeholder: deny every read and write. Real read rules arrive in T5 (SPEC.md §7).
+// Clients never write to Firestore; all writes go through API routes with the Admin SDK.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
