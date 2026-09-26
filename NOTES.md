@@ -118,3 +118,14 @@
 - `taskDocToDto` (`lib/tasks/taskDoc.ts`) parses task docs from BOTH SDKs (duck-typed Timestamps); the server store uses it too.
 - Client async loading: `useAsyncData(stableLoader, message)` + `<QueryStatus>`; wrap loaders in `useCallback`.
 - Reading a draft as a student throws `permission-denied`; `loadStudentTask` maps that to "not found".
+
+## Seed and emulators (T11)
+- `npm run emulators` (auth 9099 + firestore 8080, project from .firebaserc) then `npm run seed` (`scripts/seed.mts`).
+  Scripts run with Node 24's native TypeScript stripping: relative imports need explicit `.ts`/`.mts` extensions
+  (`allowImportingTsExtensions` is on in tsconfig), `@/` aliases do NOT work at runtime, only `import type` from them.
+  `--disable-warning=MODULE_TYPELESS_PACKAGE_JSON` hides the ESM-detection warning (package.json has no "type").
+- Admin SDK against emulators: pass only `projectId` (Firestore rejects non-cert custom credentials) and set
+  `METADATA_SERVER_DETECTION=none` to skip the slow GCP metadata probe (`MetadataLookupWarning`). `lib/firebase/admin.ts`
+  may show the same warning in emulator mode.
+- Seed data is pure in `scripts/seedData.mts` (tested in `tests/scripts/`); tasks go through `taskInputSchema`.
+- Clear emulator Firestore: `curl -X DELETE "http://127.0.0.1:8080/emulator/v1/projects/<id>/databases/(default)/documents"`.

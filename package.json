@@ -10,7 +10,9 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:rules": "firebase emulators:exec --only firestore --project demo-mentor-portal \"vitest run --config vitest.rules.config.mts\"",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run test:rules"
+    "check": "npm run typecheck && npm run lint && npm run test && npm run test:rules",
+    "emulators": "firebase emulators:start --only auth,firestore",
+    "seed": "node --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed.mts"
   },
   "dependencies": {
     "firebase": "^12.19.0",
