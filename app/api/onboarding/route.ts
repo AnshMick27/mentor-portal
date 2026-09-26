@@ -1,4 +1,5 @@
 import { jsonError } from "@/lib/api/errors";
+import { parseBody } from "@/lib/api/parseBody";
 import { requireUser } from "@/lib/auth/requireUser";
 import { completeOnboarding } from "@/lib/onboarding/completeOnboarding";
 import { onboardingSchema } from "@/lib/validation/onboarding";
@@ -8,12 +9,11 @@ export async function POST(request: Request): Promise<Response> {
   const auth = await requireUser(request, ["student"]);
   if (!auth.ok) return auth.response;
 
-  const body: unknown = await request.json().catch(() => undefined);
-  const parsed = onboardingSchema.safeParse(body);
-  if (!parsed.success) return jsonError(400, parsed.error.issues[0]?.message ?? "Invalid details.");
+  const body = await parseBody(request, onboardingSchema);
+  if (!body.ok) return body.response;
 
   try {
-    const result = await completeOnboarding(auth.value.uid, parsed.data);
+    const result = await completeOnboarding(auth.value.uid, body.data);
     if (!result.ok) return jsonError(result.status, result.message);
     return Response.json({ profile: result.profile });
   } catch (error) {

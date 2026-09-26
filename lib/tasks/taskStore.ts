@@ -1,0 +1,131 @@
+import "server-only";
+import { Timestamp } from "firebase-admin/firestore";
+import { z } from "zod";
+import { getAdminDb } from "@/lib/firebase/admin";
+import {
+  codingSchema,
+  TASK_STATUSES,
+  TASK_TYPES,
+  taskInputSchema,
+  type TaskDto,
+  type TaskInput,
+  type TaskPatch,
+  type ValidTask,
+} from "@/lib/validation/task";
+
+const LIST_LIMIT = 200;
+
+const timestampLike = z.custom<{ toDate: () => Date }>(
+  (value) => typeof value === "object" && value !== null && typeof Reflect.get(value, "toDate") === "function",
+);
+
+/** `tasks/{taskId}` as stored (SPEC.md §6). Not strict: unknown extra fields are ignored. */
+const storedTaskSchema = z.object({
+  title: z.string(),
+  type: z.enum(TASK_TYPES),
+  description: z.string(),
+  dueAt: timestampLike,
+  status: z.enum(TASK_STATUSES),
+  maxAttempts: z.number(),
+  coding: codingSchema.optional(),
+  createdBy: z.string(),
+  createdAt: timestampLike,
+  updatedAt: timestampLike,
+});
+
+export type TaskResult = { ok: true; task: TaskDto } | { ok: false; status: number; message: string };
+
+const NOT_FOUND: TaskResult = { ok: false, status: 404, message: "Task not found." };
+
+function tasks() {
+  return getAdminDb().collection("tasks");
+}
+
+/** Firestore doc ids from our own URLs: letters, digits, `_` and `-` only. */
+export function isValidTaskId(id: string): boolean {
+  return /^[A-Za-z0-9_-]{1,64}$/.test(id);
+}
+
+function toDto(id: string, data: unknown): TaskDto | undefined {
+  const parsed = storedTaskSchema.safeParse(data);
+  if (!parsed.success) {
+    console.error(`tasks/${id} does not match the task schema`);
+    return undefined;
+  }
+  const { dueAt, createdAt, updatedAt, coding, ...rest } = parsed.data;
+  return {
+    id,
+    ...rest,
+    ...(coding ? { coding } : {}),
+    dueAt: dueAt.toDate().toISOString(),
+    createdAt: createdAt.toDate().toISOString(),
+    updatedAt: updatedAt.toDate().toISOString(),
+  };
+}
+
+/** Firestore data for a validated task. `coding` is omitted (not undefined) for non-coding tasks. */
+function toStored(task: ValidTask) {
+  const { coding, dueAt, ...rest } = task;
+  return { ...rest, ...(coding ? { coding } : {}), dueAt: Timestamp.fromDate(new Date(dueAt)) };
+}
+
+/** All tasks, drafts included, latest due date first. Mentor/viewer only (enforced by the route). */
+export async function listTasks(): Promise<TaskDto[]> {
+  const snapshot = await tasks().orderBy("dueAt", "desc").limit(LIST_LIMIT).get();
+  return snapshot.docs.flatMap((doc) => toDto(doc.id, doc.data()) ?? []);
+}
+
+export async function getTask(id: string): Promise<TaskResult> {
+  const snapshot = await tasks().doc(id).get();
+  const task = snapshot.exists ? toDto(id, snapshot.data()) : undefined;
+  return task ? { ok: true, task } : NOT_FOUND;
+}
+
+export async function createTask(task: ValidTask, createdBy: string): Promise<TaskDto> {
+  const ref = tasks().doc();
+  const now = Timestamp.now();
+  await ref.create({ ...toStored(task), createdBy, createdAt: now, updatedAt: now });
+  const at = now.toDate().toISOString();
+  return { ...task, dueAt: new Date(task.dueAt).toISOString(), id: ref.id, createdBy, createdAt: at, updatedAt: at };
+}
+
+/** Applies a patch to a stored task, giving a full task to re-validate with `taskInputSchema`. */
+export function mergeTaskPatch(existing: TaskDto, patch: TaskPatch): TaskInput {
+  const { title, description, dueAt, status, maxAttempts } = existing;
+  const type = patch.type ?? existing.type;
+  // A coding task changed to another type drops its coding settings unless the patch sends new ones.
+  const coding =
+    patch.coding === null ? undefined : (patch.coding ?? (type === "coding" ? existing.coding : undefined));
+  return { title, description, dueAt, status, maxAttempts, ...patch, type, coding };
+}
+
+/** Edits (incl. publish/unpublish) a task: merge, re-validate the whole task, then write it in one transaction. */
+export async function updateTask(id: string, patch: TaskPatch): Promise<TaskResult> {
+  const db = getAdminDb();
+  const ref = tasks().doc(id);
+  return db.runTransaction(async (tx): Promise<TaskResult> => {
+    const snapshot = await tx.get(ref);
+    const existing = snapshot.exists ? toDto(id, snapshot.data()) : undefined;
+    if (!existing) return NOT_FOUND;
+
+    const merged = taskInputSchema.safeParse(mergeTaskPatch(existing, patch));
+    if (!merged.success) {
+      return { ok: false, status: 400, message: merged.error.issues[0]?.message ?? "Invalid task." };
+    }
+
+    const now = Timestamp.now();
+    const createdAt = Timestamp.fromDate(new Date(existing.createdAt));
+    tx.set(ref, { ...toStored(merged.data), createdBy: existing.createdBy, createdAt, updatedAt: now });
+    return {
+      ok: true,
+      task: {
+        ...merged.data,
+        dueAt: new Date(merged.data.dueAt).toISOString(),
+        id,
+        createdBy: existing.createdBy,
+        createdAt: existing.createdAt,
+        updatedAt: now.toDate().toISOString(),
+      },
+    };
+  });
+}

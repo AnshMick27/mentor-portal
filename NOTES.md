@@ -91,3 +91,13 @@
 - Initial `studentStats` shape comes from `initialStudentStats()` (`lib/stats/`); Loop 3's recompute should reuse its type.
 - Fake Admin SDK (`tests/auth/fakeAdmin.ts`) supports any collection, `where(==)`/`limit` queries and tx get/create/set/update.
   Use `fakeAdmin.reset()` in `beforeEach` and `fakeAdmin.collection("name")` to inspect docs.
+
+## Tasks API (T9a)
+- Schemas in `lib/validation/task.ts`: `taskInputSchema` (create; defaults status draft + per-type maxAttempts),
+  `taskPatchSchema` (partial; `coding: null` removes). PATCH merges into the stored task (`mergeTaskPatch`) and re-validates
+  the WHOLE task, so cross-field rules (coding iff type coding) always hold.
+- API returns `TaskDto` (dates as ISO strings); Firestore stores `dueAt/createdAt/updatedAt` as Timestamps. Never write
+  `undefined` fields to Firestore (Admin SDK throws); omit keys instead (see `toStored`).
+- Route bodies: use `parseBody(request, schema)` from `lib/api/parseBody.ts`. Dynamic route context type: `RouteContext<"/api/tasks/[id]">`.
+- Avoid long bash heredoc chains that contain Python `'''` strings: a quoting slip makes bash skip the whole command.
+  Use the Write tool for new files.

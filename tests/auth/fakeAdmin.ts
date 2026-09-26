@@ -4,11 +4,19 @@ import { vi } from "vitest";
 export type FakeToken = { uid: string; email?: string; email_verified?: boolean; name?: string };
 
 type Data = Record<string, unknown>;
-type DocRef = { kind: "doc"; collection: string; id: string; get: () => Promise<DocSnapshot> };
+type DocRef = {
+  kind: "doc";
+  collection: string;
+  id: string;
+  get: () => Promise<DocSnapshot>;
+  create: (data: Data) => Promise<void>;
+  set: (data: Data) => Promise<void>;
+};
 type DocSnapshot = { id: string; exists: boolean; data: () => Data | undefined };
 type Query = {
   kind: "query";
   where: (field: string, op: "==", value: unknown) => Query;
+  orderBy: (field: string, direction?: "asc" | "desc") => Query;
   limit: (n: number) => Query;
   get: () => Promise<QuerySnapshot>;
 };
@@ -16,7 +24,8 @@ type QuerySnapshot = { empty: boolean; size: number; docs: DocSnapshot[] };
 
 /**
  * In-memory stand-in for the Admin SDK pieces we use: `verifyIdToken` (token string → decoded token) and
- * Firestore docs in any collection with get, equality queries, and transaction get/create/set/update.
+ * Firestore docs in any collection: auto ids, get/create/set, `where(==)`/`orderBy`/`limit` queries,
+ * and transaction get/create/set/update.
  * Register with `vi.mock("@/lib/firebase/admin", async () => (await import("./fakeAdmin")).fakeAdmin.module)`.
  */
 export function createFakeAdmin() {
@@ -37,20 +46,51 @@ export function createFakeAdmin() {
     return { id, exists: data !== undefined, data: () => data };
   }
 
-  function docRef(collection: string, id: string): DocRef {
-    return { kind: "doc", collection, id, get: async () => snapshot(collection, id) };
+  function createDoc(collection: string, id: string, data: Data): void {
+    if (collectionData(collection).has(id)) throw new Error("already exists");
+    collectionData(collection).set(id, data);
   }
 
-  function query(collection: string, filters: [string, unknown][], max: number): Query {
+  let autoId = 0;
+  function docRef(collection: string, id = `auto-${++autoId}`): DocRef {
+    return {
+      kind: "doc",
+      collection,
+      id,
+      get: async () => snapshot(collection, id),
+      create: async (data) => createDoc(collection, id, data),
+      set: async (data) => void collectionData(collection).set(id, data),
+    };
+  }
+
+  /** Sort key for orderBy: Timestamps (anything with toMillis) by time, otherwise the raw value. */
+  function sortKey(value: unknown): number | string {
+    if (typeof value === "object" && value !== null && "toMillis" in value && typeof value.toMillis === "function") {
+      return value.toMillis() as number;
+    }
+    return typeof value === "number" ? value : String(value);
+  }
+
+  type Order = { field: string; direction: "asc" | "desc" };
+  function query(collection: string, filters: [string, unknown][], max: number, order?: Order): Query {
     return {
       kind: "query",
-      where: (field, _op, value) => query(collection, [...filters, [field, value]], max),
-      limit: (n) => query(collection, filters, n),
+      where: (field, _op, value) => query(collection, [...filters, [field, value]], max, order),
+      orderBy: (field, direction = "asc") => query(collection, filters, max, { field, direction }),
+      limit: (n) => query(collection, filters, n, order),
       get: async () => {
-        const docs = [...collectionData(collection)]
-          .filter(([, data]) => filters.every(([field, value]) => data[field] === value))
-          .slice(0, max)
-          .map(([id]) => snapshot(collection, id));
+        const matching = [...collectionData(collection)].filter(([, data]) =>
+          filters.every(([field, value]) => data[field] === value),
+        );
+        if (order) {
+          const sign = order.direction === "asc" ? 1 : -1;
+          matching.sort(([, a], [, b]) => {
+            const ka = sortKey(a[order.field]);
+            const kb = sortKey(b[order.field]);
+            return ka < kb ? -sign : ka > kb ? sign : 0;
+          });
+        }
+        const docs = matching.slice(0, max).map(([id]) => snapshot(collection, id));
         return { empty: docs.length === 0, size: docs.length, docs };
       },
     };
@@ -58,16 +98,14 @@ export function createFakeAdmin() {
 
   const db = {
     collection: (name: string) => ({
-      doc: (id: string) => docRef(name, id),
+      doc: (id?: string) => docRef(name, id),
       where: (field: string, op: "==", value: unknown) => query(name, [], Infinity).where(field, op, value),
+      orderBy: (field: string, direction?: "asc" | "desc") => query(name, [], Infinity).orderBy(field, direction),
     }),
     runTransaction: vi.fn(async <T>(fn: (tx: unknown) => Promise<T>): Promise<T> => {
       const tx = {
         get: (target: DocRef | Query) => target.get(),
-        create: (ref: DocRef, data: Data) => {
-          if (collectionData(ref.collection).has(ref.id)) throw new Error("already exists");
-          collectionData(ref.collection).set(ref.id, data);
-        },
+        create: (ref: DocRef, data: Data) => createDoc(ref.collection, ref.id, data),
         set: (ref: DocRef, data: Data) => {
           collectionData(ref.collection).set(ref.id, data);
         },

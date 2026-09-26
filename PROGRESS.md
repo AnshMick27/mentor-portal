@@ -85,11 +85,14 @@ Goal: students and mentors can log in with college Google accounts, get the righ
   - `POST /api/onboarding` (student only) validates with a shared zod schema, updates the user doc, sets `onboarded: true`, creates the initial `studentStats/{uid}` doc.
   - Acceptance: validation unit tests; after onboarding the student lands on `/student`.
 
-- [ ] **T9 — Mentor task management**
-  - API: `POST /api/tasks` (create), `PATCH /api/tasks/[id]` (edit, publish/unpublish), `GET /api/tasks` (mentor/viewer list incl. drafts). Mentor only for writes; viewer gets 403 on writes.
+- [x] **T9a — Task schema and API** (split from T9)
   - Shared zod schema for tasks incl. coding fields (problemSlug lowercase-kebab, at least 1 language, 1–5 sample tests, timeLimitMs 500–5000).
-  - UI: `/mentor/tasks` list (status, type, due date IST), `/mentor/tasks/new` and `/mentor/tasks/[id]` form with markdown preview; coding fields appear only for type coding. Viewer sees the list without buttons.
+  - API: `POST /api/tasks` (create), `PATCH /api/tasks/[id]` (edit, publish/unpublish), `GET /api/tasks` (mentor/viewer list incl. drafts), `GET /api/tasks/[id]` (for the edit form). Mentor only for writes; viewer gets 403 on writes.
   - Acceptance: schema tests; API authorisation tests (student 403, viewer 403 on write, mentor OK).
+
+- [ ] **T9b — Mentor task UI** (split from T9)
+  - UI: `/mentor/tasks` list (status, type, due date IST), `/mentor/tasks/new` and `/mentor/tasks/[id]` form with markdown preview; coding fields appear only for type coding. Viewer sees the list without buttons.
+  - Acceptance: typecheck/lint/tests pass; pages work at 360 px.
 
 - [ ] **T10 — Student task board**
   - `/student/tasks`: published tasks grouped "Due soon" / "Submitted" / "Missed" (submission-based grouping can show everything as "Due soon" or "Missed" until submissions exist).
@@ -125,6 +128,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-09-26 — T6 — requireUser/verifyIdentity (Bearer token, email_verified, exact-domain check, role from users/{uid}), transactional provisioning with list-based roles and staff upgrade, POST /api/me, shared user/role zod schemas, 28 new unit tests with a fake Admin SDK.
 - 2026-09-26 — T7 — AuthProvider (Google popup with hd hint → /api/me, sign out + message on failure), RouteGuard/ProtectedShell with pure guardRedirect rules, header sign-out, /login, placeholder /student, /mentor, /onboarding; 14 new unit tests.
 - 2026-09-26 — T8 — Shared strict onboarding zod schema, POST /api/onboarding (student only, one transaction: user doc + initial studentStats, 409 on re-onboarding or duplicate roll number), /onboarding form, generalised fake Admin SDK; 15 new unit tests.
+- 2026-09-26 — T9a — Split T9 into T9a/T9b. Strict task zod schemas (create + patch, coding rules, per-type default attempts), task store with merge-then-revalidate PATCH, GET/POST /api/tasks and GET/PATCH /api/tasks/[id] (mentor writes, mentor/viewer reads), shared parseBody helper; 30 new unit tests.
 
 ## Blockers
 (none)
@@ -138,3 +142,4 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - T6: `/api/me` does not refresh `name`/`email` on later logins; they are set once at first login.
 - T7: Guards run in the browser (Firebase Auth has no server session here), so protected pages briefly show "Loading…" before redirecting. Real protection stays in Firestore rules and `requireUser`. `/onboarding` is a guarded placeholder until T8. If `/api/me` fails for any reason (including network errors), the user is signed out and shown the message.
 - T8: Not in the spec, added for data integrity: onboarding is one-time (a second POST gets 409; a mentor would fix a typo in the console for now), and a roll number already used by another account is refused (409). OK?
+- T9a: Decisions the spec leaves open: `maxAttempts` may be 1–10; titles 3–120 chars; descriptions up to 20,000 chars; sample test input/output up to 2,000 chars each; `GET /api/tasks` returns at most 200 tasks (newest due date first) without paging. Added `GET /api/tasks/[id]` for the edit form. A task sent with a `hiddenTests` field is rejected. OK?
