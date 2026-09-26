@@ -65,10 +65,10 @@ Goal: students and mentors can log in with college Google accounts, get the righ
   - Tests must cover at least: student reads own user doc ✔ / another student's ✘; student reads published task ✔ / draft ✘; student reads own submission ✔ / another's ✘; student reads own studentStats ✔ / another's ✘; student reads taskStats ✘; viewer and mentor read all ✔; any client write to any collection ✘ (including a student trying to set their own role or score); unprovisioned signed-in user reads anything ✘.
   - Acceptance: all rules tests pass.
 
-- [ ] **H3 🔒 HUMAN — Review the rules**
+- [x] **H3 🔒 HUMAN — Review the rules**
   Read the list of rule test names printed by `npm run test:rules`. Each one describes a thing a student can or cannot do. If anything looks wrong, add it under "Questions for Ansh" before continuing.
 
-- [ ] **T6 — Server auth helper and user provisioning**
+- [x] **T6 — Server auth helper and user provisioning**
   - `lib/auth/requireUser.ts`: reads `Authorization: Bearer <idToken>`, verifies with Admin SDK, checks `email_verified` and `ALLOWED_EMAIL_DOMAIN`, loads `users/{uid}`, checks allowed roles; returns typed user or a 401/403 JSON error.
   - `POST /api/me`: verifies token + domain; on first login creates `users/{uid}` with role from MENTOR_EMAILS / VIEWER_EMAILS / else student, `onboarded` false for students (true for staff); if the email is later added to MENTOR_EMAILS, upgrade role on next login. Returns profile. Wrong domain → 403 with message "Please sign in with your college email."
   - Acceptance: unit tests for role decision logic and domain check (mock Admin SDK).
@@ -122,6 +122,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-09-25 — T3 — Firebase client (browser singleton) and Admin SDK (server-only) modules with emulator switch, private-key normaliser, 8 new unit tests; real service-account key verified.
 - 2026-09-26 — T4 — firebase.json (auth 9099 / firestore 8080 emulators), deny-all firestore.rules, empty indexes, @firebase/rules-unit-testing harness in tests/rules run via emulators:exec (demo-mentor-portal), unauthenticated users/x read+write denied tests.
 - 2026-09-26 — T5 — firestore.rules read rules per SPEC §7 (isSignedIn/isProvisioned/role/isStaff helpers, all client writes denied, default deny), 65 rules tests across users/tasks/submissions/stats/denied, mutation-checked.
+- 2026-09-26 — T6 — requireUser/verifyIdentity (Bearer token, email_verified, exact-domain check, role from users/{uid}), transactional provisioning with list-based roles and staff upgrade, POST /api/me, shared user/role zod schemas, 28 new unit tests with a fake Admin SDK.
 
 ## Blockers
 (none)
@@ -130,4 +131,6 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - T0: You gave the project id `Mentor-Portal-Ansh`. Firebase ids must be lowercase, so I used `mentor-portal-ansh`.
 - T2: The public env object lives in `lib/config/publicEnv.ts`, not `env.ts`, because `env.ts` is server-only and the browser must be able to import the public values. Only Firebase admin vars and `ALLOWED_EMAIL_DOMAIN` are required at startup; AI, judge, cron and APP_BASE_URL values are optional until the features that use them (Loop 2/3) check for them. OK?
 - T3: Added `NEXT_PUBLIC_USE_EMULATOR` (not in SPEC §13) to `.env.example` and the public env, because T3 asks for an emulator switch. It is ignored in production builds.
-- T5: "The user themself" can read `users/{uid}` only once provisioned (the doc exists), so an unprovisioned signed-in user reads nothing, as the T5 tests require. The client should learn its profile from `POST /api/me` (T6), not by reading Firestore before provisioning. OK?
+- T5: "The user themself" can read `users/{uid}` only once provisioned (the doc exists), so an unprovisioned signed-in user reads nothing, as the T5 tests require. The client should learn its profile from `POST /api/me` (T6), not by reading Firestore before provisioning. OK?ok
+- T6: Removing someone from MENTOR_EMAILS/VIEWER_EMAILS does NOT demote them (T6 only asks for upgrades). To remove a mentor's access today you would edit their `users` doc in the Firebase console. Should login also demote staff who are no longer on either list?
+- T6: `/api/me` does not refresh `name`/`email` on later logins; they are set once at first login.

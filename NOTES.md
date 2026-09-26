@@ -66,3 +66,12 @@
   `where("status","==","published")` and submissions with `where("uid","==",uid)`. Students cannot list users/studentStats.
 - Rules tests: `setupSeededRulesEnv()` + `dbAs(env(), uid)` from `tests/rules/fixtures.ts` (reseeds every collection before
   each test; `UID.stranger` is signed in but unprovisioned). The `false for 'update' @ L..` stderr lines are expected noise.
+
+## Auth (T6)
+- API routes: `const auth = await requireUser(request, ["mentor"]); if (!auth.ok) return auth.response;` then use
+  `auth.value` (typed `UserProfile`). Errors are `jsonError(status, msg)` from `lib/api/errors.ts` → `{ error }`.
+- `verifyIdentity` (token + email_verified + exact domain, no Firestore) is only for `/api/me`; everything else uses `requireUser`.
+- Role/Branch enums and `storedUserSchema` live in `lib/validation/user.ts` (reuse in T8 onboarding).
+- Tests mock the Admin SDK with `tests/auth/fakeAdmin.ts`: `vi.mock("@/lib/firebase/admin", async () => (await import("./fakeAdmin")).fakeAdmin.module)`
+  and the env with `fakeEnv`. Fill `fakeAdmin.tokens` (token → decoded) and `fakeAdmin.users`; clear both in `beforeEach`.
+  vi.mock factories are hoisted, so they must `await import(...)` rather than use top-level imports.
