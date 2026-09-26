@@ -1,8 +1,8 @@
 import { jsonError } from "@/lib/api/errors";
 import { parseBody } from "@/lib/api/parseBody";
 import { requireUser } from "@/lib/auth/requireUser";
-import { getTask, isValidTaskId, updateTask, type TaskResult } from "@/lib/tasks/taskStore";
-import { taskPatchSchema } from "@/lib/validation/task";
+import { getTask, updateTask, type TaskResult } from "@/lib/tasks/taskStore";
+import { isValidTaskId, taskPatchSchema } from "@/lib/validation/task";
 
 function respond(result: TaskResult): Response {
   return result.ok ? Response.json({ task: result.task }) : jsonError(result.status, result.message);

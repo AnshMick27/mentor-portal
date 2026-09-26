@@ -94,7 +94,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
   - UI: `/mentor/tasks` list (status, type, due date IST), `/mentor/tasks/new` and `/mentor/tasks/[id]` form with markdown preview; coding fields appear only for type coding. Viewer sees the list without buttons.
   - Acceptance: typecheck/lint/tests pass; pages work at 360 px.
 
-- [ ] **T10 — Student task board**
+- [x] **T10 — Student task board**
   - `/student/tasks`: published tasks grouped "Due soon" / "Submitted" / "Missed" (submission-based grouping can show everything as "Due soon" or "Missed" until submissions exist).
   - `/student/tasks/[id]`: renders description (markdown, sanitised), type, due date, sample tests for coding, attempts info. Submit controls are a disabled placeholder ("Coming soon") for now.
   - Reads directly from Firestore (allowed by rules) or via API; must not show drafts.
@@ -130,6 +130,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-09-26 — T8 — Shared strict onboarding zod schema, POST /api/onboarding (student only, one transaction: user doc + initial studentStats, 409 on re-onboarding or duplicate roll number), /onboarding form, generalised fake Admin SDK; 15 new unit tests.
 - 2026-09-26 — T9a — Split T9 into T9a/T9b. Strict task zod schemas (create + patch, coding rules, per-type default attempts), task store with merge-then-revalidate PATCH, GET/POST /api/tasks and GET/PATCH /api/tasks/[id] (mentor writes, mentor/viewer reads), shared parseBody helper; 30 new unit tests.
 - 2026-09-26 — T9b — /mentor/tasks list (status, type, IST due date; viewers get no buttons), /mentor/tasks/new and /mentor/tasks/[id] TaskForm (markdown Write/Preview, coding fields only for coding, draft/published), safe Markdown component (react-markdown), IST date helpers, apiFetch + useApiQuery client helpers; 25 new unit tests.
+- 2026-09-26 — T10 — /student/tasks board (Due soon / Submitted / Missed, attempts used) and /student/tasks/[id] (sanitised markdown, sample tests, disabled Submit "Coming soon"), direct Firestore reads via shared query builders, shared task-doc parser; 17 new unit tests + 5 rules tests running the real student queries.
 
 ## Blockers
 (none)
@@ -145,3 +146,4 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - T8: Not in the spec, added for data integrity: onboarding is one-time (a second POST gets 409; a mentor would fix a typo in the console for now), and a roll number already used by another account is refused (409). OK?
 - T9a: Decisions the spec leaves open: `maxAttempts` may be 1–10; titles 3–120 chars; descriptions up to 20,000 chars; sample test input/output up to 2,000 chars each; `GET /api/tasks` returns at most 200 tasks (newest due date first) without paging. Added `GET /api/tasks/[id]` for the edit form. A task sent with a `hiddenTests` field is rejected. OK?
 - T9b: Added dependency `react-markdown` (not in SPEC §4) for the markdown preview and T10's sanitised descriptions; it drops raw HTML and `javascript:` links. Publishing is a Draft/Published choice in the form, saved with the other fields. Viewers see the task list only (titles are not links); there is no read-only task detail page for them yet. Mentors can still change a task's type after publishing; Loop 2 may need to lock that once submissions exist. OK?
+- T10: "Attempts used" counts every submission doc for the task (any status); Loop 2 may want to exclude `error` ones. The student task page hides the judge `problemSlug`. A task counts as "Due soon" for any future due date (no time window). OK?

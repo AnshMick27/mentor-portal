@@ -110,3 +110,11 @@
 - Client API calls: `apiFetch(getIdToken, path, { method, body })` (`lib/api/client.ts`) or the `useApiQuery(path, zodSchema)`
   hook + `<QueryStatus>` for GETs. Validate replies with zod (`taskDtoSchema`).
 - Dynamic client pages read params with `use(params)` and type props as `PageProps<"/mentor/tasks/[id]">`.
+
+## Student board (T10)
+- Student reads use `lib/tasks/studentQueries.ts` (`publishedTasksQuery`, `ownSubmissionsQuery`, `loadStudentBoard`,
+  `loadStudentTask`). `tests/rules/studentQueries.test.ts` runs these exact functions against the emulator, so any new
+  student query should be added there too. Rules tests can import `@/…` (alias added to `vitest.rules.config.mts`).
+- `taskDocToDto` (`lib/tasks/taskDoc.ts`) parses task docs from BOTH SDKs (duck-typed Timestamps); the server store uses it too.
+- Client async loading: `useAsyncData(stableLoader, message)` + `<QueryStatus>`; wrap loaders in `useCallback`.
+- Reading a draft as a student throws `permission-denied`; `loadStudentTask` maps that to "not found".

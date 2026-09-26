@@ -8,6 +8,11 @@ export type TaskType = (typeof TASK_TYPES)[number];
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 export type Language = (typeof LANGUAGES)[number];
 
+/** Task ids in URLs: letters, digits, `_` and `-` only (auto ids qualify), so nothing odd reaches Firestore. */
+export function isValidTaskId(id: string): boolean {
+  return /^[A-Za-z0-9_-]{1,64}$/.test(id);
+}
+
 /** SPEC.md §6 defaults when a mentor does not set maxAttempts. */
 export const DEFAULT_MAX_ATTEMPTS: Record<TaskType, number> = { coding: 5, resume: 3, intro_written: 3 };
 
