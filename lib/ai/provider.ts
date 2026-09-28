@@ -2,12 +2,13 @@ import "server-only";
 import { createAnthropicModel } from "@/lib/ai/anthropic";
 import { AiFeedbackError, aiFeedbackSchema, type Feedback, type FeedbackModel } from "@/lib/ai/feedback";
 import { createGeminiModel } from "@/lib/ai/gemini";
+import { createGroqModel } from "@/lib/ai/groq";
 import { buildPrompt } from "@/lib/ai/prompt";
 import type { Rubric } from "@/lib/ai/rubrics";
 import { getServerEnv, type ServerEnv } from "@/lib/config/env";
 import type { AiTaskType } from "@/lib/validation/submission";
 
-type AiEnv = Pick<ServerEnv, "AI_PROVIDER" | "AI_MODEL" | "ANTHROPIC_API_KEY" | "GEMINI_API_KEY">;
+type AiEnv = Pick<ServerEnv, "AI_PROVIDER" | "AI_MODEL" | "ANTHROPIC_API_KEY" | "GEMINI_API_KEY" | "GROQ_API_KEY">;
 
 /** Picks the provider from `AI_PROVIDER`/`AI_MODEL` (SPEC.md §10). Switching provider = changing env vars. */
 export function createFeedbackModel(env: AiEnv, fetchFn?: typeof fetch): FeedbackModel {
@@ -17,6 +18,10 @@ export function createFeedbackModel(env: AiEnv, fetchFn?: typeof fetch): Feedbac
   if (env.AI_PROVIDER === "anthropic") {
     if (!env.ANTHROPIC_API_KEY) throw new AiFeedbackError("config", "ANTHROPIC_API_KEY is not set");
     return createAnthropicModel({ apiKey: env.ANTHROPIC_API_KEY, ...options });
+  }
+  if (env.AI_PROVIDER === "groq") {
+    if (!env.GROQ_API_KEY) throw new AiFeedbackError("config", "GROQ_API_KEY is not set");
+    return createGroqModel({ apiKey: env.GROQ_API_KEY, ...options });
   }
   if (!env.GEMINI_API_KEY) throw new AiFeedbackError("config", "GEMINI_API_KEY is not set");
   return createGeminiModel({ apiKey: env.GEMINI_API_KEY, ...options });

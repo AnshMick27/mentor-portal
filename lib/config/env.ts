@@ -23,10 +23,11 @@ const serverEnvSchema = z.object({
   ),
   MENTOR_EMAILS: optionalString.transform(parseEmailList),
   VIEWER_EMAILS: optionalString.transform(parseEmailList),
-  AI_PROVIDER: blankAsUndefined(z.enum(["anthropic", "gemini"]).default("anthropic")),
+  AI_PROVIDER: blankAsUndefined(z.enum(["anthropic", "gemini", "groq"]).default("anthropic")),
   AI_MODEL: optionalString,
   ANTHROPIC_API_KEY: optionalString,
   GEMINI_API_KEY: optionalString,
+  GROQ_API_KEY: optionalString,
   GITHUB_JUDGE_REPO: blankAsUndefined(
     z
       .string()

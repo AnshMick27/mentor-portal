@@ -147,3 +147,7 @@
 - `generateFeedback(input, model?)`: pass a `FeedbackModel` in tests/routes; the default builds one from env. Both providers accept an injected `fetch` (the Anthropic SDK takes `fetch` in its constructor), so tests never hit the network. Use 4xx (not 5xx) in SDK error tests: the SDK retries 5xx with a backoff delay.
 - `aiWireSchema` (plain, sent as JSON schema) vs `aiFeedbackSchema` (strict limits + rounding, checked after). Transforms/refines can't go in the wire schema.
 - AiFeedbackError kinds: config | provider (no retry) | invalid_output (retried once). Rubrics: lib/ai/rubrics/*.json, weights must sum to 100.
+
+## Groq (T13b)
+- `AI_PROVIDER=groq` uses `lib/ai/groq.ts` (plain fetch, OpenAI-compatible). `strict: true` only for `GROQ_STRICT_MODELS`; update that set if Groq's structured-outputs docs change. A 400 containing "does not match the expected schema" = invalid_output (retried); any other non-2xx = provider error.
+- `FEEDBACK_JSON_SCHEMA` = `z.toJSONSchema(aiWireSchema)` minus `$schema`; zod's default output already marks every field required with `additionalProperties: false`.

@@ -77,6 +77,10 @@ describe("parseServerEnv", () => {
       AI_PROVIDER: "gemini",
       GITHUB_JUDGE_REPO: "org/judge",
     });
+    expect(parseServerEnv({ ...validServer, AI_PROVIDER: "groq", GROQ_API_KEY: "gsk-test" })).toMatchObject({
+      AI_PROVIDER: "groq",
+      GROQ_API_KEY: "gsk-test",
+    });
   });
 });
 
