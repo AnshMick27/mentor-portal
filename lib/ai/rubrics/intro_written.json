@@ -1,0 +1,35 @@
+{
+  "title": "Written introduction",
+  "criteria": [
+    {
+      "name": "Structure",
+      "weight": 25,
+      "guidance": "Follows greeting → background → skills → projects/achievements → goals, with smooth transitions."
+    },
+    {
+      "name": "Clarity",
+      "weight": 15,
+      "guidance": "Easy to follow; each sentence has one clear point; no vague filler."
+    },
+    {
+      "name": "Grammar",
+      "weight": 15,
+      "guidance": "Correct grammar, spelling and punctuation."
+    },
+    {
+      "name": "Tone",
+      "weight": 15,
+      "guidance": "Confident and professional without sounding arrogant or overly casual."
+    },
+    {
+      "name": "Conciseness",
+      "weight": 15,
+      "guidance": "Between 80 and 250 words, with no repetition."
+    },
+    {
+      "name": "Relevance to placements",
+      "weight": 15,
+      "guidance": "Highlights what a recruiter cares about: skills, projects, internships and career goals that fit the roles applied for."
+    }
+  ]
+}

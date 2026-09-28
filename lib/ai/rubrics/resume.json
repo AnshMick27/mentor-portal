@@ -1,0 +1,40 @@
+{
+  "title": "Resume",
+  "criteria": [
+    {
+      "name": "Format and length",
+      "weight": 15,
+      "guidance": "Clean, consistent layout that fits on one page. Clear section headings in a sensible order."
+    },
+    {
+      "name": "Contact details and links",
+      "weight": 10,
+      "guidance": "Name, phone, college email, and working LinkedIn/GitHub/portfolio links. No broken or placeholder links."
+    },
+    {
+      "name": "Education",
+      "weight": 10,
+      "guidance": "Degree, branch, college, graduation year and CGPA/percentage shown clearly; school marks if relevant."
+    },
+    {
+      "name": "Skills relevance",
+      "weight": 15,
+      "guidance": "Skills match the roles a fresher applies for, are grouped sensibly, and are backed up by projects or experience."
+    },
+    {
+      "name": "Projects",
+      "weight": 20,
+      "guidance": "Each project names the tech stack, what the student built, and the impact or result."
+    },
+    {
+      "name": "Action verbs and quantified results",
+      "weight": 15,
+      "guidance": "Bullets start with strong action verbs and include numbers where possible (users, speed-up, accuracy, rank)."
+    },
+    {
+      "name": "Grammar and consistency",
+      "weight": 15,
+      "guidance": "No spelling or grammar mistakes; consistent tense, punctuation, date formats and capitalisation."
+    }
+  ]
+}

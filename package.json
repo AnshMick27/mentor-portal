@@ -23,6 +23,7 @@
     "seed": "node --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed.mts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
     "firebase": "^12.19.0",
     "firebase-admin": "^14.5.0",
     "next": "16.3.6",

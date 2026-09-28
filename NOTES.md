@@ -141,3 +141,9 @@
 - Limits live in `lib/submissions/limits.ts`; schemas in `lib/validation/submission.ts`. Feedback content is TRIMMED before limits apply; code is not trimmed (32 KB counted in UTF-8 bytes via `utf8Bytes`).
 - Always count attempts with `attemptsUsed(subs, now)` (skips `error` and >10 min stuck queued/running) and show status via `effectiveStatus`. Stored result arrays are loose; the AI reply's 2–3/1–3 counts are enforced in lib/ai (T13).
 - `timestampLike` (Firestore Timestamp duck type) is shared from `lib/validation/timestamp.ts`.
+
+## AI feedback (T13)
+- Dependency added: `@anthropic-ai/sdk` (Claude API guidance: use the official SDK in TS, not raw fetch). Its zod helper imports `zod/v4`, which zod 4.x provides.
+- `generateFeedback(input, model?)`: pass a `FeedbackModel` in tests/routes; the default builds one from env. Both providers accept an injected `fetch` (the Anthropic SDK takes `fetch` in its constructor), so tests never hit the network. Use 4xx (not 5xx) in SDK error tests: the SDK retries 5xx with a backoff delay.
+- `aiWireSchema` (plain, sent as JSON schema) vs `aiFeedbackSchema` (strict limits + rounding, checked after). Transforms/refines can't go in the wire schema.
+- AiFeedbackError kinds: config | provider (no retry) | invalid_output (retried once). Rubrics: lib/ai/rubrics/*.json, weights must sum to 100.
