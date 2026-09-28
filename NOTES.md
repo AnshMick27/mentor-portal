@@ -131,6 +131,8 @@
 - Clear emulator Firestore: `curl -X DELETE "http://127.0.0.1:8080/emulator/v1/projects/<id>/databases/(default)/documents"`.
 
 ## Deploy (Vercel)
-- `package.json` pins `engines.node` to `24.x`. firebase-admin 14 needs Node >= 22, and its dep jwks-rsa `require()`s the
-  ESM-only `jose` 6. On older Vercel Node runtimes every `/api/*` route crashed with `ERR_REQUIRE_ESM`, which the login page shows as
-  "Something went wrong". Don't remove the pin.
+- firebase-admin 14's dep jwks-rsa 4 `require()`s `jose`, and jose 6 is ESM-only. On a runtime without require(esm),
+  every `/api/*` route crashed with `ERR_REQUIRE_ESM`, which the login page shows as "Something went wrong". Fixed by
+  `overrides: { jwks-rsa: { jose: ^5 } }` in package.json (jose 5 ships CJS; jwks-rsa only uses importJWK/exportSPKI).
+  `engines.node` is also pinned to `24.x`. Keep both. Verify with:
+  `node --no-experimental-require-module -e "require('firebase-admin/auth')"`.
