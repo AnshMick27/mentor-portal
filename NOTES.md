@@ -136,3 +136,8 @@
   `overrides: { jwks-rsa: { jose: ^5 } }` in package.json (jose 5 ships CJS; jwks-rsa only uses importJWK/exportSPKI).
   `engines.node` is also pinned to `24.x`. Keep both. Verify with:
   `node --no-experimental-require-module -e "require('firebase-admin/auth')"`.
+
+## Submissions (T12)
+- Limits live in `lib/submissions/limits.ts`; schemas in `lib/validation/submission.ts`. Feedback content is TRIMMED before limits apply; code is not trimmed (32 KB counted in UTF-8 bytes via `utf8Bytes`).
+- Always count attempts with `attemptsUsed(subs, now)` (skips `error` and >10 min stuck queued/running) and show status via `effectiveStatus`. Stored result arrays are loose; the AI reply's 2–3/1–3 counts are enforced in lib/ai (T13).
+- `timestampLike` (Firestore Timestamp duck type) is shared from `lib/validation/timestamp.ts`.

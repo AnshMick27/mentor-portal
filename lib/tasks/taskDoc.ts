@@ -1,10 +1,6 @@
 import { z } from "zod";
 import { codingSchema, TASK_STATUSES, TASK_TYPES, type TaskDto } from "@/lib/validation/task";
-
-/** Admin and browser SDK Timestamps both have `toDate()`; duck-typing keeps this module usable on both sides. */
-const timestampLike = z.custom<{ toDate: () => Date }>(
-  (value) => typeof value === "object" && value !== null && typeof Reflect.get(value, "toDate") === "function",
-);
+import { timestampLike } from "@/lib/validation/timestamp";
 
 /** `tasks/{taskId}` as stored (SPEC.md §6). Not strict: unknown extra fields are ignored. */
 const storedTaskSchema = z.object({

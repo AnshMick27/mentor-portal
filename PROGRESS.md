@@ -6,7 +6,7 @@ Legend: `- [ ]` to do · `- [x]` done · 🔒 HUMAN = Ansh does this step, the l
 
 Goal: students submit resumes and written intros and get AI feedback, and submit code that the GitHub Actions judge checks against hidden tests. Attempt and size limits are enforced on the server. Stats recompute and dashboards come in Loop 3; this loop only leaves one clear place to call recompute from.
 
-- [ ] **T12 — Submission schemas, limits and scoring helpers**
+- [x] **T12 — Submission schemas, limits and scoring helpers**
   - `lib/validation/submission.ts`: zod schemas for the stored submission doc (SPEC.md §6), `result` (feedback fields, `criteria`, `judge`), and the two submit request bodies (AI text; code + language). One shared constants file for the §7.8 limits: code ≤ 32 KB (UTF-8 bytes), resume text ≤ 12,000 chars, intro text 300–2,500 chars.
   - Pure helpers (no Firestore): `effectiveStatus(sub, now)` (queued/running older than 10 minutes → `error`, "Judge timed out, attempt not counted"); `attemptsUsed(subs, now)` (counts only submissions whose effective status is not `error`); `bestScore(subs)`; `codingScore(passed, total)` = `round(10 * passed / total, 1)`.
   - Acceptance: unit tests for every limit edge (exactly at / one over), the 10-minute boundary, attempts excluding errors, best score, and coding score rounding (including `total = 0` → refuse).
@@ -204,6 +204,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-09-26 — T9b — /mentor/tasks list (status, type, IST due date; viewers get no buttons), /mentor/tasks/new and /mentor/tasks/[id] TaskForm (markdown Write/Preview, coding fields only for coding, draft/published), safe Markdown component (react-markdown), IST date helpers, apiFetch + useApiQuery client helpers; 25 new unit tests.
 - 2026-09-26 — T10 — /student/tasks board (Due soon / Submitted / Missed, attempts used) and /student/tasks/[id] (sanitised markdown, sample tests, disabled Submit "Coming soon"), direct Firestore reads via shared query builders, shared task-doc parser; 17 new unit tests + 5 rules tests running the real student queries.
 - 2026-09-26 — T11 — scripts/seed.mts (run by Node's built-in TypeScript support, no new dependency; refuses non-local emulator hosts): 1 mentor, 1 viewer, 6 students across branches with studentStats, 4 tasks (2 published, 1 draft, 1 past due); Auth users linked to google.com; npm run emulators / npm run seed; README emulator guide; 9 new unit tests. Verified against the running emulators from an empty database.
+- 2026-09-28 — T12 — Submission limits (lib/submissions/limits.ts), zod schemas for stored submissions/results/judge and both submit bodies (lib/validation/submission.ts), effectiveStatus/attemptsUsed/bestScore/codingScore helpers, shared timestampLike; 19 new unit tests.
 
 ## Blockers
 (none)
