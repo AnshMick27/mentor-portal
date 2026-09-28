@@ -129,3 +129,8 @@
   may show the same warning in emulator mode.
 - Seed data is pure in `scripts/seedData.mts` (tested in `tests/scripts/`); tasks go through `taskInputSchema`.
 - Clear emulator Firestore: `curl -X DELETE "http://127.0.0.1:8080/emulator/v1/projects/<id>/databases/(default)/documents"`.
+
+## Deploy (Vercel)
+- `package.json` pins `engines.node` to `24.x`. firebase-admin 14 needs Node >= 22, and its dep jwks-rsa `require()`s the
+  ESM-only `jose` 6. On older Vercel Node runtimes every `/api/*` route crashed with `ERR_REQUIRE_ESM`, which the login page shows as
+  "Something went wrong". Don't remove the pin.
