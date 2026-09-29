@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { use, useCallback } from "react";
+import { use, useCallback, useState } from "react";
 import { useSignedInProfile } from "@/components/auth/AuthProvider";
 import { QueryStatus } from "@/components/QueryStatus";
 import { StudentTaskDetail } from "@/components/student/StudentTaskDetail";
@@ -18,6 +18,9 @@ export default function StudentTaskPage({ params }: PageProps<"/student/tasks/[i
     [uid, id],
   );
   const { state, reload } = useAsyncData(load, "Could not load this task. Please try again.");
+  // Attempts made on this page since it loaded (a finished submission counts; errors do not).
+  const [newAttempts, setNewAttempts] = useState(0);
+  const onSubmitted = useCallback(() => setNewAttempts((n) => n + 1), []);
   if (state.status !== "ready") return <QueryStatus state={state} onRetry={reload} />;
 
   const { task, attemptsUsed } = state.data;
@@ -32,5 +35,7 @@ export default function StudentTaskPage({ params }: PageProps<"/student/tasks/[i
       </section>
     );
   }
-  return <StudentTaskDetail task={task} attemptsUsed={attemptsUsed} now={new Date()} />;
+  return (
+    <StudentTaskDetail task={task} attemptsUsed={attemptsUsed + newAttempts} now={new Date()} onSubmitted={onSubmitted} />
+  );
 }

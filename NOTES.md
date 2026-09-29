@@ -156,3 +156,8 @@
 - `lib/submissions/feedbackSubmission.ts`: `startFeedbackSubmission` (task + attempt checks + create `running`, one transaction; query `where uid == && taskId ==`) and `finishFeedbackSubmission`. T18's judge submit can mirror its shape.
 - Route tests mock `@/lib/ai/provider` (`generateFeedback: vi.fn()`) and `@/lib/submissions/onFinished`; the fake Admin DocRef now supports `update`.
 - Route segment config `export const maxDuration = 60` works unchanged in Next 16 route handlers.
+
+## Submit forms (T15a)
+- Dependency added: `pdfjs-dist` ^6 (SPEC §4). Browser-only: `lib/submissions/pdfjsLoader.ts` is imported dynamically on file pick; the worker is set via `new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url)`, which the Next 16 build emits under `.next/static/media/`. In v6 `PDFDocumentProxy` has no `destroy()` (use the loading task's) and `isEvalSupported` is gone.
+- Pure logic is testable without pdf.js: `extractPdfText(file, loader)` / `itemsToText` (`lib/submissions/pdfText.ts`), `checkIntroLength` (`wordCount.ts`), `submitAvailability` (`availability.ts`, mirrors the server's `now <= dueAt` and attempts checks).
+- `TaskSubmitSection` owns `useFeedbackSubmit`, so the result note survives when the last attempt closes the form. Component tests that render it mock `@/components/auth/AuthProvider` (`useAuth` throws outside the provider).

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Markdown } from "@/components/Markdown";
+import { TaskSubmitSection } from "@/components/student/TaskSubmitSection";
 import { formatIst } from "@/lib/dates/ist";
 import { LANGUAGE_LABEL, TASK_TYPE_LABEL, type TaskDto } from "@/lib/validation/task";
 
@@ -12,8 +13,18 @@ function Sample({ label, text }: { label: string; text: string }) {
   );
 }
 
-/** Read-only task view for students. Submitting arrives in Loop 2. */
-export function StudentTaskDetail({ task, attemptsUsed, now }: { task: TaskDto; attemptsUsed: number; now: Date }) {
+/** Task view for students: description, sample tests and the submit area. */
+export function StudentTaskDetail({
+  task,
+  attemptsUsed,
+  now,
+  onSubmitted = () => undefined,
+}: {
+  task: TaskDto;
+  attemptsUsed: number;
+  now: Date;
+  onSubmitted?: () => void;
+}) {
   const pastDue = Date.parse(task.dueAt) < now.getTime();
   return (
     <article className="flex flex-col gap-6">
@@ -49,16 +60,7 @@ export function StudentTaskDetail({ task, attemptsUsed, now }: { task: TaskDto; 
         </section>
       )}
 
-      <div className="flex flex-col gap-2">
-        <button
-          type="button"
-          disabled
-          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-blue-700 px-5 font-semibold text-white opacity-50"
-        >
-          Submit
-        </button>
-        <p className="text-sm opacity-70">Coming soon: submissions open in the next update.</p>
-      </div>
+      <TaskSubmitSection task={task} attemptsUsed={attemptsUsed} now={now} onSubmitted={onSubmitted} />
     </article>
   );
 }
