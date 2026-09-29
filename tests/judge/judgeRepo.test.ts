@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { JUDGE_VERDICTS, MAX_COMPILE_OUTPUT_CHARS, SUBMISSION_ID_PATTERN } from "@/lib/judge/callbackPayload";
 
 /** Static checks of the judge template's security properties (SPEC.md §7.5–7.7, §9). */
 const root = join(process.cwd(), "judge-repo");
@@ -147,5 +148,24 @@ describe("judge-repo files", () => {
     expect(readme).toContain("x-judge-signature: sha256=<hex>");
     expect(readme).toContain('"firstFailedTest"');
     expect(readme).toContain('"status": "error"');
+  });
+});
+
+describe("judge-repo ↔ portal contract (lib/judge/callbackPayload.ts)", () => {
+  const util = read("scripts/judge_util.py");
+
+  it("uses the same verdicts", () => {
+    const set = /VERDICTS = \{([^}]*)\}/.exec(util)?.[1] ?? "";
+    const pythonVerdicts = [...set.matchAll(/"([^"]+)"/g)].map((m) => m[1]).sort();
+    expect(pythonVerdicts).toEqual([...JUDGE_VERDICTS].sort());
+  });
+
+  it("caps compile output at the same length", () => {
+    expect(util).toContain(`COMPILE_OUTPUT_CHARS = ${MAX_COMPILE_OUTPUT_CHARS}`);
+  });
+
+  it("checks submission ids with the same pattern", () => {
+    expect(workflow).toContain('r"[A-Za-z0-9_-]{1,128}"');
+    expect(SUBMISSION_ID_PATTERN.source).toBe("^[A-Za-z0-9_-]{1,128}$");
   });
 });

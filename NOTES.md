@@ -174,3 +174,8 @@
 - Windows `python` can't open msys `/tmp/...` paths embedded inside `python -c "..."` strings; pass paths as argv instead.
 - No Docker on this machine: run.sh can only be `bash -n` checked locally.
 
+## Judge libs (T17)
+- `dispatchJudge(input, { repo?, token?, fetch? })` throws `JudgeDispatchError` kind `config` (env missing: fix deployment) or `github` (refused/unreachable: mark the submission `error`, tell the student to retry). Omitting repo/token reads env.
+- `verifyJudgeCallback(rawBytes, request.headers.get("x-judge-signature"), secret?)` → `{ok, payload}` or `{ok:false, reason: config|too_large|signature|payload}`. T18: read the body with `await request.arrayBuffer()` (never `request.json()` before verifying); map signature → 401, payload → 400, too_large → 413, config → 500.
+- `tests/judge/judgeRepo.test.ts` also checks the verdict list, compile-output cap and id pattern match `judge-repo/`; change both sides together.
+
