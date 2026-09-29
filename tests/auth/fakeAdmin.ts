@@ -11,6 +11,7 @@ type DocRef = {
   get: () => Promise<DocSnapshot>;
   create: (data: Data) => Promise<void>;
   set: (data: Data) => Promise<void>;
+  update: (data: Data) => Promise<void>;
 };
 type DocSnapshot = { id: string; exists: boolean; data: () => Data | undefined };
 type Query = {
@@ -24,7 +25,7 @@ type QuerySnapshot = { empty: boolean; size: number; docs: DocSnapshot[] };
 
 /**
  * In-memory stand-in for the Admin SDK pieces we use: `verifyIdToken` (token string → decoded token) and
- * Firestore docs in any collection: auto ids, get/create/set, `where(==)`/`orderBy`/`limit` queries,
+ * Firestore docs in any collection: auto ids, get/create/set/update, `where(==)`/`orderBy`/`limit` queries,
  * and transaction get/create/set/update.
  * Register with `vi.mock("@/lib/firebase/admin", async () => (await import("./fakeAdmin")).fakeAdmin.module)`.
  */
@@ -51,6 +52,12 @@ export function createFakeAdmin() {
     collectionData(collection).set(id, data);
   }
 
+  function updateDoc(collection: string, id: string, data: Data): void {
+    const docs = collectionData(collection);
+    if (!docs.has(id)) throw new Error("not found");
+    docs.set(id, { ...docs.get(id), ...data });
+  }
+
   let autoId = 0;
   function docRef(collection: string, id = `auto-${++autoId}`): DocRef {
     return {
@@ -60,6 +67,7 @@ export function createFakeAdmin() {
       get: async () => snapshot(collection, id),
       create: async (data) => createDoc(collection, id, data),
       set: async (data) => void collectionData(collection).set(id, data),
+      update: async (data) => updateDoc(collection, id, data),
     };
   }
 
@@ -109,11 +117,7 @@ export function createFakeAdmin() {
         set: (ref: DocRef, data: Data) => {
           collectionData(ref.collection).set(ref.id, data);
         },
-        update: (ref: DocRef, data: Data) => {
-          const docs = collectionData(ref.collection);
-          if (!docs.has(ref.id)) throw new Error("not found");
-          docs.set(ref.id, { ...docs.get(ref.id), ...data });
-        },
+        update: (ref: DocRef, data: Data) => updateDoc(ref.collection, ref.id, data),
       };
       return fn(tx);
     }),

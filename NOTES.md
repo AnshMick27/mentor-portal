@@ -151,3 +151,8 @@
 ## Groq (T13b)
 - `AI_PROVIDER=groq` uses `lib/ai/groq.ts` (plain fetch, OpenAI-compatible). `strict: true` only for `GROQ_STRICT_MODELS`; update that set if Groq's structured-outputs docs change. A 400 containing "does not match the expected schema" = invalid_output (retried); any other non-2xx = provider error.
 - `FEEDBACK_JSON_SCHEMA` = `z.toJSONSchema(aiWireSchema)` minus `$schema`; zod's default output already marks every field required with `additionalProperties: false`.
+
+## Feedback route (T14)
+- `lib/submissions/feedbackSubmission.ts`: `startFeedbackSubmission` (task + attempt checks + create `running`, one transaction; query `where uid == && taskId ==`) and `finishFeedbackSubmission`. T18's judge submit can mirror its shape.
+- Route tests mock `@/lib/ai/provider` (`generateFeedback: vi.fn()`) and `@/lib/submissions/onFinished`; the fake Admin DocRef now supports `update`.
+- Route segment config `export const maxDuration = 60` works unchanged in Next 16 route handlers.
