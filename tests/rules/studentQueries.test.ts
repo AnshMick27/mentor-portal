@@ -1,7 +1,15 @@
-import { assertSucceeds } from "@firebase/rules-unit-testing";
-import { doc, getDoc, getDocs, setDoc, type Firestore } from "firebase/firestore";
+import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
+import { doc, getDoc, getDocs, setDoc, Timestamp, type Firestore } from "firebase/firestore";
 import { describe, expect, it } from "vitest";
-import { loadStudentBoard, loadStudentTask, ownSubmissionsQuery, publishedTasksQuery } from "@/lib/tasks/studentQueries";
+import type { SubmissionView } from "@/lib/submissions/submissionDoc";
+import {
+  loadStudentBoard,
+  loadStudentTask,
+  ownSubmissionsQuery,
+  ownTaskSubmissionsQuery,
+  publishedTasksQuery,
+  watchOwnTaskSubmissions,
+} from "@/lib/tasks/studentQueries";
 import { dbAs, setupSeededRulesEnv, SUBMISSION, TASK, UID } from "./fixtures";
 
 const env = setupSeededRulesEnv();
@@ -22,32 +30,79 @@ describe("student board queries (the exact queries the app runs)", () => {
     expect(snapshot.docs.map((d) => d.id)).toEqual([SUBMISSION.alice]);
   });
 
-  it("loadStudentBoard returns published tasks only, plus own attempt counts", async () => {
+  it("loadStudentBoard returns published tasks only, plus the student's own submissions", async () => {
     await env().withSecurityRulesDisabled(async (ctx) => {
       const db = ctx.firestore();
       const draft = await getDoc(doc(db, "tasks", TASK.draft));
       await setDoc(doc(db, "tasks", "another-draft"), { ...draft.data(), title: "Another draft" });
     });
-    const { tasks, attempts } = await loadStudentBoard(studentDb(UID.alice), UID.alice);
+    const { tasks, submissions } = await loadStudentBoard(studentDb(UID.alice), UID.alice);
     expect(tasks.map((t) => t.id)).toEqual([TASK.published]);
     expect(tasks.every((t) => t.status === "published")).toBe(true);
-    expect(Object.fromEntries(attempts)).toEqual({ [TASK.published]: 1 });
+    expect(submissions.map((s) => [s.id, s.taskId, s.uid])).toEqual([[SUBMISSION.alice, TASK.published, UID.alice]]);
+    expect(submissions[0]?.createdAt).toBeInstanceOf(Date);
   });
 
-  it("loadStudentTask returns a published task with the student's attempts", async () => {
-    const { task, attemptsUsed } = await loadStudentTask(studentDb(UID.bob), UID.bob, TASK.published);
-    expect(task?.id).toBe(TASK.published);
-    expect(attemptsUsed).toBe(1);
+  it("loadStudentTask returns a published task", async () => {
+    expect((await loadStudentTask(studentDb(UID.bob), TASK.published))?.id).toBe(TASK.published);
   });
 
   it("loadStudentTask treats a draft like a missing task", async () => {
-    expect(await loadStudentTask(studentDb(UID.alice), UID.alice, TASK.draft)).toEqual({
-      task: undefined,
-      attemptsUsed: 0,
+    expect(await loadStudentTask(studentDb(UID.alice), TASK.draft)).toBeUndefined();
+    expect(await loadStudentTask(studentDb(UID.alice), "does-not-exist")).toBeUndefined();
+  });
+});
+
+describe("task attempt history query (the exact query the task page listens to)", () => {
+  /** Two more attempts by Alice (one on this task, one elsewhere) so ordering and filtering show. */
+  async function seedMoreAttempts() {
+    await env().withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      const base = (await getDoc(doc(db, "submissions", SUBMISSION.alice))).data();
+      await setDoc(doc(db, "submissions", "alice-newer"), {
+        ...base,
+        attempt: 2,
+        status: "done",
+        createdAt: Timestamp.fromDate(new Date("2026-09-27T10:00:00+05:30")),
+        result: { score: 7.5, summary: "Good", strengths: [], improvements: [], nextSteps: [] },
+      });
+      await setDoc(doc(db, "submissions", "alice-other-task"), { ...base, taskId: "other-task" });
     });
-    expect(await loadStudentTask(studentDb(UID.alice), UID.alice, "does-not-exist")).toEqual({
-      task: undefined,
-      attemptsUsed: 0,
+  }
+
+  it("is allowed for the student and returns only their attempts on that task, newest first", async () => {
+    await seedMoreAttempts();
+    const snapshot = await assertSucceeds(
+      getDocs(ownTaskSubmissionsQuery(studentDb(UID.alice), UID.alice, TASK.published)),
+    );
+    expect(snapshot.docs.map((d) => d.id)).toEqual(["alice-newer", SUBMISSION.alice]);
+  });
+
+  it("is denied when a student asks for another student's attempts", async () => {
+    await assertFails(getDocs(ownTaskSubmissionsQuery(studentDb(UID.alice), UID.bob, TASK.published)));
+  });
+
+  it("is denied for an unprovisioned user", async () => {
+    await assertFails(getDocs(ownTaskSubmissionsQuery(studentDb(UID.stranger), UID.stranger, TASK.published)));
+  });
+
+  it("watchOwnTaskSubmissions delivers the parsed attempts through a listener", async () => {
+    await seedMoreAttempts();
+    const received = await new Promise<SubmissionView[]>((resolve, reject) => {
+      const stop = watchOwnTaskSubmissions(
+        studentDb(UID.alice),
+        UID.alice,
+        TASK.published,
+        (list) => {
+          stop();
+          resolve(list);
+        },
+        reject,
+      );
     });
+    expect(received.map((s) => [s.id, s.attempt, s.result?.score])).toEqual([
+      ["alice-newer", 2, 7.5],
+      [SUBMISSION.alice, 1, undefined],
+    ]);
   });
 });

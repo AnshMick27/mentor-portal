@@ -36,7 +36,7 @@ export function SubmitFooter({ state, disabled }: { state: FeedbackSubmitState; 
   );
 }
 
-/** Short note after a successful submit (the full results view comes with the attempt history). */
+/** Short note after a successful submit; the full feedback is in the attempt history below. */
 export function FeedbackReady({ result }: { result: SubmissionResult }) {
   return (
     <div
@@ -45,6 +45,7 @@ export function FeedbackReady({ result }: { result: SubmissionResult }) {
     >
       <span className="text-base font-semibold">Feedback ready: {result.score.toFixed(1)} / 10</span>
       <span>{result.summary}</span>
+      <span className="opacity-80">Full feedback is under “Your attempts” below.</span>
     </div>
   );
 }

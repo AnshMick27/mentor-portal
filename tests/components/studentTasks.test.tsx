@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { StudentTaskBoard } from "@/components/student/StudentTaskBoard";
 import { StudentTaskDetail } from "@/components/student/StudentTaskDetail";
+import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import type { TaskDto } from "@/lib/validation/task";
 
 const codingTask: TaskDto = {
@@ -23,9 +24,22 @@ const codingTask: TaskDto = {
   updatedAt: "2026-09-20T00:00:00.000Z",
 };
 
+const attempt: SubmissionView = {
+  id: "s1",
+  taskId: "t1",
+  uid: "u1",
+  type: "coding",
+  attempt: 1,
+  createdAt: new Date("2026-09-30T00:00:00Z"),
+  status: "done",
+  content: "print(1)",
+  language: "python",
+  result: { score: 7.5, summary: "", strengths: [], improvements: [], nextSteps: [] },
+};
+
 describe("StudentTaskDetail", () => {
   const html = renderToStaticMarkup(
-    <StudentTaskDetail task={codingTask} attemptsUsed={1} now={new Date("2026-10-01T00:00:00Z")} />,
+    <StudentTaskDetail task={codingTask} submissions={[attempt]} now={new Date("2026-10-01T00:00:00Z")} />,
   );
 
   it("shows title, type, IST due date and attempts", () => {
@@ -33,6 +47,7 @@ describe("StudentTaskDetail", () => {
     expect(html).toContain("Coding");
     expect(html).toContain("Due 5 Oct 2026, 11:59 pm IST");
     expect(html).toContain("Attempts: 1 of 5 used");
+    expect(html).toContain("Best score 7.5 / 10");
   });
 
   it("renders the description as sanitised markdown", () => {
@@ -55,7 +70,7 @@ describe("StudentTaskDetail", () => {
 
   it("says 'Was due' after the deadline", () => {
     const late = renderToStaticMarkup(
-      <StudentTaskDetail task={codingTask} attemptsUsed={0} now={new Date("2026-11-01T00:00:00Z")} />,
+      <StudentTaskDetail task={codingTask} submissions={[]} now={new Date("2026-11-01T00:00:00Z")} />,
     );
     expect(late).toContain("Was due");
   });

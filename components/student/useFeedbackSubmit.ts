@@ -18,7 +18,7 @@ export type FeedbackSubmitState =
   | { status: "done"; result: SubmissionResult };
 
 /** Sends resume/intro text to `POST /api/feedback`; validates locally first with the same schema as the server. */
-export function useFeedbackSubmit(taskId: string, type: AiTaskType, onSubmitted: () => void) {
+export function useFeedbackSubmit(taskId: string, type: AiTaskType) {
   const { getIdToken } = useAuth();
   const [state, setState] = useState<FeedbackSubmitState>({ status: "idle" });
 
@@ -36,11 +36,10 @@ export function useFeedbackSubmit(taskId: string, type: AiTaskType, onSubmitted:
     }
     const data = feedbackReplySchema.safeParse(reply.data);
     if (!data.success) {
-      setState({ status: "error", message: "Your feedback is saved, but could not be shown. Please reload the page." });
+      setState({ status: "error", message: "Your feedback is saved. See “Your attempts” below." });
     } else {
       setState({ status: "done", result: data.data.submission.result });
     }
-    onSubmitted();
   }
 
   return { state, submit };

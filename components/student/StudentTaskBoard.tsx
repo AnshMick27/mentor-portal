@@ -16,6 +16,7 @@ function TaskCard({ task }: { task: StudentTask }) {
         </span>
         <span className="text-sm opacity-75">
           Attempts: {task.attemptsUsed} of {task.maxAttempts} used
+          {task.bestScore !== undefined && <> · Best {task.bestScore.toFixed(1)} / 10</>}
         </span>
       </Link>
     </li>

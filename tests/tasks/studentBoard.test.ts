@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { countAttempts, groupStudentTasks, publishedOnly } from "@/lib/tasks/studentBoard";
+import type { SubmissionLike } from "@/lib/submissions/scoring";
+import { groupStudentTasks, publishedOnly, summarizeByTask, taskProgress } from "@/lib/tasks/studentBoard";
 import type { TaskDto } from "@/lib/validation/task";
 
 const now = new Date("2026-10-01T12:00:00+05:30");
@@ -36,16 +37,38 @@ describe("publishedOnly", () => {
   });
 });
 
-describe("countAttempts", () => {
-  it("counts submissions per task", () => {
-    const counts = countAttempts([{ taskId: "a" }, { taskId: "b" }, { taskId: "a" }]);
-    expect(Object.fromEntries(counts)).toEqual({ a: 2, b: 1 });
+function sub(taskId: string, status: SubmissionLike["status"], score?: number, minutesAgo = 1) {
+  const createdAt = new Date(now.getTime() - minutesAgo * 60_000);
+  const base = { taskId, status, createdAt };
+  return score === undefined ? base : { ...base, result: { score } };
+}
+
+describe("taskProgress / summarizeByTask", () => {
+  it("counts attempts without errors or timed-out ones, and keeps the best finished score", () => {
+    const list = [
+      sub("a", "done", 6.5),
+      sub("a", "done", 8),
+      sub("a", "error"),
+      sub("a", "running", undefined, 11),
+      sub("a", "running"),
+    ];
+    expect(taskProgress(list, now)).toEqual({ attemptsUsed: 3, bestScore: 8 });
+  });
+
+  it("has no best score until an attempt is finished", () => {
+    expect(taskProgress([sub("a", "running")], now)).toEqual({ attemptsUsed: 1 });
+    expect(taskProgress([], now)).toEqual({ attemptsUsed: 0 });
+  });
+
+  it("groups progress per task id", () => {
+    const progress = summarizeByTask([sub("a", "done", 7), sub("b", "error"), sub("a", "done", 4)], now);
+    expect(Object.fromEntries(progress)).toEqual({ a: { attemptsUsed: 2, bestScore: 7 }, b: { attemptsUsed: 0 } });
   });
 });
 
 describe("groupStudentTasks", () => {
   it("never shows drafts in any group", () => {
-    const board = groupStudentTasks(tasks, new Map([["draft-future", 1]]), now);
+    const board = groupStudentTasks(tasks, new Map([["draft-future", { attemptsUsed: 1 }]]), now);
     const all = [...board.dueSoon, ...board.submitted, ...board.missed];
     expect(ids(all)).not.toContain("draft-future");
     expect(ids(all)).not.toContain("draft-past");
@@ -58,10 +81,15 @@ describe("groupStudentTasks", () => {
     expect(ids(board.missed)).toEqual(["missed-recent", "missed-old"]);
   });
 
-  it("puts tasks with at least one attempt under Submitted, with attempts used", () => {
-    const board = groupStudentTasks(tasks, new Map([["soon", 2], ["missed-old", 1]]), now);
+  it("puts tasks with at least one counted attempt under Submitted, with attempts used and best score", () => {
+    const progress = new Map([
+      ["soon", { attemptsUsed: 2, bestScore: 7.5 }],
+      ["missed-old", { attemptsUsed: 1 }],
+      ["missed-recent", { attemptsUsed: 0 }],
+    ]);
+    const board = groupStudentTasks(tasks, progress, now);
     expect(ids(board.submitted)).toEqual(["soon", "missed-old"]);
-    expect(board.submitted[0]?.attemptsUsed).toBe(2);
+    expect(board.submitted[0]).toMatchObject({ attemptsUsed: 2, bestScore: 7.5 });
     expect(ids(board.dueSoon)).toEqual(["later"]);
     expect(board.dueSoon[0]?.attemptsUsed).toBe(0);
     expect(ids(board.missed)).toEqual(["missed-recent"]);

@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { StudentTaskDetail } from "@/components/student/StudentTaskDetail";
 import { FeedbackReady, SubmitFooter } from "@/components/student/FeedbackSubmitParts";
+import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import type { TaskDto } from "@/lib/validation/task";
 
 vi.mock("@/components/auth/AuthProvider", () => ({ useAuth: () => ({ getIdToken: async () => "token" }) }));
@@ -18,8 +19,21 @@ const base: Omit<TaskDto, "type" | "title" | "maxAttempts"> = {
 const resumeTask: TaskDto = { ...base, type: "resume", title: "Resume review", maxAttempts: 3 };
 const introTask: TaskDto = { ...base, type: "intro_written", title: "Introduce yourself", maxAttempts: 3 };
 const now = new Date("2026-10-01T00:00:00Z");
+/** `count` finished attempts on the task. */
+const done = (task: TaskDto, count: number): SubmissionView[] =>
+  Array.from({ length: count }, (_, i) => ({
+    id: `s${i + 1}`,
+    taskId: task.id,
+    uid: "u1",
+    type: task.type,
+    attempt: i + 1,
+    createdAt: new Date(now.getTime() - (count - i) * 60_000),
+    status: "done",
+    content: "text",
+    result: { score: 5 + i, summary: "ok", strengths: [], improvements: [], nextSteps: [] },
+  }));
 const render = (task: TaskDto, attemptsUsed = 0, at = now) =>
-  renderToStaticMarkup(<StudentTaskDetail task={task} attemptsUsed={attemptsUsed} now={at} />);
+  renderToStaticMarkup(<StudentTaskDetail task={task} submissions={done(task, attemptsUsed)} now={at} />);
 
 describe("resume submit area", () => {
   const html = render(resumeTask, 1);

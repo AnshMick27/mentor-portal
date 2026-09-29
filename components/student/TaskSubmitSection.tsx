@@ -8,10 +8,10 @@ import { IntroSubmitForm } from "./IntroSubmitForm";
 import { ResumeSubmitForm } from "./ResumeSubmitForm";
 import { useFeedbackSubmit } from "./useFeedbackSubmit";
 
-type SectionProps = { task: TaskDto; attemptsUsed: number; now: Date; onSubmitted: () => void };
+type SectionProps = { task: TaskDto; attemptsUsed: number; now: Date };
 
-function AiSubmitSection({ task, type, attemptsUsed, now, onSubmitted }: SectionProps & { type: AiTaskType }) {
-  const { state, submit } = useFeedbackSubmit(task.id, type, onSubmitted);
+function AiSubmitSection({ task, type, attemptsUsed, now }: SectionProps & { type: AiTaskType }) {
+  const { state, submit } = useFeedbackSubmit(task.id, type);
   const availability = submitAvailability(task, attemptsUsed, now);
   const onSubmit = (text: string) => void submit(text);
   return (

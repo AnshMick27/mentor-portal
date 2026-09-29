@@ -161,3 +161,9 @@
 - Dependency added: `pdfjs-dist` ^6 (SPEC §4). Browser-only: `lib/submissions/pdfjsLoader.ts` is imported dynamically on file pick; the worker is set via `new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url)`, which the Next 16 build emits under `.next/static/media/`. In v6 `PDFDocumentProxy` has no `destroy()` (use the loading task's) and `isEvalSupported` is gone.
 - Pure logic is testable without pdf.js: `extractPdfText(file, loader)` / `itemsToText` (`lib/submissions/pdfText.ts`), `checkIntroLength` (`wordCount.ts`), `submitAvailability` (`availability.ts`, mirrors the server's `now <= dueAt` and attempts checks).
 - `TaskSubmitSection` owns `useFeedbackSubmit`, so the result note survives when the last attempt closes the form. Component tests that render it mock `@/components/auth/AuthProvider` (`useAuth` throws outside the provider).
+
+## Results and history (T15b)
+- Client submission docs → `SubmissionView` (`lib/submissions/submissionDoc.ts`, `createdAt` as Date). Progress per task: `taskProgress`/`summarizeByTask` in `lib/tasks/studentBoard.ts` (wraps `attemptsUsed` + `bestScore`); `countAttempts` is gone.
+- Task page history = `watchOwnTaskSubmissions` (onSnapshot on `ownTaskSubmissionsQuery`: uid ==, taskId ==, orderBy createdAt desc, limit 20) via `useOwnTaskSubmissions`. It needs the composite index in `firestore.indexes.json`; the emulator does NOT enforce indexes, so a missing index only shows up in production. Deploy with `firebase deploy --only firestore:rules,firestore:indexes`. T19 can reuse the same listener for live judge status.
+- `SubmissionResultView` already renders `result.judge` (passed/total · verdict); T19 only needs compile-output display.
+

@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Markdown } from "@/components/Markdown";
+import { SubmissionHistory } from "@/components/student/SubmissionHistory";
 import { TaskSubmitSection } from "@/components/student/TaskSubmitSection";
 import { formatIst } from "@/lib/dates/ist";
+import type { SubmissionView } from "@/lib/submissions/submissionDoc";
+import { taskProgress } from "@/lib/tasks/studentBoard";
 import { LANGUAGE_LABEL, TASK_TYPE_LABEL, type TaskDto } from "@/lib/validation/task";
 
 function Sample({ label, text }: { label: string; text: string }) {
@@ -16,15 +19,14 @@ function Sample({ label, text }: { label: string; text: string }) {
 /** Task view for students: description, sample tests and the submit area. */
 export function StudentTaskDetail({
   task,
-  attemptsUsed,
+  submissions,
   now,
-  onSubmitted = () => undefined,
 }: {
   task: TaskDto;
-  attemptsUsed: number;
+  submissions: readonly SubmissionView[];
   now: Date;
-  onSubmitted?: () => void;
 }) {
+  const { attemptsUsed, bestScore } = taskProgress(submissions, now);
   const pastDue = Date.parse(task.dueAt) < now.getTime();
   return (
     <article className="flex flex-col gap-6">
@@ -38,6 +40,7 @@ export function StudentTaskDetail({
         </p>
         <p className="text-sm opacity-80">
           Attempts: {attemptsUsed} of {task.maxAttempts} used
+          {bestScore !== undefined && <> · Best score {bestScore.toFixed(1)} / 10</>}
         </p>
       </header>
 
@@ -60,7 +63,8 @@ export function StudentTaskDetail({
         </section>
       )}
 
-      <TaskSubmitSection task={task} attemptsUsed={attemptsUsed} now={now} onSubmitted={onSubmitted} />
+      <TaskSubmitSection task={task} attemptsUsed={attemptsUsed} now={now} />
+      <SubmissionHistory submissions={submissions} now={now} />
     </article>
   );
 }
