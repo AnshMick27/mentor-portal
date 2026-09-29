@@ -167,3 +167,10 @@
 - Task page history = `watchOwnTaskSubmissions` (onSnapshot on `ownTaskSubmissionsQuery`: uid ==, taskId ==, orderBy createdAt desc, limit 20) via `useOwnTaskSubmissions`. It needs the composite index in `firestore.indexes.json`; the emulator does NOT enforce indexes, so a missing index only shows up in production. Deploy with `firebase deploy --only firestore:rules,firestore:indexes`. T19 can reuse the same listener for live judge status.
 - `SubmissionResultView` already renders `result.judge` (passed/total · verdict); T19 only needs compile-output display.
 
+## Judge template (T16)
+- `judge-repo/` is copied by Ansh into the private judge repo (H6); it is not part of the Next app (not linted/typechecked). Static security checks live in `tests/judge/judgeRepo.test.ts`; keep them passing when editing judge.yml/run.sh.
+- Callback contract is in `judge-repo/README.md`: header `x-judge-signature: sha256=<hex>` = HMAC-SHA256(raw body, JUDGE_WEBHOOK_SECRET); body `{submissionId, status:"done", judge:{passed,total,verdict,firstFailedTest?}, compileOutput?}` or `{submissionId, status:"error", error}`. T17's zod schema must match it exactly.
+- `.gitattributes` forces LF for `judge-repo/**` (core.autocrlf is false here, but the Write tool/Windows editors could add CRLF; bash on the runner fails on CRLF).
+- Windows `python` can't open msys `/tmp/...` paths embedded inside `python -c "..."` strings; pass paths as argv instead.
+- No Docker on this machine: run.sh can only be `bash -n` checked locally.
+

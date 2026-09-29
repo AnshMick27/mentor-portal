@@ -1,0 +1,89 @@
+# Code judge (SPEC.md §9). Started by the app with a `repository_dispatch` of type `judge` whose
+# client_payload is { submissionId, problemSlug, language, codeB64 }.
+#
+# Security:
+# - `run` executes student code (inside Docker, via scripts/run.sh). It has a read-only token, does not keep
+#   git credentials, and references NO secrets.
+# - `report` never checks out or runs anything from the submission. Only it can read the webhook secret.
+# - Payload values reach scripts only through `env:`, never through `${{ }}` inside a `run:` script,
+#   so a crafted payload cannot inject shell commands.
+name: judge
+
+on:
+  repository_dispatch:
+    types: [judge]
+
+permissions: {}
+
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    outputs:
+      results_b64: ${{ steps.judge.outputs.results_b64 }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Judge the submission
+        id: judge
+        env:
+          PROBLEM_SLUG: ${{ github.event.client_payload.problemSlug }}
+          LANGUAGE: ${{ github.event.client_payload.language }}
+          CODE_B64: ${{ github.event.client_payload.codeB64 }}
+        run: |
+          export RESULTS_FILE="$RUNNER_TEMP/results.json"
+          bash scripts/run.sh
+          cat "$RESULTS_FILE"
+          echo "results_b64=$(base64 -w0 "$RESULTS_FILE")" >> "$GITHUB_OUTPUT"
+
+  report:
+    needs: run
+    # Also report when `run` crashed or timed out, so the student sees an error instead of waiting 10 minutes.
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    permissions: {}
+    steps:
+      - name: Sign and send the result
+        env:
+          SUBMISSION_ID: ${{ github.event.client_payload.submissionId }}
+          RESULTS_B64: ${{ needs.run.outputs.results_b64 }}
+          JUDGE_WEBHOOK_SECRET: ${{ secrets.JUDGE_WEBHOOK_SECRET }}
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+        run: |
+          set -euo pipefail
+          body="$RUNNER_TEMP/body.json"
+          # Builds the callback body and prints its HMAC-SHA256 signature (hex) over the exact bytes sent.
+          signature="$(python3 - "$body" <<'PY'
+          import base64, hashlib, hmac, json, os, re, sys
+
+          submission_id = os.environ.get("SUBMISSION_ID", "")
+          if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", submission_id):
+              sys.exit("invalid submissionId in the dispatch payload")
+          secret = os.environ.get("JUDGE_WEBHOOK_SECRET", "")
+          if not secret:
+              sys.exit("JUDGE_WEBHOOK_SECRET is not set")
+
+          try:
+              results = json.loads(base64.b64decode(os.environ.get("RESULTS_B64", ""), validate=True))
+              if results.get("status") not in ("done", "error"):
+                  raise ValueError("bad status")
+          except Exception:
+              results = {"status": "error", "error": "The judge had an internal error."}
+
+          body = json.dumps({**results, "submissionId": submission_id}, separators=(",", ":")).encode()
+          with open(sys.argv[1], "wb") as f:
+              f.write(body)
+          print(hmac.new(secret.encode(), body, hashlib.sha256).hexdigest())
+          PY
+          )"
+          curl --fail-with-body --silent --show-error --retry 3 --max-time 20 \
+            -X POST \
+            -H "content-type: application/json" \
+            -H "x-judge-signature: sha256=$signature" \
+            --data-binary "@$body" \
+            "${APP_BASE_URL%/}/api/judge/callback"

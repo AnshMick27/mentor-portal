@@ -1,0 +1,2 @@
+# Keep LF endings: the judge runs on Linux, and bash fails on CRLF scripts.
+* text=auto eol=lf
