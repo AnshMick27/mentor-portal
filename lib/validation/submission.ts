@@ -32,6 +32,8 @@ export const judgeResultSchema = z
     total: z.number().int().min(1),
     verdict: z.string(),
     firstFailedTest: z.number().int().min(1).optional(),
+    /** First 20 lines of compiler output, only with a compilation error (judge-repo/README.md). */
+    compileOutput: z.string().optional(),
   })
   .refine((judge) => judge.passed <= judge.total, "passed cannot exceed total.");
 export type JudgeResult = z.infer<typeof judgeResultSchema>;

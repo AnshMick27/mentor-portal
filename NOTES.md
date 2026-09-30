@@ -179,3 +179,8 @@
 - `verifyJudgeCallback(rawBytes, request.headers.get("x-judge-signature"), secret?)` → `{ok, payload}` or `{ok:false, reason: config|too_large|signature|payload}`. T18: read the body with `await request.arrayBuffer()` (never `request.json()` before verifying); map signature → 401, payload → 400, too_large → 413, config → 500.
 - `tests/judge/judgeRepo.test.ts` also checks the verdict list, compile-output cap and id pattern match `judge-repo/`; change both sides together.
 
+
+## Judge routes (T18)
+- `startSubmission(sub, now, check)` (`lib/submissions/startSubmission.ts`) is THE submit transaction (published, type, due date, attempts, create). Feedback and judge wrap it; `check(task)` adds type-specific refusals and returns extra fields (e.g. `problemSlug`).
+- `lib/submissions/judgeSubmission.ts`: `startJudgeSubmission`, `failJudgeDispatch`, `applyJudgeCallback` (uses `effectiveStatus`, so late callbacks are 409), `judgeToResult`/`judgeSummary`. `judgeResultSchema` now has optional `compileOutput` for T19.
+- Route tests mock `@/lib/judge/dispatch` with `importOriginal` (keep `JudgeDispatchError`) and sign callback bodies with node:crypto HMAC; env mock needs `JUDGE_WEBHOOK_SECRET`.
