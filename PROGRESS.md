@@ -75,7 +75,7 @@ Goal: students submit resumes and written intros and get AI feedback, and submit
   5. In Vercel (and `.env.local`) set `GITHUB_JUDGE_REPO` (`owner/mentor-portal-judge`), `GITHUB_JUDGE_TOKEN`, the same `JUDGE_WEBHOOK_SECRET`, and `APP_BASE_URL`. Redeploy.
   6. Tick H6 and say `Follow LOOP.md`.
 
-- [ ] **H7 🔒 HUMAN — End-to-end check of Loop 2**
+- [x] **H7 🔒 HUMAN — End-to-end check of Loop 2**
   1. As mentor, create and publish a coding task with slug `sum-two-numbers` and a short due date.
   2. As a student on your phone (deployed site): submit a correct solution (Accepted, 10/10), a wrong one (Wrong Answer on test N), code that does not compile, and an infinite loop (Time Limit Exceeded). Watch the status change live.
   3. Use up all attempts and confirm the next submit is refused. Confirm a resume and an intro still get feedback.
