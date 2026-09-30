@@ -2,7 +2,77 @@
 
 Legend: `- [ ]` to do · `- [x]` done · 🔒 HUMAN = Ansh does this step, the loop stops and explains it.
 
-## Current loop: Loop 2 — Submissions (Week 2)
+## Current loop: Loop 3 — Dashboards (Week 3)
+
+Goal: stats are recomputed after every finished submission and once a day, so dashboards read a few precomputed docs instead of raw submissions (SPEC.md §8.5–8.7). Students get a home screen with their tasks, latest feedback, next steps and progress chart; mentors and viewers get task status, needs-attention, class overview, student profiles and an Excel export; an opt-in leaderboard exists but stays off by default.
+
+Definitions used by every task below (SPEC.md §6 leaves them open; see Questions):
+- Only `published` tasks and onboarded students count. A task is **submitted** by a student when they have at least one `done` submission for it (errors, and queued/running attempts, don't count). **Best score** = `bestScore` over those.
+- `tasksDue` = published tasks whose due date has passed; `missedCount` = of those, the ones not submitted; `tasksSubmitted` = published tasks submitted (due or not).
+- `avgBySkill[type]` = mean of best scores over the student's submitted tasks of that type (one decimal). New field `overallAvg` = mean of all best scores (leaderboard, export, class overview).
+- `recentScores` = one entry per submitted task (best score; `at` = time of that best attempt), newest 8 by `at`. `latestNextSteps` = `nextSteps` of the newest `done` resume/intro result (max 3).
+- Needs attention (SPEC §6): missed ≥ 2 of the last 4 past-due tasks (by due date), OR the mean of the newest 4 `recentScores` < 5 (only when the student has at least 2 scores). The reason names the rule, e.g. "Missed 2 of the last 4 tasks".
+- `taskStats`: `submittedCount`, `notSubmittedUids` (onboarded students without a `done` submission), `avgScore` (mean of best scores, absent if none), new field `avgScoreByBranch` (for the branch filter).
+
+- [ ] **T20 — Pure stats computation**
+  - `lib/stats/compute.ts` (no Firestore): `computeStudentStats(student, tasks, ownSubmissions, now)` and `computeTaskStats(task, students, taskSubmissions, now)` following the definitions above; reuse `effectiveStatus`/`bestScore` from `lib/submissions/scoring.ts`. Extend `StudentStatsFields` (`overallAvg`) and add `TaskStatsFields` + zod schemas for both stored docs (`lib/validation/stats.ts`) so the dashboards can parse them.
+  - Acceptance: unit tests for drafts ignored, not-yet-due vs past-due, missed, error/stuck/queued not counted, best of several attempts, averages and rounding, recentScores order and cap of 8, latestNextSteps from AI results only, both needs-attention rules at their edges (exactly 2 of 4 missed; mean exactly 5 vs 4.9; fewer than 2 scores), taskStats counts, notSubmitted excludes non-onboarded and staff, avgScoreByBranch.
+
+- [ ] **T21 — `lib/stats/recompute.ts` and wiring**
+  - `recomputeStudent(uid)`, `recomputeTask(taskId)`, `recomputeAll()` (reads users, published tasks and submissions once, writes every `studentStats`/`taskStats` doc; a draft task's `taskStats` is deleted). Idempotent: `set` whole docs with `updatedAt`.
+  - Fill `onFinished` (T14): recompute that student and that task; failures are logged, never change the submission or the API reply.
+  - After a mentor publishes/unpublishes a task or changes its due date (`PATCH /api/tasks/[id]`), run `recomputeAll()` so boards don't wait for the nightly cron (logged on failure, the PATCH still succeeds).
+  - Acceptance: tests with the fake Admin SDK: stats docs written with the expected numbers, running twice gives the same docs, onFinished calls both and swallows errors, PATCH triggers recompute only for status/due-date changes.
+
+- [ ] **T22 — Daily cron `GET /api/cron/recompute`**
+  - Checks `Authorization: Bearer <CRON_SECRET>` with a timing-safe compare (401 otherwise; 500 with a log line if `CRON_SECRET` is unset), then `recomputeAll()`; replies with counts only. `maxDuration` set. `vercel.json` cron once a day at 00:30 IST (`0 19 * * *` UTC; Vercel Hobby allows one run a day).
+  - Acceptance: route tests (missing/wrong/right secret, secret unset, recompute failure → 500 without details) and a test that `vercel.json` points at the route with a daily schedule.
+
+- [ ] **T23 — Seed demo submissions and stats**
+  - Extend `scripts/seed.mts` so local dashboards have data: `done` submissions (coding, resume, intro; several attempts, one `error`) for most demo students, at least one student who trips each needs-attention rule, then write `studentStats`/`taskStats` with the T20 functions (import them by relative path; keep the file importable by Node's type stripping) and `config/app` with `leaderboardEnabled: false`.
+  - Acceptance: seed data unit tests updated; seed runs against the emulator from an empty database.
+
+- [ ] **T24 — Mentee dashboard `/student`**
+  - Replace the placeholder: "This week" (published tasks due in the next 7 days IST, due soon first, with submitted/best score, link to the task), "Latest feedback" (own last 3 `done` results, expandable, reusing `SubmissionResultView`), "Next steps" (up to 3 from `studentStats.latestNextSteps`), summary numbers (submitted / missed / averages by skill). Reads own `studentStats` and own submissions directly from Firestore.
+  - New query (uid ==, status == "done", orderBy createdAt desc, limit 3): index in `firestore.indexes.json` and a rules test running the exact query.
+  - Acceptance: works at 360 px; unit tests for the "this week" selection and empty states (new student with no stats yet).
+
+- [ ] **T25 — Progress chart**
+  - Add `recharts` (SPEC §4). Line chart of `recentScores` over time, one line per skill, y-axis 0–10, dates in IST, readable at 360 px; text fallback list for screen readers; empty state when there are fewer than 2 scores. Pure data-shaping helper for the chart.
+  - Acceptance: unit tests for the helper; `npm run build` still passes (chart is a client component).
+
+- [ ] **T26 — Opt-in leaderboard**
+  - `PATCH /api/config` (mentor only; viewer 403) sets `config/app.leaderboardEnabled`; `GET /api/config` for mentor/viewer. `POST /api/me/leaderboard` (student) sets their own `showOnLeaderboard` (strict zod body).
+  - `GET /api/leaderboard` (student, mentor, viewer): 404 "Leaderboard is off" when disabled; else top 10 opted-in students by `overallAvg` (ties by name), returning ONLY `{name, overallAvg}` — never uid, email or roll number. Students never read `config/app` directly (rules unchanged).
+  - UI: leaderboard card + opt-in switch on `/student` (card only when enabled; switch always, with a one-line explanation); on/off switch on `/mentor` (mentor only, hidden for viewers).
+  - Acceptance: API tests (roles, disabled, only opted-in, top 10 cap, response contains only name + average), UI works at 360 px.
+
+- [ ] **T27 — Mentor dashboard `/mentor`**
+  - Replace the placeholder. Task status: the 10 most recent published tasks (by due date) with submitted / not submitted counts and an expandable list of non-submitters (names and roll numbers from `studentStats`). Needs attention: flagged students with reason. Class overview: average per task and per skill, branch filter (uses `avgScoreByBranch` and studentStats branch). Student names link to `/mentor/students/[uid]`. Reads `studentStats`/`taskStats`/`tasks` directly (staff read allowed by rules), no raw submissions.
+  - Acceptance: works at 360 px; unit tests for the pure aggregation/filter helpers; rules test that a student cannot run the dashboard queries.
+
+- [ ] **T28 — Student profile `/mentor/students/[uid]`**
+  - Name, roll number, branch, stats summary; every published task with attempts used, best score and status; per task the attempts (newest first) with full results reusing `SubmissionResultView` and "What they sent". Reads the student's submissions (uid ==, orderBy createdAt desc, paged 50 at a time) — index + rules test (staff ✔, other student ✘). Viewer sees the same page read-only.
+  - Acceptance: works at 360 px; rules test for the query; unit test for grouping submissions by task.
+
+- [ ] **T29 — Excel export `GET /api/export`**
+  - Add `exceljs` (SPEC §4). Mentor and viewer only. Sheets: "Students" (name, roll no, branch, email, tasks due/submitted/missed, averages by skill, overall, needs attention + reason), "Task status" (student × published task matrix of best scores, blank = not submitted), "All results" (every `done` submission: student, roll no, task, type, attempt, date IST, score, verdict or summary). Filename `mentor-portal-YYYY-MM-DD.xlsx` (IST). Pure workbook builder separate from the route. "Export Excel" button on `/mentor` (downloads with the ID token, not a plain link).
+  - Acceptance: API auth tests (student 403, viewer and mentor 200 with the xlsx content type); builder test that reads the workbook back and checks sheet names, headers, a blank cell for not submitted, and IST dates. Never includes content (code/resume text) or hidden tests.
+
+- [ ] **H8 🔒 HUMAN — Cron secret and indexes (about 10 minutes)**
+  1. Make a long random string (same `node -e ...randomBytes...` command as for the judge secret) and add it as `CRON_SECRET` in Vercel (Production) and `.env.local`. Plain value, no quotes.
+  2. In the project folder run `firebase deploy --only firestore:rules,firestore:indexes` and wait until Firebase console → Firestore → Indexes shows every index as "Enabled".
+  3. Push to GitHub and wait for the Vercel deploy. In Vercel → Settings → Cron Jobs, check `/api/cron/recompute` is listed, and click **Run** once; its log should say how many students and tasks were recomputed.
+  4. Tick H8 and say `Follow LOOP.md`.
+
+- [ ] **H9 🔒 HUMAN — End-to-end check of Loop 3**
+  1. As a student (the second account from H7): the home screen shows this week's tasks, the latest feedback, next steps and the progress chart; it works on your phone.
+  2. As mentor: task status shows who has not submitted; a student with missed tasks appears under needs attention with a reason; the branch filter works; a student's profile shows all attempts.
+  3. Turn the leaderboard on, opt in as the student, and check only name and average appear; turn it off again.
+  4. Download the Excel export as mentor and as viewer; open it and check the three sheets.
+  5. When all is fine, push to GitHub. Loop 3 is complete — ask Claude for Loop 4.
+
+## Finished: Loop 2 — Submissions (Week 2)
 
 Goal: students submit resumes and written intros and get AI feedback, and submit code that the GitHub Actions judge checks against hidden tests. Attempt and size limits are enforced on the server. Stats recompute and dashboards come in Loop 3; this loop only leaves one clear place to call recompute from.
 
@@ -227,6 +297,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 (none)
 
 ## Questions for Ansh
+- Loop 3 (planning): SPEC §6 doesn't define how the stats numbers are counted, so I wrote the definitions at the top of Loop 3 (only published tasks and onboarded students count; "submitted" = at least one finished attempt; needs-attention's score rule waits until a student has 2 scores). Two fields not in SPEC §6 are added: `studentStats.overallAvg` (leaderboard "average", export) and `taskStats.avgScoreByBranch` (branch filter for per-task averages). Publishing/unpublishing or moving a due date triggers a full recompute (a few thousand reads at most for ~50 students, well inside the free quota). The nightly cron runs at 00:30 IST. Change any of this before T20 if you disagree.
 - T0: You gave the project id `Mentor-Portal-Ansh`. Firebase ids must be lowercase, so I used `mentor-portal-ansh`.
 - T2: The public env object lives in `lib/config/publicEnv.ts`, not `env.ts`, because `env.ts` is server-only and the browser must be able to import the public values. Only Firebase admin vars and `ALLOWED_EMAIL_DOMAIN` are required at startup; AI, judge, cron and APP_BASE_URL values are optional until the features that use them (Loop 2/3) check for them. OK?
 - T3: Added `NEXT_PUBLIC_USE_EMULATOR` (not in SPEC §13) to `.env.example` and the public env, because T3 asks for an emulator switch. It is ignored in production builds.
