@@ -1,9 +1,11 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { StudentTaskBoard } from "@/components/student/StudentTaskBoard";
 import { StudentTaskDetail } from "@/components/student/StudentTaskDetail";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import type { TaskDto } from "@/lib/validation/task";
+
+vi.mock("@/components/auth/AuthProvider", () => ({ useAuth: () => ({ getIdToken: async () => "token" }) }));
 
 const codingTask: TaskDto = {
   id: "t1",
@@ -63,9 +65,10 @@ describe("StudentTaskDetail", () => {
     expect(html).not.toContain("two-sum");
   });
 
-  it("has only a disabled Submit button with a coming-soon note", () => {
-    expect(html).toMatch(/<button[^>]*disabled/);
-    expect(html).toContain("Coming soon");
+  it("has the code submit form instead of the old coming-soon placeholder", () => {
+    expect(html).toContain("Submit your code");
+    expect(html).toMatch(/<textarea[^>]*id="code-text"/);
+    expect(html).not.toContain("Coming soon");
   });
 
   it("says 'Was due' after the deadline", () => {

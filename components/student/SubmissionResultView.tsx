@@ -1,3 +1,4 @@
+import { verdictLabel } from "@/lib/submissions/judgeDisplay";
 import type { SubmissionResult } from "@/lib/validation/submission";
 
 function List({ title, items }: { title: string; items: string[] }) {
@@ -26,10 +27,19 @@ export function SubmissionResultView({ result }: { result: SubmissionResult }) {
       </p>
       {result.judge && (
         <p>
-          Passed {result.judge.passed} of {result.judge.total} tests · {result.judge.verdict}
+          Passed {result.judge.passed} of {result.judge.total} tests · {verdictLabel(result.judge)}
         </p>
       )}
-      {result.summary && <p className="break-words">{result.summary}</p>}
+      {result.judge?.compileOutput && (
+        <div className="flex flex-col gap-1">
+          <h4 className="font-semibold">Compiler output</h4>
+          <pre className="max-h-64 overflow-auto rounded-lg bg-black/[0.05] p-3 font-mono text-xs whitespace-pre dark:bg-white/[0.08]">
+            {result.judge.compileOutput}
+          </pre>
+        </div>
+      )}
+      {/* A judge summary only repeats the verdict line above. */}
+      {result.summary && !result.judge && <p className="break-words">{result.summary}</p>}
 
       {result.criteria && result.criteria.length > 0 && (
         <table className="w-full border-collapse text-left">

@@ -184,3 +184,8 @@
 - `startSubmission(sub, now, check)` (`lib/submissions/startSubmission.ts`) is THE submit transaction (published, type, due date, attempts, create). Feedback and judge wrap it; `check(task)` adds type-specific refusals and returns extra fields (e.g. `problemSlug`).
 - `lib/submissions/judgeSubmission.ts`: `startJudgeSubmission`, `failJudgeDispatch`, `applyJudgeCallback` (uses `effectiveStatus`, so late callbacks are 409), `judgeToResult`/`judgeSummary`. `judgeResultSchema` now has optional `compileOutput` for T19.
 - Route tests mock `@/lib/judge/dispatch` with `importOriginal` (keep `JudgeDispatchError`) and sign callback bodies with node:crypto HMAC; env mock needs `JUDGE_WEBHOOK_SECRET`.
+
+## Coding UI (T19)
+- Judge display logic is pure in `lib/submissions/judgeDisplay.ts` (`judgeStatusView`, `verdictLabel`, `insertIndent`, `codeSize`); components only render it.
+- `useNow(ms)` (`components/useNow.ts`) re-renders the task page every 15 s so time-based states (10-min timeout, due date) update without a reload.
+- Tests that render `StudentTaskDetail` for ANY task type must mock `@/components/auth/AuthProvider` (both submit sections call `useAuth`).

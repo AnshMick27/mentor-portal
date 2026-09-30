@@ -1,4 +1,5 @@
 import { formatIst } from "@/lib/dates/ist";
+import { judgeStatusView } from "@/lib/submissions/judgeDisplay";
 import { effectiveStatus } from "@/lib/submissions/scoring";
 import { newestFirst, type SubmissionView } from "@/lib/submissions/submissionDoc";
 import { SubmissionResultView } from "./SubmissionResultView";
@@ -6,13 +7,35 @@ import { SubmissionResultView } from "./SubmissionResultView";
 /** One-line status for the collapsed row. */
 export function statusLabel(submission: SubmissionView, now: Date): string {
   const { status } = effectiveStatus(submission, now);
+  if (submission.type === "coding" && status !== "done") return judgeStatusView(submission, now).headline;
   if (status === "done") return submission.result ? `${submission.result.score.toFixed(1)} / 10` : "Done";
   if (status === "error") return "Not counted";
   return status === "queued" ? "Waiting…" : "Checking…";
 }
 
+const TONE_CLASS = {
+  waiting: "border-black/10 dark:border-white/15",
+  passed: "border-green-300 bg-green-50 text-green-900 dark:border-green-800 dark:bg-green-950 dark:text-green-100",
+  failed: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100",
+  error: "border-black/10 dark:border-white/15",
+} as const;
+
+/** Live judge status for a coding attempt; the full result (score, compile output) follows when done. */
+function JudgeStatus({ submission, now }: { submission: SubmissionView; now: Date }) {
+  const view = judgeStatusView(submission, now);
+  return (
+    <div role="status" className={`flex flex-col gap-1 rounded-lg border px-4 py-3 text-sm ${TONE_CLASS[view.tone]}`}>
+      <span className="text-base font-semibold">{view.headline}</span>
+      {view.detail && <span>{view.detail}</span>}
+    </div>
+  );
+}
+
 function AttemptBody({ submission, now }: { submission: SubmissionView; now: Date }) {
   const effective = effectiveStatus(submission, now);
+  if (submission.type === "coding" && !(effective.status === "done" && submission.result)) {
+    return <JudgeStatus submission={submission} now={now} />;
+  }
   if (effective.status === "done" && submission.result) return <SubmissionResultView result={submission.result} />;
   if (effective.status === "error") {
     return (

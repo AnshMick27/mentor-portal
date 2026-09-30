@@ -7,6 +7,7 @@ import { QueryStatus } from "@/components/QueryStatus";
 import { StudentTaskDetail } from "@/components/student/StudentTaskDetail";
 import { useOwnTaskSubmissions } from "@/components/student/useOwnTaskSubmissions";
 import { useAsyncData } from "@/components/useAsyncData";
+import { useNow } from "@/components/useNow";
 import { getClientDb } from "@/lib/firebase/client";
 import { loadStudentTask } from "@/lib/tasks/studentQueries";
 import { isValidTaskId } from "@/lib/validation/task";
@@ -18,6 +19,8 @@ export default function StudentTaskPage({ params }: PageProps<"/student/tasks/[i
   const { state, reload } = useAsyncData(load, "Could not load this task. Please try again.");
   const hasTask = state.status === "ready" && state.data !== undefined;
   const history = useOwnTaskSubmissions(uid, id, hasTask);
+  // Ticks so an attempt stuck > 10 minutes flips to "Judge timed out" without a reload.
+  const now = useNow(15_000);
 
   if (state.status !== "ready") return <QueryStatus state={state} onRetry={reload} />;
   const task = state.data;
@@ -33,5 +36,5 @@ export default function StudentTaskPage({ params }: PageProps<"/student/tasks/[i
     );
   }
   if (history.state.status !== "ready") return <QueryStatus state={history.state} onRetry={history.retry} />;
-  return <StudentTaskDetail task={task} submissions={history.state.data} now={new Date()} />;
+  return <StudentTaskDetail task={task} submissions={history.state.data} now={now} />;
 }
