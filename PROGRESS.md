@@ -67,7 +67,7 @@ Goal: students submit resumes and written intros and get AI feedback, and submit
   - Live status via a Firestore listener on the student's own submission: queued → running → done, showing passed/total and the verdict (compile errors in a scrollable monospace block). Stuck > 10 min shown as "Judge timed out, attempt not counted". Past attempts listed as in T15.
   - Acceptance: works at 360 px; unit tests for the status/verdict display logic.
 
-- [ ] **H6 🔒 HUMAN — Create the judge repo (about 20 minutes)**
+- [x] **H6 🔒 HUMAN — Create the judge repo (about 20 minutes)**
   1. On GitHub, create a PRIVATE repo `mentor-portal-judge` in the same account, and copy everything from `judge-repo/` into it (commit and push).
   2. Add your real hidden tests for each coding problem under `problems/<slug>/tests/` there. They must never be added to this repo.
   3. In the judge repo → Settings → Secrets and variables → Actions, add `JUDGE_WEBHOOK_SECRET` (a long random string) and `APP_BASE_URL` (your Vercel URL).
