@@ -189,3 +189,8 @@
 - Judge display logic is pure in `lib/submissions/judgeDisplay.ts` (`judgeStatusView`, `verdictLabel`, `insertIndent`, `codeSize`); components only render it.
 - `useNow(ms)` (`components/useNow.ts`) re-renders the task page every 15 s so time-based states (10-min timeout, due date) update without a reload.
 - Tests that render `StudentTaskDetail` for ANY task type must mock `@/components/auth/AuthProvider` (both submit sections call `useAuth`).
+
+## Stats (T20)
+- `lib/stats/compute.ts` is pure: `computeStudentStats(user, tasks, submissions, now)` / `computeTaskStats(task, users, submissions)` take plain `Stats*` inputs (Dates, not Timestamps; see `lib/stats/types.ts`) and ignore unrelated docs, so T21 can pass whole collections. Averages go through `averageScore` (sums whole tenths, no float drift).
+- compute.ts and `lib/submissions/scoring.ts` use RELATIVE `.ts` value imports (only `import type` from `@/`) so plain Node can load them for the seed (T23). Keep it that way; check with `node --input-type=module -e "import('./lib/stats/compute.ts')"`. Next/Turbopack builds these imports fine.
+- Stored docs parse with `storedStudentStatsSchema` / `storedTaskStatsSchema` (`lib/validation/stats.ts`); never write `undefined` (optional fields like `overallAvg`, `avgScore`, `needsAttentionReason` are omitted instead).

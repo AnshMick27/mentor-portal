@@ -1,4 +1,5 @@
-import { JUDGE_TIMEOUT_MS, TIMED_OUT_ERROR } from "@/lib/submissions/limits";
+// Relative `.ts` import so plain Node (the seed script) can load this file via lib/stats/compute.ts.
+import { JUDGE_TIMEOUT_MS, TIMED_OUT_ERROR } from "./limits.ts";
 import type { SubmissionStatus } from "@/lib/validation/submission";
 
 /** The fields these helpers need; works for stored docs (after `toDate()`) and API replies alike. */

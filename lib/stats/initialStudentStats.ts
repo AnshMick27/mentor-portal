@@ -1,21 +1,7 @@
+import type { StudentStatsFields } from "@/lib/stats/types";
 import type { Branch } from "@/lib/validation/user";
 
-/** `studentStats/{uid}` fields (SPEC.md §6) except `updatedAt`, which the writer sets. */
-export type StudentStatsFields = {
-  name: string;
-  rollNo: string;
-  branch: Branch;
-  tasksDue: number;
-  tasksSubmitted: number;
-  missedCount: number;
-  avgBySkill: Partial<Record<"coding" | "resume" | "intro_written", number>>;
-  recentScores: { taskId: string; type: string; score: number; at: unknown }[];
-  latestNextSteps: string[];
-  needsAttention: boolean;
-  needsAttentionReason?: string;
-};
-
-/** Empty stats for a freshly onboarded student; the recompute job (Loop 3) fills in real numbers. */
+/** Empty stats for a freshly onboarded student; `lib/stats/compute.ts` fills in real numbers later. */
 export function initialStudentStats(student: { name: string; rollNo: string; branch: Branch }): StudentStatsFields {
   return {
     name: student.name,

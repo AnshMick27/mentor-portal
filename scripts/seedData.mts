@@ -1,6 +1,7 @@
 // Demo data for the local emulators (T11). Pure: no Firebase calls, so it is unit-tested in tests/scripts/.
 // Imports use `.ts` extensions because `node` runs this file directly (native type stripping).
-import { initialStudentStats, type StudentStatsFields } from "../lib/stats/initialStudentStats.ts";
+import { initialStudentStats } from "../lib/stats/initialStudentStats.ts";
+import type { StudentStatsFields } from "../lib/stats/types.ts";
 import { taskInputSchema, type TaskInput, type ValidTask } from "../lib/validation/task.ts";
 import type { Branch, Role, StoredUser } from "../lib/validation/user.ts";
 
