@@ -1,19 +1,39 @@
 @import "tailwindcss";
 
+/* Design tokens (docs/UX_REVIEW.md §3.1). color-scheme makes native controls (select, date picker, file input,
+   checkbox, scrollbar) follow the theme. */
 :root {
+  color-scheme: light dark;
   --background: #ffffff;
   --foreground: #171717;
+  --muted: #525252; /* secondary text, about 7.8:1 */
+  --line: rgb(0 0 0 / 0.1); /* card borders (decorative) */
+  --line-strong: rgb(0 0 0 / 0.45); /* field borders, about 3.4:1 */
+  --surface: rgb(0 0 0 / 0.04); /* code/sample backgrounds, hover */
+  --link: #1d4ed8;
+  --focus: #1d4ed8;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-surface: var(--surface);
+  --color-link: var(--link);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --muted: #a3a3a3;
+    --line: rgb(255 255 255 / 0.15);
+    --line-strong: rgb(255 255 255 / 0.4);
+    --surface: rgb(255 255 255 / 0.07);
+    --link: #93c5fd;
+    --focus: #93c5fd; /* about 11:1 on the dark background; #1d4ed8 was only 2.9:1 */
   }
 }
 
@@ -21,6 +41,19 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* One focus ring for every control. Unlayered, so it wins over Tailwind's per-element focus-visible:outline-*
+   utilities (which live in a cascade layer) and gives the same visible ring in light and dark mode. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Open <select> lists use the page colours instead of a white list with light text. */
+select option {
+  background: var(--background);
+  color: var(--foreground);
 }
 
 /* Mentor-written task descriptions (components/Markdown.tsx). No typography plugin; just readable defaults. */
@@ -36,7 +69,8 @@ body {
 .markdown h3 { font-size: 1.05rem; font-weight: 600; }
 .markdown ul { list-style: disc; padding-left: 1.25rem; }
 .markdown ol { list-style: decimal; padding-left: 1.25rem; }
-.markdown a { color: #1d4ed8; text-decoration: underline; }
+.markdown a { color: var(--link); text-decoration: underline; }
+.markdown img { max-width: 100%; height: auto; }
 .markdown code {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.9em;
@@ -52,6 +86,3 @@ body {
 }
 .markdown pre code { background: none; padding: 0; }
 .markdown blockquote { border-left: 3px solid rgb(127 127 127 / 0.4); padding-left: 0.75rem; opacity: 0.85; }
-@media (prefers-color-scheme: dark) {
-  .markdown a { color: #93c5fd; }
-}
