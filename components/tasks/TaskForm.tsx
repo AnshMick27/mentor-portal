@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Markdown } from "@/components/Markdown";
 import { Button } from "@/components/ui/Button";
-import { inputClasses } from "@/components/ui/Field";
+import { Field, inputClasses } from "@/components/ui/Field";
 import { Note } from "@/components/ui/Note";
 import { apiFetch } from "@/lib/api/client";
 import { formToTaskInput, taskToPatch, type TaskFormState } from "@/lib/tasks/taskForm";
@@ -22,15 +22,54 @@ import {
 const inputClass = inputClasses;
 const textareaClass = `${inputClass} py-2 font-mono text-sm`;
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
-  return (
-    <label className="flex flex-col gap-1.5">
-      <span className="font-medium">{label}</span>
-      {children}
-      {hint && <span className="text-sm text-muted">{hint}</span>}
-    </label>
-  );
+/** Form fields that can carry their own error message. */
+export type TaskFieldKey =
+  | "title"
+  | "type"
+  | "description"
+  | "dueAtLocal"
+  | "maxAttempts"
+  | "problemSlug"
+  | "languages"
+  | "timeLimitMs"
+  | "sampleTests";
+export type TaskFieldErrors = Partial<Record<TaskFieldKey, string>>;
+
+const TOP_LEVEL_KEYS: Record<string, TaskFieldKey> = {
+  title: "title",
+  type: "type",
+  description: "description",
+  dueAt: "dueAtLocal",
+  maxAttempts: "maxAttempts",
+};
+const CODING_KEYS: Record<string, TaskFieldKey> = {
+  problemSlug: "problemSlug",
+  languages: "languages",
+  timeLimitMs: "timeLimitMs",
+  sampleTests: "sampleTests",
+};
+
+/**
+ * Puts each validation message under the field it is about (UX-21): zod paths of the API input (`dueAt`,
+ * `coding.problemSlug`, …) map back to the form's fields. The first message per field wins; a message with no
+ * field comes back as `other`.
+ */
+export function taskFieldErrors(issues: readonly { path: readonly PropertyKey[]; message: string }[]): {
+  fields: TaskFieldErrors;
+  other?: string;
+} {
+  const fields: TaskFieldErrors = {};
+  let other: string | undefined;
+  for (const issue of issues) {
+    const [first, second] = issue.path;
+    const key = first === "coding" ? CODING_KEYS[String(second)] : TOP_LEVEL_KEYS[String(first)];
+    if (key) fields[key] ??= issue.message;
+    else other ??= issue.message;
+  }
+  return { fields, other };
 }
+
+const sameForm = (a: TaskFormState, b: TaskFormState) => JSON.stringify(a) === JSON.stringify(b);
 
 /** In edit mode, `hasSubmissions` locks the type and problem slug (the API refuses those changes too). */
 type Props = { initial: TaskFormState } & ({ mode: "new" } | { mode: "edit"; taskId: string; hasSubmissions?: boolean });
@@ -41,11 +80,16 @@ const LOCKED_HINT = "Locked: students have already submitted to this task.";
 export function TaskForm(props: Props) {
   const { getIdToken } = useAuth();
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [form, setForm] = useState<TaskFormState>(props.initial);
-  const [tab, setTab] = useState<"write" | "preview">("write");
+  const [saved, setSaved] = useState<TaskFormState>(props.initial);
+  const [preview, setPreview] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<TaskFieldErrors>({});
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const dirty = !sameForm(form, saved);
 
   function update<K extends keyof TaskFormState>(key: K, value: TaskFormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -61,12 +105,23 @@ export function TaskForm(props: Props) {
     update("sampleTests", form.sampleTests.map((test, i) => (i === index ? { ...test, [key]: value } : test)));
   }
 
+  function showErrors(fields: TaskFieldErrors, other?: string) {
+    setFieldErrors(fields);
+    setError(other ?? "Please fix the fields marked below.");
+    // Take keyboard and screen-reader users straight to the first problem.
+    requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus());
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!form.dueAtLocal) return setError("Choose a due date and time.");
+    if (!form.dueAtLocal) return showErrors({ dueAtLocal: "Choose a due date and time." });
     const parsed = taskInputSchema.safeParse(formToTaskInput(form));
-    if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? "Please check the form.");
+    if (!parsed.success) {
+      const { fields, other } = taskFieldErrors(parsed.error.issues);
+      return showErrors(fields, Object.keys(fields).length === 0 ? (other ?? "Please check the form.") : other);
+    }
 
+    setFieldErrors({});
     setError(null);
     setSaving(true);
     const result =
@@ -76,103 +131,98 @@ export function TaskForm(props: Props) {
     setSaving(false);
 
     if (!result.ok) return setError(result.message);
-    if (props.mode === "new") return router.push("/mentor/tasks");
+    setSaved(form);
+    if (props.mode === "new") return router.push("/mentor/tasks?created=1");
     setNotice(form.status === "published" ? "Saved. Students can see this task." : "Saved as a draft.");
+  }
+
+  function leave() {
+    if (dirty && !confirmLeave) return setConfirmLeave(true);
+    router.push("/mentor/tasks");
   }
 
   const isCoding = form.type === "coding";
   const locked = props.mode === "edit" && props.hasSubmissions === true;
   return (
-    <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5" noValidate>
-      <Field label="Title">
-        <input value={form.title} onChange={(e) => update("title", e.target.value)} maxLength={120} className={inputClass} />
-      </Field>
-
-      <Field label="Type" hint={locked ? LOCKED_HINT : undefined}>
-        <select
-          value={form.type}
-          disabled={locked}
-          onChange={(e) => update("type", TASK_TYPES.find((type) => type === e.target.value) ?? form.type)}
-          className={inputClass}
-        >
-          {TASK_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {TASK_TYPE_LABEL[type]}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between gap-3">
-          <span className="font-medium" id="description-label">
-            Description (markdown)
-          </span>
-          <div className="flex gap-1" role="tablist" aria-label="Description view">
-            {(["write", "preview"] as const).map((name) => (
-              <button
-                key={name}
-                type="button"
-                role="tab"
-                aria-selected={tab === name}
-                onClick={() => setTab(name)}
-                className={`min-h-9 rounded-md px-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-blue-700 ${
-                  tab === name ? "bg-black/10 dark:bg-white/15" : "text-muted"
-                }`}
-              >
-                {name === "write" ? "Write" : "Preview"}
-              </button>
-            ))}
-          </div>
-        </div>
-        {tab === "write" ? (
-          <textarea
-            aria-labelledby="description-label"
-            value={form.description}
-            onChange={(e) => update("description", e.target.value)}
-            rows={10}
-            className={textareaClass}
-          />
-        ) : (
-          <div className="min-h-40 rounded-lg border border-black/10 p-3 dark:border-white/15">
-            {form.description.trim() ? <Markdown>{form.description}</Markdown> : <p className="text-muted">Nothing to preview.</p>}
-          </div>
+    <form ref={formRef} onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5" noValidate>
+      <Field label="Title (required)" error={fieldErrors.title}>
+        {(control) => (
+          <input {...control} value={form.title} onChange={(e) => update("title", e.target.value)} maxLength={120} className={inputClass} />
         )}
-      </div>
-
-      <Field label="Due date and time (IST)">
-        <input
-          type="datetime-local"
-          value={form.dueAtLocal}
-          onChange={(e) => update("dueAtLocal", e.target.value)}
-          className={inputClass}
-        />
       </Field>
 
-      <Field label="Max attempts" hint={`Leave blank for the default (${DEFAULT_MAX_ATTEMPTS[form.type]}).`}>
-        <input
-          type="number"
-          inputMode="numeric"
-          min={1}
-          max={10}
-          value={form.maxAttempts}
-          onChange={(e) => update("maxAttempts", e.target.value)}
-          className={inputClass}
-        />
+      <Field label="Type" hint={locked ? LOCKED_HINT : undefined} error={fieldErrors.type}>
+        {(control) => (
+          <select
+            {...control}
+            value={form.type}
+            disabled={locked}
+            onChange={(e) => update("type", TASK_TYPES.find((type) => type === e.target.value) ?? form.type)}
+            className={inputClass}
+          >
+            {TASK_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {TASK_TYPE_LABEL[type]}
+              </option>
+            ))}
+          </select>
+        )}
+      </Field>
+
+      <DescriptionField
+        value={form.description}
+        preview={preview}
+        error={fieldErrors.description}
+        onPreview={setPreview}
+        onChange={(value) => update("description", value)}
+      />
+
+      <Field label="Due date and time (IST, required)" error={fieldErrors.dueAtLocal}>
+        {(control) => (
+          <input
+            {...control}
+            type="datetime-local"
+            value={form.dueAtLocal}
+            onChange={(e) => update("dueAtLocal", e.target.value)}
+            className={inputClass}
+          />
+        )}
+      </Field>
+
+      <Field label="Max attempts" hint={`Leave blank for the default (${DEFAULT_MAX_ATTEMPTS[form.type]}).`} error={fieldErrors.maxAttempts}>
+        {(control) => (
+          <input
+            {...control}
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={10}
+            value={form.maxAttempts}
+            onChange={(e) => update("maxAttempts", e.target.value)}
+            className={inputClass}
+          />
+        )}
       </Field>
 
       {isCoding && (
-        <fieldset className="flex flex-col gap-5 rounded-lg border border-black/10 p-4 dark:border-white/15">
+        <fieldset className="flex flex-col gap-5 rounded-lg border border-line p-4">
           <legend className="px-1 font-semibold">Coding settings</legend>
-          <Field label="Problem slug" hint={locked ? LOCKED_HINT : "Must match a folder in the judge repo, e.g. two-sum."}>
-            <input
-              value={form.problemSlug}
-              readOnly={locked}
-              onChange={(e) => update("problemSlug", e.target.value.toLowerCase())}
-              autoCapitalize="none"
-              spellCheck={false}
-              className={inputClass}
-            />
+          <Field
+            label="Problem slug (required)"
+            hint={locked ? LOCKED_HINT : "Must match a folder in the judge repo, e.g. two-sum."}
+            error={fieldErrors.problemSlug}
+          >
+            {(control) => (
+              <input
+                {...control}
+                value={form.problemSlug}
+                readOnly={locked}
+                onChange={(e) => update("problemSlug", e.target.value.toLowerCase())}
+                autoCapitalize="none"
+                spellCheck={false}
+                className={inputClass}
+              />
+            )}
           </Field>
 
           <fieldset className="flex flex-col gap-2">
@@ -184,37 +234,44 @@ export function TaskForm(props: Props) {
                     type="checkbox"
                     checked={form.languages.includes(language)}
                     onChange={(e) => toggleLanguage(language, e.target.checked)}
+                    aria-invalid={fieldErrors.languages ? true : undefined}
                     className="h-5 w-5"
                   />
                   {LANGUAGE_LABEL[language]}
                 </label>
               ))}
             </div>
+            <FieldError message={fieldErrors.languages} />
           </fieldset>
 
-          <Field label="Time limit (ms)" hint="500 to 5000.">
-            <input
-              type="number"
-              inputMode="numeric"
-              min={500}
-              max={5000}
-              step={100}
-              value={form.timeLimitMs}
-              onChange={(e) => update("timeLimitMs", e.target.value)}
-              className={inputClass}
-            />
+          <Field label="Time limit (ms)" hint="500 to 5000." error={fieldErrors.timeLimitMs}>
+            {(control) => (
+              <input
+                {...control}
+                type="number"
+                inputMode="numeric"
+                min={500}
+                max={5000}
+                step={100}
+                value={form.timeLimitMs}
+                onChange={(e) => update("timeLimitMs", e.target.value)}
+                className={inputClass}
+              />
+            )}
           </Field>
 
           <div className="flex flex-col gap-3">
             <span className="font-medium">Sample tests (shown to students, 1–5)</span>
+            <FieldError message={fieldErrors.sampleTests} />
             {form.sampleTests.map((test, index) => (
-              <div key={index} className="flex flex-col gap-2 rounded-lg bg-black/[0.03] p-3 dark:bg-white/[0.05]">
+              <div key={index} className="flex flex-col gap-2 rounded-lg bg-surface p-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Sample {index + 1}</span>
                   {form.sampleTests.length > 1 && (
                     <Button
                       variant="secondary"
                       size="sm"
+                      aria-label={`Remove sample ${index + 1}`}
                       onClick={() => update("sampleTests", form.sampleTests.filter((_, i) => i !== index))}
                     >
                       Remove
@@ -222,10 +279,26 @@ export function TaskForm(props: Props) {
                   )}
                 </div>
                 <Field label="Input">
-                  <textarea value={test.input} onChange={(e) => updateSample(index, "input", e.target.value)} rows={3} className={textareaClass} />
+                  {(control) => (
+                    <textarea
+                      {...control}
+                      value={test.input}
+                      onChange={(e) => updateSample(index, "input", e.target.value)}
+                      rows={3}
+                      className={textareaClass}
+                    />
+                  )}
                 </Field>
                 <Field label="Expected output">
-                  <textarea value={test.output} onChange={(e) => updateSample(index, "output", e.target.value)} rows={3} className={textareaClass} />
+                  {(control) => (
+                    <textarea
+                      {...control}
+                      value={test.output}
+                      onChange={(e) => updateSample(index, "output", e.target.value)}
+                      rows={3}
+                      className={textareaClass}
+                    />
+                  )}
                 </Field>
               </div>
             ))}
@@ -260,9 +333,7 @@ export function TaskForm(props: Props) {
         ))}
       </fieldset>
 
-      {error && (
-        <Note tone="danger">{error}</Note>
-      )}
+      {error && <Note tone="danger">{error}</Note>}
       {notice && (
         <Note tone="success" live>
           {notice}
@@ -273,10 +344,93 @@ export function TaskForm(props: Props) {
         <Button type="submit" busy={saving} busyLabel="Saving…">
           {props.mode === "new" ? "Create task" : "Save changes"}
         </Button>
-        <Button variant="secondary" onClick={() => router.push("/mentor/tasks")}>
+        <Button variant="secondary" onClick={leave}>
           Back to tasks
         </Button>
       </div>
+      {confirmLeave && dirty && <LeaveConfirm onLeave={leave} onStay={() => setConfirmLeave(false)} />}
     </form>
+  );
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="text-sm font-medium text-red-700 dark:text-red-300">{message}</p>;
+}
+
+/**
+ * Description with a Write/Preview switch: two toggle buttons (`aria-pressed`) rather than tabs, because there is
+ * no tab panel or arrow-key handling (UX-21). Both buttons are 44 px tall.
+ */
+export function DescriptionField({
+  value,
+  preview,
+  error,
+  onPreview,
+  onChange,
+}: {
+  value: string;
+  preview: boolean;
+  error?: string;
+  onPreview: (preview: boolean) => void;
+  onChange: (value: string) => void;
+}) {
+  const toggle = (on: boolean) =>
+    `inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium ${
+      on ? "bg-surface ring-1 ring-inset ring-line-strong" : "text-muted hover:bg-surface"
+    }`;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="font-medium" id="description-label">
+          Description (markdown, required)
+        </span>
+        <div className="flex gap-1" role="group" aria-label="Description view">
+          <button type="button" aria-pressed={!preview} onClick={() => onPreview(false)} className={toggle(!preview)}>
+            Write
+          </button>
+          <button type="button" aria-pressed={preview} onClick={() => onPreview(true)} className={toggle(preview)}>
+            Preview
+          </button>
+        </div>
+      </div>
+      {preview ? (
+        <div role="region" aria-labelledby="description-label" className="min-h-40 rounded-lg border border-line p-3">
+          {value.trim() ? <Markdown>{value}</Markdown> : <p className="text-muted">Nothing to preview.</p>}
+        </div>
+      ) : (
+        <textarea
+          aria-labelledby="description-label"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? "description-error" : undefined}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={10}
+          className={textareaClass}
+        />
+      )}
+      {error && (
+        <p id="description-error" className="text-sm font-medium text-red-700 dark:text-red-300">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Inline "are you sure" before throwing away edits, like the Remove-student confirm. */
+export function LeaveConfirm({ onLeave, onStay }: { onLeave: () => void; onStay: () => void }) {
+  return (
+    <Note tone="warning" title="Leave without saving?">
+      <p>Your changes to this task will be lost.</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Button variant="danger" size="sm" onClick={onLeave}>
+          Leave without saving
+        </Button>
+        <Button variant="secondary" size="sm" onClick={onStay}>
+          Stay here
+        </Button>
+      </div>
+    </Note>
   );
 }
