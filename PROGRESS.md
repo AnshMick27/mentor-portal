@@ -42,11 +42,33 @@ Goal: make the portal safe and understandable for real students, let the mentor 
   - Students: a removed user who signs in sees the plain message on the login page.
   - Acceptance: works at 360 px; render tests for both groups, the confirm step and viewer read-only; rules test for the list query (staff ✔, student ✘).
 
-- [ ] **T35 — UI/UX design pass by a dedicated design agent** (added by Ansh on 2026-10-01)
+- [x] **T35 — UI/UX design pass by a dedicated design agent** (added by Ansh on 2026-10-01)
   - Create a project subagent `.claude/agents/ui-ux-designer.md` (frontmatter: name, description, tools limited to read/search/run plus Edit/Write for UI files only; system prompt: mobile-first at 360 px, Tailwind 4 already in use, accessibility basics from SPEC §11, plain-English copy for Indian campus students, never touch API routes, rules, lib/ server code or tests' assertions about security).
   - Run it on the whole portal (login, onboarding, student dashboard, task board, task page incl. the three submit forms, mentor dashboard, task list/form, student list and profile, privacy page). It writes `docs/UX_REVIEW.md`: findings ranked by impact (consistency, visual hierarchy, spacing, tap targets, colour/contrast incl. dark mode, empty/loading/error states, copy, navigation), each with the page, the problem and a concrete fix; plus shared design tokens/components to extract (buttons, cards, section headings, status chips) so pages stop repeating long class strings.
   - Then split the review into T35a, T35b, … (most impact first, one per iteration): the main loop (or the agent, when the change is purely presentational) implements them, keeping every existing test green and adding render tests for new shared components.
   - Acceptance for T35 itself: the agent file exists and is committed; `docs/UX_REVIEW.md` exists with ranked findings; the follow-up sub-tasks are written into this list.
+- [ ] **T35a — Theme tokens, global focus ring, dark-mode controls** (UX-02, UX-03 global part, UX-29 CSS part; see docs/UX_REVIEW.md §2–4)
+  - Acceptance: `globals.css` sets `color-scheme`, has the tokens from review §3.1 and one `:focus-visible` rule; all tests green.
+- [ ] **T35b — Header navigation, brand link, skip link** (UX-01, UX-30)
+  - Acceptance: render test for `AppHeader`: student sees Home and My tasks, mentor/viewer sees Dashboard, Tasks and Students; current page has `aria-current="page"`; brand links to the role's home; skip link targets `#main`.
+- [ ] **T35c — `Button`, `TextLink`/`BackLink`, `Note` components, replacing the copies** (UX-16, UX-15 links part, UX-09, UX-17)
+  - Acceptance: render tests for the three components; no raw button class strings left outside `components/ui` (grep); a successful feedback submit is never shown as an error.
+- [ ] **T35d — `Card`, `Section`, `PageHeader`, `EmptyState`, a tab title per page, heading kept while loading** (UX-25, UX-18, UX-26, UX-11 section part)
+  - Acceptance: render tests for the four components; each data page keeps its h1 while loading.
+- [ ] **T35e — `Disclosure`, `StatusChip`, `Score`** (UX-05, UX-24, UX-31)
+  - Acceptance: render tests (chevron present, chip text per tone, `Score` shows — when missing); chart legend readable in both themes.
+- [ ] **T35f — Student home: reorder so what is due comes first** (UX-04)
+  - Acceptance: dashboard test asserts "This week" comes before "Progress"; no feedback item open by default.
+- [ ] **T35g — Task board and task page status** (UX-07 display part, UX-23, UX-32 student copy)
+  - Acceptance: a submitted-but-open task shows "Can improve"; relative-due helper unit-tested with IST edge cases; task page shows "Go to submit" only while open.
+- [ ] **T35h — Submit forms: live judge status, last-attempt warning, disabled reasons, field order, counters** (UX-08, UX-10, UX-19, UX-11 result/markdown headings)
+  - Acceptance: last-attempt note when one attempt is left; disabled reason linked by `aria-describedby`; no h4 without an h3; counters not `aria-live`.
+- [ ] **T35i — Fields and contrast: `Field` component, field borders, switch track, onboarding errors** (UX-06, UX-28, UX-15 text part)
+  - Acceptance: `Field` render test (`aria-invalid`/`aria-describedby`); grep finds no `border-black/20` on inputs and no `opacity-7x/8x` on text in `components/`.
+- [ ] **T35j — Mentor screens: refresh without wiping the page, tap targets, Remove placement, task form** (UX-12, UX-13, UX-14, UX-21, UX-22 except section order)
+  - Acceptance: student list keeps its search value after Remove/Restore; `taskFormLock` test still passes; Remove sits in an "Access" section on the profile; not-submitted rows are at least 44 px.
+- [ ] **T35k — Small polish: login context, Markdown links, mentor copy** (UX-27, UX-29 component part, UX-32 mentor copy)
+  - Acceptance: home/privacy tests green; Markdown test checks the "(opens in a new tab)" text.
 
 - [ ] **H12 🔒 HUMAN — Launch** (H10 pilot setup and H11 pilot week dropped by Ansh on 2026-10-01: launch directly)
   1. Before announcing: as mentor, create and publish the first real tasks (for a coding task, add its hidden tests to the judge repo first). Check spend limits (AI provider, GitHub Actions minutes, Firebase usage) and set a calendar reminder a week before the GitHub judge token expires.
@@ -373,11 +395,13 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-10-01 — T33 — docs/RUNBOOK.md (linked from README): where everything lives, deploying (incl. rules/indexes and redeploy after env changes), every env var with secret/where/meaning, rotating the GitHub judge token (expiry), webhook/cron secrets, Firebase key and AI key, adding a coding problem, routine jobs (nightly stats, manual cron run, export, leaderboard), a "when something goes wrong" table using the app's real error messages, free-tier limits to watch, backups (Spark has none; weekly Excel export, Blaze for a managed export), useful commands; 4 tests keep it in step with .env.example, package.json scripts and README, and check it holds no secret-looking values.
 - 2026-10-01 — T34a — Students can be removed and restored by a mentor: `users/{uid}.removed` (+ removedAt/removedBy, restoredAt/restoredBy), set in one transaction by lib/students/removal.ts via POST /api/students/[uid]/remove and /restore (mentor only; viewer/student 403; staff 400; unknown 404; repeatable); removing deletes their studentStats, then a full recompute drops them from taskStats (countedStudents skips removed users, recomputeAll deletes removed users' stats); requireUser and POST /api/me answer 403 "Your access to the portal has been removed…" and /api/me never re-creates or un-removes them; export skips them; leaderboard follows from the deleted stats; Firestore rules treat a removed user as not provisioned (tightening only, mutation-checked); fake Admin gained tx.delete; 8 API/unit tests + 5 rules tests.
 - 2026-10-01 — T34b — /mentor/students (mentor + viewer): every student account incl. not-onboarded sign-ups, search by name/email/roll no, Active and Removed groups (name → profile, email, roll no, branch, joined date IST, "Onboarding not finished"); mentor-only "Remove from portal" with an inline confirm step naming the student, and "Restore access"; same controls + a "Removed from the portal" note on the student profile; "Students" button in the mentor dashboard header; runbook section "Removing a student"; 17 unit/render tests + 3 rules tests for the list query.
+- 2026-10-01 — T35 — Project subagent `.claude/agents/ui-ux-designer.md` (UI-only edit scope) and its review `docs/UX_REVIEW.md`: 32 ranked findings, shared components to extract, follow-up batches T35a–T35k written into the list.
 
 ## Blockers
 (none)
 
 ## Questions for Ansh
+- T35 (UX review): (1) UX-20: may viewers open a read-only task page (description and samples)? The API already allows it; it only changes what viewers see. (2) UX-22: should "Needs attention" come before "Task status" on the mentor dashboard? SPEC §8.6 lists Task status first, so it stays until you say. (3) UX-01: should a signed-in user who opens `/` be sent straight to their home page? (4) UX-07: should tasks that are submitted but still open with attempts left move into "Due soon"? That changes `lib/tasks/studentBoard.ts`, so it is not in T35a–k. (5) UX-28: what should the roll-number hint say (the review guessed "As printed on your college ID card")?
 - Loop 3 (planning): SPEC §6 doesn't define how the stats numbers are counted, so I wrote the definitions at the top of Loop 3 (only published tasks and onboarded students count; "submitted" = at least one finished attempt; needs-attention's score rule waits until a student has 2 scores). Two fields not in SPEC §6 are added: `studentStats.overallAvg` (leaderboard "average", export) and `taskStats.avgScoreByBranch` (branch filter for per-task averages). Publishing/unpublishing or moving a due date triggers a full recompute (a few thousand reads at most for ~50 students, well inside the free quota). The nightly cron runs at 00:30 IST. Change any of this before T20 if you disagree.
 - T0: You gave the project id `Mentor-Portal-Ansh`. Firebase ids must be lowercase, so I used `mentor-portal-ansh`.
 - T2: The public env object lives in `lib/config/publicEnv.ts`, not `env.ts`, because `env.ts` is server-only and the browser must be able to import the public values. Only Firebase admin vars and `ALLOWED_EMAIL_DOMAIN` are required at startup; AI, judge, cron and APP_BASE_URL values are optional until the features that use them (Loop 2/3) check for them. OK?
