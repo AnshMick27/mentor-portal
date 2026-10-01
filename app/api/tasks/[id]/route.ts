@@ -2,7 +2,7 @@ import { jsonError } from "@/lib/api/errors";
 import { parseBody } from "@/lib/api/parseBody";
 import { requireUser } from "@/lib/auth/requireUser";
 import { recomputeAllAfter } from "@/lib/stats/recompute";
-import { getTask, taskHasSubmissions, updateTask, type TaskResult } from "@/lib/tasks/taskStore";
+import { deleteTask, getTask, taskHasSubmissions, updateTask, type TaskResult } from "@/lib/tasks/taskStore";
 import { isValidTaskId, taskPatchSchema } from "@/lib/validation/task";
 
 function respond(result: TaskResult): Response {
@@ -43,4 +43,23 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/tasks/[id]
   // Publishing, unpublishing, or moving a due date changes every student's due/missed counts.
   if (result.ok && result.affectsStats) await recomputeAllAfter(`PATCH /api/tasks/${id}`);
   return respond(result);
+}
+
+/** Mentor only: delete a task (T37). Submissions are kept but stop counting; stats are recomputed. */
+export async function DELETE(request: Request, ctx: RouteContext<"/api/tasks/[id]">): Promise<Response> {
+  const auth = await requireUser(request, ["mentor"]);
+  if (!auth.ok) return auth.response;
+  const { id } = await ctx.params;
+  if (!isValidTaskId(id)) return jsonError(404, "Task not found.");
+  let result;
+  try {
+    result = await deleteTask(id);
+  } catch (error) {
+    console.error(`DELETE /api/tasks/${id} failed:`, error);
+    return jsonError(500, "Could not delete the task. Please try again.");
+  }
+  if (!result.ok) return jsonError(result.status, result.message);
+  // Due/missed counts, averages and recent scores all change once the task is gone.
+  await recomputeAllAfter(`DELETE /api/tasks/${id}`);
+  return Response.json({ deleted: true });
 }

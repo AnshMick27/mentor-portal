@@ -9,7 +9,7 @@ type GetIdToken = () => Promise<string | null>;
 export async function apiFetch(
   getIdToken: GetIdToken,
   path: string,
-  options: { method?: "GET" | "POST" | "PATCH"; body?: unknown } = {},
+  options: { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown } = {},
 ): Promise<ApiResult> {
   let response: Response;
   try {

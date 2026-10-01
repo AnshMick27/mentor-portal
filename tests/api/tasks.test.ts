@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase-admin/firestore";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GET as getOne, PATCH } from "@/app/api/tasks/[id]/route";
+import { DELETE as remove, GET as getOne, PATCH } from "@/app/api/tasks/[id]/route";
 import { GET as list, POST } from "@/app/api/tasks/route";
 import { recomputeAllAfter } from "@/lib/stats/recompute";
 import { fakeAdmin } from "../auth/fakeAdmin";
@@ -52,6 +52,10 @@ const callCreate = async (token: string | undefined, body: unknown) => read(awai
 const callGet = async (token: string | undefined, id: string) => read(await getOne(request("GET", token), ctx(id)));
 const callPatch = async (token: string | undefined, id: string, body: unknown) =>
   read(await PATCH(request("PATCH", token, body), ctx(id)));
+const callDelete = async (token: string | undefined, id: string) => {
+  const response = await remove(request("DELETE", token), ctx(id));
+  return { status: response.status, body: (await response.json()) as Body & { deleted?: boolean } };
+};
 
 function seedTask(id: string, fields: Record<string, unknown> = {}) {
   const at = Timestamp.fromDate(new Date("2026-09-20T10:00:00Z"));
@@ -286,5 +290,34 @@ describe("type and problem lock once a task has submissions", () => {
     expect((await callGet("mentor", "t1")).body).toMatchObject({ hasSubmissions: false });
     submitTo("t1");
     expect((await callGet("viewer", "t1")).body).toMatchObject({ hasSubmissions: true });
+  });
+});
+
+describe("DELETE /api/tasks/[id] (T37)", () => {
+  it("only mentors may delete", async () => {
+    expect((await callDelete(undefined, "t1")).status).toBe(401);
+    expect((await callDelete("student", "t1")).status).toBe(403);
+    expect((await callDelete("viewer", "t1")).status).toBe(403);
+    expect(fakeAdmin.collection("tasks").get("t1")).toBeDefined();
+    expect(recomputeMock).not.toHaveBeenCalled();
+  });
+
+  it("404s unknown or malformed ids", async () => {
+    expect((await callDelete("mentor", "nope")).status).toBe(404);
+    expect((await callDelete("mentor", "a.b")).status).toBe(404);
+    expect(recomputeMock).not.toHaveBeenCalled();
+  });
+
+  it("deletes the task and its stats, keeps submissions, and recomputes", async () => {
+    fakeAdmin.collection("taskStats").set("t1", { submittedCount: 1 });
+    fakeAdmin.collection("submissions").set("s-1", { taskId: "t1", uid: "s1", status: "done" });
+    const { status, body } = await callDelete("mentor", "t1");
+    expect(status).toBe(200);
+    expect(body.deleted).toBe(true);
+    expect(fakeAdmin.collection("tasks").get("t1")).toBeUndefined();
+    expect(fakeAdmin.collection("taskStats").get("t1")).toBeUndefined();
+    expect(fakeAdmin.collection("submissions").get("s-1")).toMatchObject({ taskId: "t1" });
+    expect(recomputeMock).toHaveBeenCalledWith("DELETE /api/tasks/t1");
+    expect((await callDelete("mentor", "t1")).status).toBe(404);
   });
 });

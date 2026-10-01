@@ -72,6 +72,22 @@ export function mergeTaskPatch(existing: TaskDto, patch: TaskPatch): TaskInput {
   return { title, description, dueAt, status, maxAttempts, ...patch, type, coding };
 }
 
+/**
+ * Deletes a task and its `taskStats` doc in one transaction (T37). Students' submissions are kept: they stay in
+ * their history and stop counting, like attempts on an unpublished task. The caller recomputes stats afterwards.
+ */
+export async function deleteTask(id: string): Promise<{ ok: true } | TaskError> {
+  const db = getAdminDb();
+  const ref = tasks().doc(id);
+  return db.runTransaction(async (tx): Promise<{ ok: true } | TaskError> => {
+    const snapshot = await tx.get(ref);
+    if (!snapshot.exists) return NOT_FOUND;
+    tx.delete(ref);
+    tx.delete(db.collection("taskStats").doc(id));
+    return { ok: true };
+  });
+}
+
 /** Edits (incl. publish/unpublish) a task: merge, re-validate the whole task, then write it in one transaction. */
 export async function updateTask(id: string, patch: TaskPatch): Promise<TaskUpdateResult> {
   const db = getAdminDb();

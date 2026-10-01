@@ -3,6 +3,7 @@
 import { use } from "react";
 import { z } from "zod";
 import { QueryStatus } from "@/components/QueryStatus";
+import { DeleteTask } from "@/components/tasks/DeleteTask";
 import { MentorOnly } from "@/components/tasks/MentorOnly";
 import { TaskForm } from "@/components/tasks/TaskForm";
 import { StatusBadge } from "@/components/tasks/TaskList";
@@ -35,6 +36,7 @@ function EditTask({ id }: { id: string }) {
         initial={taskToForm(task)}
         hasSubmissions={hasSubmissions}
       />
+      <DeleteTask taskId={task.id} title={task.title} hasSubmissions={hasSubmissions} />
     </>
   );
 }

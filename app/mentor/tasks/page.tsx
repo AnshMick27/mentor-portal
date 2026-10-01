@@ -12,13 +12,14 @@ import { taskDtoSchema } from "@/lib/validation/task";
 
 const listSchema = z.object({ tasks: z.array(taskDtoSchema) });
 
-/** After "Create task" the form comes here with `?created=1`: confirm it worked (UX-21). */
+/** After creating (`?created=1`, UX-21) or deleting (`?deleted=1`, T37) a task, confirm it worked. */
 function CreatedNote() {
-  const created = useSearchParams().get("created") === "1";
-  if (!created) return null;
+  const params = useSearchParams();
+  const message = params.get("created") === "1" ? "Task created." : params.get("deleted") === "1" ? "Task deleted." : null;
+  if (!message) return null;
   return (
     <Note tone="success" live>
-      Task created.
+      {message}
     </Note>
   );
 }
