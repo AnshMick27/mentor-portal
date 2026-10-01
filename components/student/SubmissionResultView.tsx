@@ -1,3 +1,4 @@
+import { Score } from "@/components/ui/Score";
 import { verdictLabel } from "@/lib/submissions/judgeDisplay";
 import type { SubmissionResult } from "@/lib/validation/submission";
 
@@ -21,9 +22,8 @@ function List({ title, items }: { title: string; items: string[] }) {
 export function SubmissionResultView({ result }: { result: SubmissionResult }) {
   return (
     <div className="flex flex-col gap-4 text-sm">
-      <p className="flex items-baseline gap-2">
-        <span className="text-3xl font-bold">{result.score.toFixed(1)}</span>
-        <span className="opacity-70">/ 10</span>
+      <p>
+        <Score value={result.score} />
       </p>
       {result.judge && (
         <p>

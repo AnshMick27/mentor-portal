@@ -48,7 +48,7 @@ export function ProgressChart({ recentScores }: { recentScores: StoredStudentSta
               formatter={(value) => [`${Number(value).toFixed(1)} / 10`]}
               contentStyle={{ borderRadius: 8, fontSize: 13, color: "#111" }}
             />
-            <Legend wrapperStyle={{ fontSize: 13 }} />
+            <Legend wrapperStyle={{ fontSize: 13 }} formatter={(value) => <span className="text-foreground">{value}</span>} />
             {data.skills.map(({ type, label }) => {
               const style = LINE_STYLE[type];
               return (

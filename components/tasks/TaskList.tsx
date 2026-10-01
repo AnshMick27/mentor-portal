@@ -3,21 +3,15 @@ import { ButtonLink } from "@/components/ui/Button";
 import { cardClasses } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { formatIst } from "@/lib/dates/ist";
 import { TASK_TYPE_LABEL, type TaskDto } from "@/lib/validation/task";
 
 export function StatusBadge({ status }: { status: TaskDto["status"] }) {
-  const published = status === "published";
-  return (
-    <span
-      className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-        published
-          ? "bg-green-100 text-green-900 dark:bg-green-900 dark:text-green-100"
-          : "bg-amber-100 text-amber-900 dark:bg-amber-900 dark:text-amber-100"
-      }`}
-    >
-      {published ? "Published" : "Draft"}
-    </span>
+  return status === "published" ? (
+    <StatusChip tone="success">Published</StatusChip>
+  ) : (
+    <StatusChip tone="warning">Draft</StatusChip>
   );
 }
 

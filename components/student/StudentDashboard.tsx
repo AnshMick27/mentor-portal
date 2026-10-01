@@ -1,6 +1,9 @@
 import { cardClasses, CardLink } from "@/components/ui/Card";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { formatScore } from "@/components/ui/Score";
 import { Section } from "@/components/ui/Section";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { TextLink } from "@/components/ui/TextLink";
 import { dashboardNextSteps, skillAverages } from "@/lib/dashboard/student";
 import type { StudentDashboardData } from "@/lib/dashboard/studentQueries";
@@ -26,9 +29,9 @@ function Summary({ stats }: { stats: StudentDashboardData["stats"] }) {
     <dl className={cardClasses({ className: "grid grid-cols-2 gap-4 sm:grid-cols-4" })}>
       <Stat label="Submitted" value={String(stats?.tasksSubmitted ?? 0)} />
       <Stat label="Missed" value={String(stats?.missedCount ?? 0)} />
-      <Stat label="Average" value={stats?.overallAvg === undefined ? "—" : `${stats.overallAvg.toFixed(1)} / 10`} />
+      <Stat label="Average" value={formatScore(stats?.overallAvg)} />
       {skills.map((skill) => (
-        <Stat key={skill.type} label={skill.label} value={skill.average.toFixed(1)} />
+        <Stat key={skill.type} label={skill.label} value={formatScore(skill.average)} />
       ))}
     </dl>
   );
@@ -49,7 +52,7 @@ function WeekTask({ task }: { task: StudentTask }) {
           ) : task.attemptsUsed > 0 ? (
             "Being checked…"
           ) : (
-            <span className="font-medium text-amber-800 dark:text-amber-300">Not submitted yet</span>
+            <StatusChip tone="warning">Not submitted yet</StatusChip>
           )}
         </span>
       </CardLink>
@@ -61,13 +64,18 @@ function LatestResult({ submission, task, open }: { submission: SubmissionView; 
   if (!submission.result) return null;
   return (
     <li>
-      <details open={open} className={cardClasses({ className: "group" })}>
-        <summary className="flex min-h-11 cursor-pointer list-none flex-wrap items-center justify-between gap-x-3 gap-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
-          <span className="font-semibold break-words">{task?.title ?? TASK_TYPE_LABEL[submission.type]}</span>
-          <span className="text-sm opacity-75">
-            {submission.result.score.toFixed(1)} / 10 · {formatIst(submission.createdAt.toISOString())}
+      <Disclosure
+        defaultOpen={open}
+        className={cardClasses()}
+        summary={
+          <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <span className="font-semibold break-words">{task?.title ?? TASK_TYPE_LABEL[submission.type]}</span>
+            <span className="text-sm text-muted">
+              {formatScore(submission.result.score)} · {formatIst(submission.createdAt.toISOString())}
+            </span>
           </span>
-        </summary>
+        }
+      >
         <div className="mt-3 flex flex-col gap-3 border-t border-line pt-3">
           <SubmissionResultView result={submission.result} />
           {task && (
@@ -76,7 +84,7 @@ function LatestResult({ submission, task, open }: { submission: SubmissionView; 
             </TextLink>
           )}
         </div>
-      </details>
+      </Disclosure>
     </li>
   );
 }

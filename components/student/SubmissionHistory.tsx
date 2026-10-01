@@ -1,3 +1,6 @@
+import { cardClasses } from "@/components/ui/Card";
+import { Disclosure } from "@/components/ui/Disclosure";
+import { formatScore } from "@/components/ui/Score";
 import { formatIst } from "@/lib/dates/ist";
 import { judgeStatusView } from "@/lib/submissions/judgeDisplay";
 import { effectiveStatus } from "@/lib/submissions/scoring";
@@ -8,7 +11,7 @@ import { SubmissionResultView } from "./SubmissionResultView";
 export function statusLabel(submission: SubmissionView, now: Date): string {
   const { status } = effectiveStatus(submission, now);
   if (submission.type === "coding" && status !== "done") return judgeStatusView(submission, now).headline;
-  if (status === "done") return submission.result ? `${submission.result.score.toFixed(1)} / 10` : "Done";
+  if (status === "done") return submission.result ? formatScore(submission.result.score) : "Done";
   if (status === "error") return "Not counted";
   return status === "queued" ? "Waiting…" : "Checking…";
 }
@@ -84,24 +87,29 @@ export function AttemptList({
     <ul className="flex flex-col gap-3">
       {newestFirst(submissions).map((submission, index) => (
         <li key={submission.id}>
-          <details open={index === 0} className="group rounded-lg border border-black/10 dark:border-white/15">
-            <summary className="flex min-h-11 cursor-pointer flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
-              <span className="font-medium">
-                Attempt {submission.attempt}
-                <span className="ml-2 text-sm font-normal opacity-70">{formatIst(submission.createdAt.toISOString())}</span>
+          <Disclosure
+            defaultOpen={index === 0}
+            className={cardClasses({ padding: "none" })}
+            summaryClassName="px-4 py-2"
+            summary={
+              <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                <span className="font-medium">
+                  Attempt {submission.attempt}
+                  <span className="ml-2 text-sm font-normal text-muted">{formatIst(submission.createdAt.toISOString())}</span>
+                </span>
+                <span className="text-sm font-semibold">{statusLabel(submission, now)}</span>
               </span>
-              <span className="text-sm font-semibold">{statusLabel(submission, now)}</span>
-            </summary>
-            <div className="flex flex-col gap-4 border-t border-black/10 px-4 py-3 dark:border-white/15">
+            }
+          >
+            <div className="flex flex-col gap-4 border-t border-line px-4 py-3">
               <AttemptBody submission={submission} now={now} audience={audience} />
-              <details>
-                <summary className="cursor-pointer text-sm font-medium">{WORDING[audience].sent}</summary>
+              <Disclosure summary={WORDING[audience].sent} summaryClassName="text-sm font-medium">
                 <pre className="mt-2 max-h-80 overflow-auto rounded-lg bg-black/[0.05] p-3 font-mono text-xs whitespace-pre-wrap break-words dark:bg-white/[0.08]">
                   {submission.content}
                 </pre>
-              </details>
+              </Disclosure>
             </div>
-          </details>
+          </Disclosure>
         </li>
       ))}
     </ul>

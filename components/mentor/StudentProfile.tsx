@@ -2,10 +2,13 @@ import type { ReactNode } from "react";
 import { AttemptList } from "@/components/student/SubmissionHistory";
 import { Button } from "@/components/ui/Button";
 import { cardClasses } from "@/components/ui/Card";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Note } from "@/components/ui/Note";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { formatScore } from "@/components/ui/Score";
 import { Section } from "@/components/ui/Section";
+import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
 import { skillAverages } from "@/lib/dashboard/student";
 import { attemptsOnOtherTasks, PROFILE_STATE_LABEL, profileTaskRows, type ProfileTaskRow } from "@/lib/dashboard/profile";
 import type { StudentProfileData } from "@/lib/dashboard/profileQueries";
@@ -14,10 +17,10 @@ import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import { TASK_TYPE_LABEL } from "@/lib/validation/task";
 
 
-const STATE_CLASS: Record<ProfileTaskRow["state"], string> = {
-  submitted: "text-green-800 dark:text-green-300",
-  missed: "text-amber-800 dark:text-amber-300",
-  open: "opacity-70",
+const STATE_TONE: Record<ProfileTaskRow["state"], ChipTone> = {
+  submitted: "success",
+  missed: "warning",
+  open: "neutral",
 };
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -32,19 +35,23 @@ function Stat({ label, value }: { label: string; value: string }) {
 function TaskRow({ row, now }: { row: ProfileTaskRow; now: Date }) {
   return (
     <li>
-      <details className={cardClasses()}>
-        <summary className="flex min-h-11 cursor-pointer flex-col gap-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
+      <Disclosure
+        className={cardClasses()}
+        summary={
+          <span className="flex flex-col gap-0.5">
           <span className="font-semibold break-words">{row.task.title}</span>
           <span className="text-sm opacity-75">
             {TASK_TYPE_LABEL[row.task.type]} · Due {formatIst(row.task.dueAt)}
           </span>
           <span className="text-sm">
-            <span className={`font-medium ${STATE_CLASS[row.state]}`}>{PROFILE_STATE_LABEL[row.state]}</span>
+            <StatusChip tone={STATE_TONE[row.state]}>{PROFILE_STATE_LABEL[row.state]}</StatusChip>
             {" · "}
             {row.attemptsUsed} of {row.task.maxAttempts} attempts
-            {row.bestScore !== undefined && <> · Best {row.bestScore.toFixed(1)} / 10</>}
+            {row.bestScore !== undefined && <> · Best {formatScore(row.bestScore)}</>}
           </span>
-        </summary>
+          </span>
+        }
+      >
         <div className="mt-3 border-t border-line pt-3">
           {row.attempts.length === 0 ? (
             <EmptyState>No attempts.</EmptyState>
@@ -52,7 +59,7 @@ function TaskRow({ row, now }: { row: ProfileTaskRow; now: Date }) {
             <AttemptList submissions={row.attempts} now={now} audience="mentor" />
           )}
         </div>
-      </details>
+      </Disclosure>
     </li>
   );
 }
@@ -85,7 +92,15 @@ export function StudentProfile({
         <PageHeader
           title={user.name}
           back={{ href: "/mentor/students", label: "Students" }}
-          subtitle={`${user.rollNo ?? "No roll number yet"} · ${user.branch ?? "—"} · ${user.email}`}
+          badge={user.removed === true ? <StatusChip tone="danger">Removed</StatusChip> : undefined}
+          subtitle={
+            <>
+              <p>
+                {user.rollNo ?? "No roll number yet"} · {user.branch ?? "—"}
+              </p>
+              <p className="break-all">{user.email}</p>
+            </>
+          }
         />
         {actions}
       </div>
@@ -104,9 +119,9 @@ export function StudentProfile({
       <dl className={cardClasses({ className: "grid grid-cols-2 gap-4 sm:grid-cols-4" })}>
         <Stat label="Submitted" value={String(stats?.tasksSubmitted ?? 0)} />
         <Stat label="Missed" value={String(stats?.missedCount ?? 0)} />
-        <Stat label="Average" value={stats?.overallAvg === undefined ? "—" : `${stats.overallAvg.toFixed(1)} / 10`} />
+        <Stat label="Average" value={formatScore(stats?.overallAvg)} />
         {skillAverages(stats).map((skill) => (
-          <Stat key={skill.type} label={skill.label} value={skill.average.toFixed(1)} />
+          <Stat key={skill.type} label={skill.label} value={formatScore(skill.average)} />
         ))}
       </dl>
 

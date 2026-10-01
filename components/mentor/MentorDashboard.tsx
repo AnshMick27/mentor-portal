@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { cardClasses } from "@/components/ui/Card";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { formatScore } from "@/components/ui/Score";
 import { Section } from "@/components/ui/Section";
 import { TextLink } from "@/components/ui/TextLink";
 import {
@@ -39,13 +41,10 @@ function TaskStatus({ row }: { row: TaskStatusRow }) {
       {row.hasStats ? (
         <>
           <p className="text-sm">
-            <span className="font-semibold">{row.submitted}</span> of {row.total} submitted · Average {score(row.average)}
+            <span className="font-semibold">{row.submitted}</span> of {row.total} submitted · Average {formatScore(row.average)}
           </p>
           {row.notSubmitted.length > 0 ? (
-            <details>
-              <summary className="min-h-11 cursor-pointer py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
-                {row.notSubmitted.length} not submitted
-              </summary>
+            <Disclosure summary={`${row.notSubmitted.length} not submitted`} summaryClassName="text-sm font-medium">
               <ul className="flex flex-col gap-1 pl-1 text-sm">
                 {row.notSubmitted.map((student) => (
                   <li key={student.uid} className="break-words">
@@ -53,7 +52,7 @@ function TaskStatus({ row }: { row: TaskStatusRow }) {
                   </li>
                 ))}
               </ul>
-            </details>
+            </Disclosure>
           ) : (
             <EmptyState>Everyone has submitted.</EmptyState>
           )}
@@ -134,7 +133,7 @@ export function MentorDashboardView({
           {skills.map((skill) => (
             <div key={skill.type} className="flex flex-col">
               <dt className="text-xs uppercase tracking-wide opacity-70">{skill.label}</dt>
-              <dd className="text-xl font-bold">{score(skill.average)}</dd>
+              <dd className="text-xl font-bold">{formatScore(skill.average)}</dd>
               <dd className="text-xs opacity-70">
                 {skill.students} student{skill.students === 1 ? "" : "s"} with a score
               </dd>

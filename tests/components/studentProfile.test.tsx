@@ -73,7 +73,8 @@ describe("StudentProfile", () => {
   it("shows identity, the needs-attention reason and stats", () => {
     const html = render();
     expect(html).toContain("Kabir Singh");
-    expect(html).toContain("0827CI1 · CSIT · kabir@college.ac.in");
+    expect(html).toContain("0827CI1 · CSIT</p>");
+    expect(html).toContain('<p class="break-all">kabir@college.ac.in</p>'); // email on its own line (UX-31)
     expect(html).toContain("Needs attention: Missed 2 of the last 3 tasks");
     expect(html).toContain("7.5 / 10");
     expect(html).toContain('href="/mentor/students"'); // back link goes to the student list (UX-17)

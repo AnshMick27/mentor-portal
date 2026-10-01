@@ -5,6 +5,7 @@ import { cardClasses } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { TextLink } from "@/components/ui/TextLink";
 import { formatIst } from "@/lib/dates/ist";
 import { searchStudents, splitStudents, type StudentRow } from "@/lib/students/list";
@@ -22,7 +23,12 @@ function Row({ row, canEdit, onChanged }: { row: StudentRow; canEdit: boolean; o
           {row.rollNo ?? "No roll number"} · {row.branch ?? "—"}
           {row.joinedAt && <> · Joined {formatIst(row.joinedAt.toISOString())}</>}
         </span>
-        {!row.onboarded && <span className="font-medium text-amber-800 dark:text-amber-300">Onboarding not finished</span>}
+        {(row.removed || !row.onboarded) && (
+          <span className="mt-1 flex flex-wrap gap-2">
+            {row.removed && <StatusChip tone="danger">Removed</StatusChip>}
+            {!row.onboarded && <StatusChip tone="warning">Onboarding not finished</StatusChip>}
+          </span>
+        )}
       </div>
       {canEdit && (
         <div className="shrink-0 sm:max-w-xs">
