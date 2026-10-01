@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { AiFeedbackError, aiFeedbackSchema } from "@/lib/ai/feedback";
-import { createFeedbackModel, generateFeedback } from "@/lib/ai/provider";
+import { createFeedbackModel, createModelWithFallback, generateFeedback } from "@/lib/ai/provider";
 import { getRubric } from "@/lib/ai/rubrics";
 import { anthropicReply, geminiReply, jsonResponse, queuedFetch, validFeedback } from "./helpers";
 
@@ -141,5 +141,77 @@ describe("generateFeedback with Gemini (mocked fetch)", () => {
     const offline = queuedFetch();
     offline.mockRejectedValueOnce(new TypeError("fetch failed"));
     expect((await failure(generateFeedback(input, createFeedbackModel(geminiEnv, offline)))).kind).toBe("provider");
+  });
+});
+
+describe("createModelWithFallback (Groq main model, smaller Groq model as backup)", () => {
+  const fallbackEnv = {
+    AI_PROVIDER: "groq" as const,
+    AI_MODEL: "openai/gpt-oss-120b",
+    AI_FALLBACK_PROVIDER: "groq" as const,
+    AI_FALLBACK_MODEL: "openai/gpt-oss-20b",
+    GROQ_API_KEY: "gsk-test",
+  };
+  const groqReply = (content: string) =>
+    jsonResponse({ choices: [{ message: { role: "assistant", content }, finish_reason: "stop" }] });
+  const rateLimited = () => jsonResponse({ error: { message: "Rate limit reached", code: "rate_limit_exceeded" } }, 429);
+  const sentModel = (fetchMock: ReturnType<typeof queuedFetch>, call: number) =>
+    (JSON.parse(String(fetchMock.mock.calls[call]![1]?.body)) as { model: string }).model;
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it("uses the backup model when the main one is rate limited, and the main one again on the next call", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchMock = queuedFetch(
+      rateLimited(),
+      groqReply(JSON.stringify(validFeedback())),
+      groqReply(JSON.stringify(validFeedback())),
+    );
+    const model = createModelWithFallback(fallbackEnv, fetchMock);
+
+    await expect(generateFeedback(input, model)).resolves.toMatchObject({ score: 7.3 });
+    expect([sentModel(fetchMock, 0), sentModel(fetchMock, 1)]).toEqual(["openai/gpt-oss-120b", "openai/gpt-oss-20b"]);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Groq request failed (429)"));
+
+    await generateFeedback(input, model);
+    expect(sentModel(fetchMock, 2)).toBe("openai/gpt-oss-120b");
+  });
+
+  it("never calls the backup when the main model answers", async () => {
+    const fetchMock = queuedFetch(groqReply(JSON.stringify(validFeedback())));
+    await generateFeedback(input, createModelWithFallback(fallbackEnv, fetchMock));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not use the backup for an unusable reply (that is retried on the main model)", async () => {
+    const fetchMock = queuedFetch(groqReply("not json"), groqReply(JSON.stringify(validFeedback())));
+    await generateFeedback(input, createModelWithFallback(fallbackEnv, fetchMock));
+    expect([sentModel(fetchMock, 0), sentModel(fetchMock, 1)]).toEqual(["openai/gpt-oss-120b", "openai/gpt-oss-120b"]);
+  });
+
+  it("fails as a provider error when the backup is rate limited too", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchMock = queuedFetch(rateLimited(), rateLimited());
+    const error = await failure(generateFeedback(input, createModelWithFallback(fallbackEnv, fetchMock)));
+    expect(error.kind).toBe("provider");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("behaves exactly as before when no backup is set", async () => {
+    const fetchMock = queuedFetch(rateLimited());
+    const env = { ...fallbackEnv, AI_FALLBACK_PROVIDER: undefined, AI_FALLBACK_MODEL: undefined };
+    expect((await failure(generateFeedback(input, createModelWithFallback(env, fetchMock)))).kind).toBe("provider");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports a missing AI_FALLBACK_MODEL only when the backup is needed", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const env = { ...fallbackEnv, AI_FALLBACK_MODEL: undefined };
+    const ok = queuedFetch(groqReply(JSON.stringify(validFeedback())));
+    await expect(generateFeedback(input, createModelWithFallback(env, ok))).resolves.toBeDefined();
+
+    const error = await failure(generateFeedback(input, createModelWithFallback(env, queuedFetch(rateLimited()))));
+    expect(error.kind).toBe("config");
+    expect(error.message).toBe("AI_FALLBACK_MODEL is not set");
   });
 });

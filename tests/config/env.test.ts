@@ -34,6 +34,7 @@ describe("parseServerEnv", () => {
     expect([...env.MENTOR_EMAILS]).toEqual(["ansh@college.ac.in", "co@college.ac.in"]);
     expect(env.VIEWER_EMAILS.size).toBe(0);
     expect(env.ANTHROPIC_API_KEY).toBeUndefined();
+    expect(env.AI_FALLBACK_PROVIDER).toBeUndefined();
     expect(env.APP_BASE_URL).toBeUndefined();
   });
 
@@ -81,6 +82,12 @@ describe("parseServerEnv", () => {
       AI_PROVIDER: "groq",
       GROQ_API_KEY: "gsk-test",
     });
+    expect(
+      parseServerEnv({ ...validServer, AI_FALLBACK_PROVIDER: "groq", AI_FALLBACK_MODEL: "openai/gpt-oss-20b" }),
+    ).toMatchObject({ AI_FALLBACK_PROVIDER: "groq", AI_FALLBACK_MODEL: "openai/gpt-oss-20b" });
+    expect(errorOf(() => parseServerEnv({ ...validServer, AI_FALLBACK_PROVIDER: "openai" }))).toContain(
+      "AI_FALLBACK_PROVIDER: invalid",
+    );
   });
 });
 

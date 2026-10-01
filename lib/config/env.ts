@@ -25,6 +25,8 @@ const serverEnvSchema = z.object({
   VIEWER_EMAILS: optionalString.transform(parseEmailList),
   AI_PROVIDER: blankAsUndefined(z.enum(["anthropic", "gemini", "groq"]).default("anthropic")),
   AI_MODEL: optionalString,
+  AI_FALLBACK_PROVIDER: blankAsUndefined(z.enum(["anthropic", "gemini", "groq"]).optional()),
+  AI_FALLBACK_MODEL: optionalString,
   ANTHROPIC_API_KEY: optionalString,
   GEMINI_API_KEY: optionalString,
   GROQ_API_KEY: optionalString,

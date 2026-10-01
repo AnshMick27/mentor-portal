@@ -55,6 +55,8 @@ or start with `NEXT_PUBLIC_`.
 | `VIEWER_EMAILS` | no | Vercel, `.env.local` | Comma-separated; read-only viewers (CDC leadership) |
 | `AI_PROVIDER` | no | Vercel, `.env.local` | `groq`, `gemini` or `anthropic` |
 | `AI_MODEL` | no | Vercel, `.env.local` | Model id for that provider |
+| `AI_FALLBACK_PROVIDER` | no | Vercel, `.env.local` | Backup used only when the main provider fails (rate limit, outage), e.g. `groq` |
+| `AI_FALLBACK_MODEL` | no | Vercel, `.env.local` | Backup model id, e.g. `openai/gpt-oss-20b` (Groq counts limits per model) |
 | `GROQ_API_KEY` | yes | Vercel, `.env.local` | Needed when `AI_PROVIDER=groq` |
 | `GEMINI_API_KEY` | yes | Vercel, `.env.local` | Needed when `AI_PROVIDER=gemini` |
 | `ANTHROPIC_API_KEY` | yes | Vercel, `.env.local` | Needed when `AI_PROVIDER=anthropic` |
@@ -150,7 +152,7 @@ Look at Vercel → the project → **Logs** first: every API error is logged the
 |---|---|---|
 | Coding submission says "We could not start the judge right now" | Judge token expired or wrong; `GITHUB_JUDGE_*` missing | Logs show `Judge is not configured` or `GitHub refused the judge dispatch (HTTP …)`; see §3 |
 | Coding submission stays "Waiting" then "not counted" after 10 min | Judge run failed or its callback was refused | GitHub → judge repo → **Actions** → the run: `run` job failed = harness problem; `report` job 401 = `JUDGE_WEBHOOK_SECRET` differs; connection error = `APP_BASE_URL` wrong |
-| Resume/intro: "We could not get AI feedback right now" | AI provider down, key revoked, or quota used up | Logs name the provider error; check the provider's console; the attempt was not counted |
+| Resume/intro: "We could not get AI feedback right now" | AI provider down, key revoked, or quota used up (Groq free tier: 8,000 tokens a minute per model, i.e. 2–3 submissions at once) | Logs name the provider error (`(429)` = rate limit); a line `trying the fallback … model` means the backup was used. If it happens often, set `AI_FALLBACK_PROVIDER`/`AI_FALLBACK_MODEL` or move to a paid tier. Logs are kept 1 hour on Hobby. The attempt was not counted |
 | A dashboard says "Could not load…" | A Firestore index is missing or still building | Firebase console → Firestore → Indexes; redeploy indexes (§1) |
 | "Please sign in with your college email." | Signed in with a personal Gmail | Use the college account |
 | Sign-in popup fails on a new domain | Domain not authorised in Firebase | Firebase console → Authentication → Settings → Authorized domains → add it |

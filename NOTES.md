@@ -150,6 +150,7 @@
 
 ## Groq (T13b)
 - `AI_PROVIDER=groq` uses `lib/ai/groq.ts` (plain fetch, OpenAI-compatible). `strict: true` only for `GROQ_STRICT_MODELS`; update that set if Groq's structured-outputs docs change. A 400 containing "does not match the expected schema" = invalid_output (retried); any other non-2xx = provider error.
+- Fallback (T38): `createModelWithFallback` (the default in `generateFeedback`) tries `AI_PROVIDER` first on every call and moves that call to `AI_FALLBACK_PROVIDER`/`AI_FALLBACK_MODEL` only on a `provider` error; `invalid_output` is still retried on the main model. Groq free tier limits are per model (8,000 tokens/min each), so `openai/gpt-oss-20b` backs up `openai/gpt-oss-120b` at no cost. Gemini's free tier may use inputs for training, so it is not a backup option for resumes unless billing is on.
 - `FEEDBACK_JSON_SCHEMA` = `z.toJSONSchema(aiWireSchema)` minus `$schema`; zod's default output already marks every field required with `additionalProperties: false`.
 
 ## Feedback route (T14)
