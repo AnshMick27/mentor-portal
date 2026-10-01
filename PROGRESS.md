@@ -63,13 +63,13 @@ Definitions used by every task below (SPEC.md §6 leaves them open; see Question
   - Add `exceljs` (SPEC §4). Mentor and viewer only. Sheets: "Students" (name, roll no, branch, email, tasks due/submitted/missed, averages by skill, overall, needs attention + reason), "Task status" (student × published task matrix of best scores, blank = not submitted), "All results" (every `done` submission: student, roll no, task, type, attempt, date IST, score, verdict or summary). Filename `mentor-portal-YYYY-MM-DD.xlsx` (IST). Pure workbook builder separate from the route. "Export Excel" button on `/mentor` (downloads with the ID token, not a plain link).
   - Acceptance: API auth tests (student 403, viewer and mentor 200 with the xlsx content type); builder test that reads the workbook back and checks sheet names, headers, a blank cell for not submitted, and IST dates. Never includes content (code/resume text) or hidden tests.
 
-- [ ] **H8 🔒 HUMAN — Cron secret and indexes (about 10 minutes)**
+- [x] **H8 🔒 HUMAN — Cron secret and indexes (about 10 minutes)**
   1. Make a long random string (same `node -e ...randomBytes...` command as for the judge secret) and add it as `CRON_SECRET` in Vercel (Production) and `.env.local`. Plain value, no quotes.
   2. In the project folder run `firebase deploy --only firestore:rules,firestore:indexes` and wait until Firebase console → Firestore → Indexes shows every index as "Enabled".
   3. Push to GitHub and wait for the Vercel deploy. In Vercel → Settings → Cron Jobs, check `/api/cron/recompute` is listed, and click **Run** once; its log should say how many students and tasks were recomputed.
   4. Tick H8 and say `Follow LOOP.md`.
 
-- [ ] **H9 🔒 HUMAN — End-to-end check of Loop 3**
+- [x] **H9 🔒 HUMAN — End-to-end check of Loop 3**
   1. As a student (the second account from H7): the home screen shows this week's tasks, the latest feedback, next steps and the progress chart; it works on your phone.
   2. As mentor: task status shows who has not submitted; a student with missed tasks appears under needs attention with a reason; the branch filter works; a student's profile shows all attempts.
   3. Turn the leaderboard on, opt in as the student, and check only name and average appear; turn it off again.
