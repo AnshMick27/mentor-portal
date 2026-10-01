@@ -216,3 +216,8 @@
 - Run one rules file quickly: `npx firebase emulators:exec --only firestore --project demo-mentor-portal "npx vitest run --config vitest.rules.config.mts tests/rules/<file>"`.
 - `formatIst` takes an ISO string; pass `date.toISOString()` for a `SubmissionView.createdAt`.
 - Composite indexes so far: submissions (uid, taskId, createdAt desc) and (uid, status, createdAt desc). `uid == && taskId in [...]` needs no composite index (equality-only).
+
+## Charts (T25)
+- Dependencies: `recharts` ^3.10 (SPEC §4) and `react-is` 19.2.x (NOT in SPEC): recharts' peer `react-is` resolved to the hoisted 16.13.1 from eslint-plugin-react, which predates React 19's element format; recharts asks for the version matching React. Keep `react-is` in step with `react` when upgrading.
+- Chart components are `"use client"`. Shape data in a pure helper (`lib/dashboard/progressChart.ts`) and unit-test that; `renderToStaticMarkup` renders ResponsiveContainer at 0 width (no SVG), so render tests check only the wrapper, empty state and the sr-only table.
+- `npm audit` (2026-10-01): 5 high `@grpc/grpc-js` advisories via firebase-admin → @google-cloud/firestore → google-gax, plus the old uuid moderates. Only `--force` (breaking) fixes; left as is.

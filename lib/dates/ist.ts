@@ -18,6 +18,17 @@ export function formatIst(iso: string): string {
   return `${istFormatter.format(date)} IST`;
 }
 
+const istShortDateFormatter = new Intl.DateTimeFormat("en-IN", {
+  timeZone: "Asia/Kolkata",
+  day: "numeric",
+  month: "short",
+});
+
+/** e.g. "28 Sept" — the IST calendar day, for compact labels such as chart axes. */
+export function formatIstShortDate(time: number): string {
+  return Number.isNaN(time) ? "—" : istShortDateFormatter.format(new Date(time));
+}
+
 /** ISO instant → `YYYY-MM-DDTHH:mm` in IST, the value format of `<input type="datetime-local">`. */
 export function toIstInputValue(iso: string): string {
   const time = Date.parse(iso);

@@ -6,6 +6,7 @@ import { formatIst } from "@/lib/dates/ist";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import type { StudentTask } from "@/lib/tasks/studentBoard";
 import { TASK_TYPE_LABEL, type TaskDto } from "@/lib/validation/task";
+import { ProgressChart } from "./ProgressChart";
 import { SubmissionResultView } from "./SubmissionResultView";
 
 const CARD = "rounded-lg border border-black/10 p-4 dark:border-white/15";
@@ -109,6 +110,10 @@ export function StudentDashboard({ name, data }: { name: string; data: StudentDa
       </div>
 
       <Summary stats={data.stats} />
+
+      <Section title="Progress">
+        <ProgressChart recentScores={data.stats?.recentScores} />
+      </Section>
 
       <Section
         title="This week"
