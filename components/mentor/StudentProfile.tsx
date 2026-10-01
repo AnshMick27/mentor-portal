@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { AttemptList } from "@/components/student/SubmissionHistory";
 import { skillAverages } from "@/lib/dashboard/student";
 import { attemptsOnOtherTasks, PROFILE_STATE_LABEL, profileTaskRows, type ProfileTaskRow } from "@/lib/dashboard/profile";
@@ -60,6 +61,7 @@ export function StudentProfile({
   hasMore,
   loadingMore,
   onLoadMore,
+  actions,
 }: {
   data: StudentProfileData;
   submissions: readonly SubmissionView[];
@@ -67,6 +69,8 @@ export function StudentProfile({
   hasMore: boolean;
   loadingMore: boolean;
   onLoadMore: () => void;
+  /** Mentor-only controls (Remove / Restore), shown under the student's details. */
+  actions?: ReactNode;
 }) {
   const { user, stats } = data;
   const rows = profileTaskRows(data.tasks, submissions, now);
@@ -81,7 +85,15 @@ export function StudentProfile({
         <p className="text-sm opacity-75 break-words">
           {user.rollNo ?? "No roll number yet"} · {user.branch ?? "—"} · {user.email}
         </p>
+        {actions && <div className="mt-2">{actions}</div>}
       </div>
+
+      {user.removed === true && (
+        <p role="note" className="rounded-lg border border-black/15 bg-black/[0.04] px-4 py-3 text-sm dark:border-white/20 dark:bg-white/[0.06]">
+          Removed from the portal: this student cannot sign in and is left out of dashboards and the export. Their work
+          below is kept.
+        </p>
+      )}
 
       {stats?.needsAttention && (
         <p role="note" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">

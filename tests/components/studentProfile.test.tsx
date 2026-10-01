@@ -96,6 +96,13 @@ describe("StudentProfile", () => {
     expect(render({ hasMore: true, loadingMore: true })).toContain("Loading…");
   });
 
+  it("shows the mentor's controls and a note when the student was removed", () => {
+    const html = render({ data: { ...data, user: { ...data.user, removed: true } }, actions: <button type="button">Restore access</button> });
+    expect(html).toContain("Restore access");
+    expect(html).toContain("Removed from the portal: this student cannot sign in");
+    expect(render()).not.toContain("Removed from the portal");
+  });
+
   it("copes with a student who has no stats doc or roll number yet", () => {
     const html = render({
       data: { ...data, stats: undefined, user: { ...data.user, rollNo: undefined, branch: undefined } },

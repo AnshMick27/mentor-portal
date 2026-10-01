@@ -127,6 +127,19 @@ Once anyone has submitted, a task's type and problem slug are locked; to change 
 - **Excel export**: `/mentor` → **Export Excel** (mentor and viewer).
 - **Leaderboard**: off by default; switch at the bottom of `/mentor`.
 
+### Removing a student who is not your mentee
+
+Anyone with a college email can sign in and becomes a student. To take someone out:
+
+1. `/mentor` → **Students** (or open the student's profile).
+2. Find them (search by name, email or roll number) → **Remove from portal** → **Yes, remove**.
+3. They can no longer sign in (they see "Your access to the portal has been removed…"), and they leave the
+   dashboards, task status, leaderboard and Excel export straight away. Their submissions are kept.
+4. Changed your mind? Open the **Removed** group → **Restore access**.
+
+Only mentors can remove or restore; viewers see the list read-only. Mentor and viewer accounts cannot be removed
+this way (see §6).
+
 ---
 
 ## 6. When something goes wrong

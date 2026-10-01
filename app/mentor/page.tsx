@@ -31,6 +31,12 @@ export default function MentorHomePage() {
           >
             {profile.role === "mentor" ? "Manage tasks" : "View tasks"}
           </Link>
+          <Link
+            href="/mentor/students"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-black/20 px-5 font-semibold hover:bg-black/[0.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 dark:border-white/25 dark:hover:bg-white/[0.06]"
+          >
+            Students
+          </Link>
           <ExportButton />
         </div>
       </div>

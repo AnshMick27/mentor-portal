@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { use, useCallback, useState } from "react";
+import { useSignedInProfile } from "@/components/auth/AuthProvider";
+import { RemoveStudentButton } from "@/components/mentor/RemoveStudentButton";
 import { StudentProfile } from "@/components/mentor/StudentProfile";
 import { QueryStatus } from "@/components/QueryStatus";
 import { useAsyncData } from "@/components/useAsyncData";
@@ -23,7 +25,8 @@ function NotFound() {
 }
 
 /** Holds the loaded pages of attempts; "Load older attempts" appends the next 50. */
-function LoadedProfile({ data }: { data: StudentProfileData }) {
+function LoadedProfile({ data, onChanged }: { data: StudentProfileData; onChanged: () => void }) {
+  const viewer = useSignedInProfile();
   const now = useNow(15_000);
   const [pages, setPages] = useState(data.firstPage);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -53,6 +56,11 @@ function LoadedProfile({ data }: { data: StudentProfileData }) {
         hasMore={pages.cursor !== undefined}
         loadingMore={loadingMore}
         onLoadMore={() => void loadMore()}
+        actions={
+          viewer.role === "mentor" ? (
+            <RemoveStudentButton uid={data.uid} name={data.user.name} removed={data.user.removed === true} onChanged={onChanged} />
+          ) : undefined
+        }
       />
       {error && (
         <p role="alert" className="text-sm text-red-700 dark:text-red-300">
@@ -67,10 +75,10 @@ function Profile({ uid }: { uid: string }) {
   const load = useCallback(() => loadStudentProfile(getClientDb(), uid), [uid]);
   const { state, reload } = useAsyncData(load, "Could not load this student. Please try again.");
   if (state.status !== "ready") return <QueryStatus state={state} onRetry={reload} />;
-  return state.data ? <LoadedProfile key={uid} data={state.data} /> : <NotFound />;
+  return state.data ? <LoadedProfile key={uid} data={state.data} onChanged={reload} /> : <NotFound />;
 }
 
-/** Mentor and viewer: one student's stats, tasks and every attempt, read-only. */
+/** Mentor and viewer: one student's stats, tasks and every attempt; mentors can also remove or restore them. */
 export default function StudentProfilePage({ params }: PageProps<"/mentor/students/[uid]">) {
   const { uid } = use(params);
   return isValidUid(uid) ? <Profile uid={uid} /> : <NotFound />;
