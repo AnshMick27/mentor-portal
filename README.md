@@ -2,6 +2,9 @@
 
 Placement-prep portal for final-year students. See `SPEC.md` for the full specification and `PROGRESS.md` for status.
 
+Running the live portal (deploys, secrets, adding coding problems, fixing problems, free-tier limits, backups):
+see [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
+
 ## Getting started
 
 ```bash
