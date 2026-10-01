@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PrivacyLink } from "@/components/PrivacyLink";
 import { Button } from "@/components/ui/Button";
+import { Note } from "@/components/ui/Note";
 import { guardRedirect } from "@/lib/auth/guards";
 import { useAuth } from "./AuthProvider";
 
@@ -34,14 +35,12 @@ export function LoginPanel({ allowedDomain }: { allowedDomain: string }) {
         Use your college Google account (<span className="font-medium">@{allowedDomain}</span>).
       </p>
       {message && (
-        <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-          {message}
-        </p>
+        <Note tone="danger">{message}</Note>
       )}
       <Button onClick={() => void handleSignIn()} busy={waiting} busyLabel="Please wait…">
         Sign in with Google
       </Button>
-      <p className="text-sm opacity-80">
+      <p className="text-sm text-muted">
         Signing in creates your portal profile. <PrivacyLink />
       </p>
     </main>

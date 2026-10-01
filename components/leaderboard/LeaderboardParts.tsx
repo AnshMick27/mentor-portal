@@ -1,3 +1,4 @@
+import { Note } from "@/components/ui/Note";
 import type { LeaderboardEntry } from "@/lib/validation/config";
 
 /** Top 10: rank, name and average only (SPEC.md §8.5). */
@@ -70,9 +71,7 @@ export function Switch({ id, label, hint, checked, disabled = false, error, onCh
         {hint}
       </p>
       {error && (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-300">
-          {error}
-        </p>
+        <Note tone="danger">{error}</Note>
       )}
     </div>
   );

@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { Markdown } from "@/components/Markdown";
 import { SubmissionHistory } from "@/components/student/SubmissionHistory";
 import { TaskSubmitSection } from "@/components/student/TaskSubmitSection";
+import { BackLink } from "@/components/ui/TextLink";
 import { formatIst } from "@/lib/dates/ist";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import { taskProgress } from "@/lib/tasks/studentBoard";
@@ -30,9 +30,7 @@ export function StudentTaskDetail({
   const pastDue = Date.parse(task.dueAt) < now.getTime();
   return (
     <article className="flex flex-col gap-6">
-      <Link href="/student/tasks" className="self-start text-sm font-medium text-blue-700 underline dark:text-blue-300">
-        ← All tasks
-      </Link>
+      <BackLink href="/student/tasks">My tasks</BackLink>
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight break-words">{task.title}</h1>
         <p className="text-sm opacity-80">

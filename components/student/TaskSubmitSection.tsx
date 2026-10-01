@@ -4,7 +4,7 @@ import { submitAvailability } from "@/lib/submissions/availability";
 import type { AiTaskType } from "@/lib/validation/submission";
 import type { Language, TaskDto } from "@/lib/validation/task";
 import { CodeSubmitForm } from "./CodeSubmitForm";
-import { FeedbackReady } from "./FeedbackSubmitParts";
+import { FeedbackReady, FeedbackSaved } from "./FeedbackSubmitParts";
 import { IntroSubmitForm } from "./IntroSubmitForm";
 import { ResumeSubmitForm } from "./ResumeSubmitForm";
 import { useCodeSubmit } from "./useCodeSubmit";
@@ -58,6 +58,7 @@ function AiSubmitSection({ task, type, attemptsUsed, now }: SectionProps & { typ
         {type === "resume" ? "Submit your resume" : "Submit your introduction"}
       </h2>
       {state.status === "done" && <FeedbackReady result={state.result} />}
+      {state.status === "saved" && <FeedbackSaved />}
       {availability.open ? (
         <>
           <AttemptsLeft count={availability.attemptsLeft} />

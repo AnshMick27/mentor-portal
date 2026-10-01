@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useState, type ReactNode } from "react";
+import { TextLink } from "@/components/ui/TextLink";
 import {
   branchesOf,
   classSkillAverages,
@@ -16,8 +16,6 @@ import { formatIst } from "@/lib/dates/ist";
 import { TASK_TYPE_LABEL } from "@/lib/validation/task";
 
 const CARD = "rounded-lg border border-black/10 p-4 dark:border-white/15";
-const LINK =
-  "font-medium text-blue-700 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 dark:text-blue-300";
 
 const score = (value: number | undefined) => (value === undefined ? "—" : value.toFixed(1));
 
@@ -32,9 +30,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 function StudentLink({ student }: { student: StudentRef }) {
   return (
-    <Link href={`/mentor/students/${student.uid}`} className={LINK}>
-      {student.name}
-    </Link>
+    <TextLink href={`/mentor/students/${student.uid}`}>{student.name}</TextLink>
   );
 }
 

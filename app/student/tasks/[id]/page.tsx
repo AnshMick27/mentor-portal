@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { use, useCallback } from "react";
 import { useSignedInProfile } from "@/components/auth/AuthProvider";
 import { QueryStatus } from "@/components/QueryStatus";
 import { StudentTaskDetail } from "@/components/student/StudentTaskDetail";
 import { useOwnTaskSubmissions } from "@/components/student/useOwnTaskSubmissions";
+import { BackLink } from "@/components/ui/TextLink";
 import { useAsyncData } from "@/components/useAsyncData";
 import { useNow } from "@/components/useNow";
 import { getClientDb } from "@/lib/firebase/client";
@@ -29,9 +29,7 @@ export default function StudentTaskPage({ params }: PageProps<"/student/tasks/[i
       <section className="flex flex-col gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Task not found</h1>
         <p className="opacity-80">This task does not exist or is not available yet.</p>
-        <Link href="/student/tasks" className="self-start font-medium text-blue-700 underline dark:text-blue-300">
-          Back to your tasks
-        </Link>
+        <BackLink href="/student/tasks">My tasks</BackLink>
       </section>
     );
   }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/Button";
+import { Note } from "@/components/ui/Note";
 import { fetchExport } from "@/lib/export/download";
 
 /** Downloads the Excel export (mentor and viewer). Fetches with the ID token, then saves the file. */
@@ -36,9 +37,7 @@ export function ExportButton() {
         Export Excel
       </Button>
       {error && (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-300">
-          {error}
-        </p>
+        <Note tone="danger">{error}</Note>
       )}
     </div>
   );

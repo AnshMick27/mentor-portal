@@ -76,7 +76,7 @@ describe("StudentProfile", () => {
     expect(html).toContain("0827CI1 · CSIT · kabir@college.ac.in");
     expect(html).toContain("Needs attention: Missed 2 of the last 3 tasks");
     expect(html).toContain("7.5 / 10");
-    expect(html).toContain('href="/mentor"');
+    expect(html).toContain('href="/mentor/students"'); // back link goes to the student list (UX-17)
   });
 
   it("lists every task with state, attempts and full results, labelled for a mentor", () => {

@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/Button";
+import { Note } from "@/components/ui/Note";
 import { apiFetch } from "@/lib/api/client";
 import { onboardingSchema } from "@/lib/validation/onboarding";
 import { BRANCHES } from "@/lib/validation/user";
@@ -65,9 +66,7 @@ export function OnboardingForm() {
         </select>
       </label>
       {error && (
-        <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-          {error}
-        </p>
+        <Note tone="danger">{error}</Note>
       )}
       <Button type="submit" busy={saving} busyLabel="Saving…">
         Continue

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { BackLink } from "@/components/ui/TextLink";
 
 export const metadata: Metadata = {
   title: "How your data is used · CDC Mentor Portal",
@@ -82,9 +82,7 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
-      <Link href="/" className="self-start font-medium text-blue-700 underline underline-offset-2 dark:text-blue-300">
-        Back to the portal
-      </Link>
+      <BackLink href="/">Portal home</BackLink>
     </main>
   );
 }

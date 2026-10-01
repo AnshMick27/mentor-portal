@@ -1,21 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
+import { TextLink } from "@/components/ui/TextLink";
 import { formatIst } from "@/lib/dates/ist";
 import { searchStudents, splitStudents, type StudentRow } from "@/lib/students/list";
 import { RemoveStudentButton } from "./RemoveStudentButton";
-
-const LINK =
-  "font-semibold text-blue-700 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 dark:text-blue-300";
 
 function Row({ row, canEdit, onChanged }: { row: StudentRow; canEdit: boolean; onChanged: () => void }) {
   return (
     <li className="flex flex-col gap-3 rounded-lg border border-black/10 p-4 sm:flex-row sm:items-start sm:justify-between dark:border-white/15">
       <div className="flex min-w-0 flex-col gap-0.5 text-sm">
-        <Link href={`/mentor/students/${row.uid}`} className={`${LINK} text-base break-words`}>
+        <TextLink href={`/mentor/students/${row.uid}`} strong className="text-base break-words">
           {row.name}
-        </Link>
+        </TextLink>
         <span className="break-all opacity-75">{row.email}</span>
         <span className="opacity-75">
           {row.rollNo ?? "No roll number"} · {row.branch ?? "—"}

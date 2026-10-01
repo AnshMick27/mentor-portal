@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/Button";
+import { Note } from "@/components/ui/Note";
 import type { SubmissionResult } from "@/lib/validation/submission";
 import type { FeedbackSubmitState } from "./useFeedbackSubmit";
 
@@ -7,12 +8,7 @@ export const textareaClass =
 
 export function ErrorNote({ message }: { message: string }) {
   return (
-    <p
-      role="alert"
-      className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200"
-    >
-      {message}
-    </p>
+    <Note tone="danger">{message}</Note>
   );
 }
 
@@ -37,13 +33,18 @@ export function SubmitFooter({ state, disabled }: { state: FeedbackSubmitState; 
 /** Short note after a successful submit; the full feedback is in the attempt history below. */
 export function FeedbackReady({ result }: { result: SubmissionResult }) {
   return (
-    <div
-      role="status"
-      className="flex flex-col gap-1 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-900 dark:border-green-800 dark:bg-green-950 dark:text-green-100"
-    >
-      <span className="text-base font-semibold">Feedback ready: {result.score.toFixed(1)} / 10</span>
-      <span>{result.summary}</span>
-      <span className="opacity-80">Full feedback is under “Your attempts” below.</span>
-    </div>
+    <Note tone="success" live title={`Feedback ready: ${result.score.toFixed(1)} / 10`}>
+      <p>{result.summary}</p>
+      <p>Full feedback is under “Your attempts” below.</p>
+    </Note>
+  );
+}
+
+/** The attempt was saved but its reply could not be read here; never shown as an error (UX-09). */
+export function FeedbackSaved() {
+  return (
+    <Note tone="success" live>
+      Your feedback is ready. You can read it under “Your attempts” below.
+    </Note>
   );
 }

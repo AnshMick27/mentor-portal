@@ -53,7 +53,7 @@ Goal: make the portal safe and understandable for real students, let the mentor 
   - Acceptance: render test for `AppHeader`: student sees Home and My tasks, mentor/viewer sees Dashboard, Tasks and Students; current page has `aria-current="page"`; brand links to the role's home; skip link targets `#main`.
 - [x] **T35c1 — `Button` / `ButtonLink` / `buttonClasses` in `components/ui/`, replacing every hand-written button style** (UX-16; T35c split in two because it touches ~20 files)
   - Acceptance: render tests for the component (variants, sizes, `busy` label, disabled); grep finds no `bg-blue-700`/`bg-red-700` button strings outside `components/ui`; all tests green.
-- [ ] **T35c2 — `TextLink`/`BackLink` and `Note`, replacing the copies; success never shown as an error; back links go to the right place** (UX-15 links part, UX-09, UX-17)
+- [x] **T35c2 — `TextLink`/`BackLink` and `Note`, replacing the copies; success never shown as an error; back links go to the right place** (UX-15 links part, UX-09, UX-17)
   - Acceptance: render tests for the components (`role` per tone, `←` hidden from screen readers); a successful feedback submit is never shown as an error; no link inside an `opacity-*` element.
 - [ ] **T35d — `Card`, `Section`, `PageHeader`, `EmptyState`, a tab title per page, heading kept while loading** (UX-25, UX-18, UX-26, UX-11 section part)
   - Acceptance: render tests for the four components; each data page keeps its h1 while loading.
@@ -401,6 +401,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-10-01 — T35a — globals.css: `color-scheme: light dark`, design tokens (muted, line, line-strong, surface, link, focus) for both themes exposed as Tailwind colours, one global `:focus-visible` ring (light blue in dark mode), themed `<select>` options, Markdown links use `--link` and images fit the screen; CSS guard test.
 - 2026-10-01 — T35b — Header nav row (student: Home, My tasks; mentor/viewer: Dashboard, Tasks, Students; none before onboarding) with `aria-current="page"` incl. sub-pages, brand links to the role's home (`homeFor`), "Skip to content" link and `id="main"` in ProtectedShell; 7 render tests. Redirecting signed-in visitors away from `/` still waits for Ansh (T35 question 3).
 - 2026-10-01 — T35c1 — `components/ui/Button.tsx` (`Button` with primary/secondary/danger/ghost, md/sm, `busy`+`busyLabel`; `ButtonLink`; `buttonClasses`), replacing the hand-written button styles in 13 files (login, landing, onboarding, header sign-out, retry, export, remove/restore, load older, task list/form, submit forms); 10 render tests. Left for later batches: the switch track (T35i) and the Write/Preview tabs (T35j).
+- 2026-10-01 — T35c2 — `components/ui/TextLink.tsx` (`TextLink`, `textLinkClasses`, `BackLink`) and `components/ui/Note.tsx` (5 tones; danger = alert, `live` = status); replaced the LINK constants, PrivacyLink, back links (profile → Students, task page → My tasks, viewer notice → Tasks, privacy → Portal home) and the boxed/inline error and success notes in 17 files; an unreadable-but-saved feedback reply now shows a success note (`saved` state) instead of a red error; AI-data and login lines use `text-muted` instead of opacity; 13 render tests.
 
 ## Blockers
 (none)

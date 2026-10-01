@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { use, useCallback, useState } from "react";
 import { useSignedInProfile } from "@/components/auth/AuthProvider";
 import { RemoveStudentButton } from "@/components/mentor/RemoveStudentButton";
 import { StudentProfile } from "@/components/mentor/StudentProfile";
 import { QueryStatus } from "@/components/QueryStatus";
+import { Note } from "@/components/ui/Note";
+import { BackLink } from "@/components/ui/TextLink";
 import { useAsyncData } from "@/components/useAsyncData";
 import { useNow } from "@/components/useNow";
 import { isValidUid } from "@/lib/dashboard/profile";
@@ -17,9 +18,7 @@ function NotFound() {
     <section className="flex flex-col gap-3">
       <h1 className="text-2xl font-bold tracking-tight">Student not found</h1>
       <p className="opacity-80">There is no student with this link.</p>
-      <Link href="/mentor" className="self-start font-medium text-blue-700 underline dark:text-blue-300">
-        Back to the dashboard
-      </Link>
+      <BackLink href="/mentor/students">Students</BackLink>
     </section>
   );
 }
@@ -63,9 +62,7 @@ function LoadedProfile({ data, onChanged }: { data: StudentProfileData; onChange
         }
       />
       {error && (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-300">
-          {error}
-        </p>
+        <Note tone="danger">{error}</Note>
       )}
     </>
   );

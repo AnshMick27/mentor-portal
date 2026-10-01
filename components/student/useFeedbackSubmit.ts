@@ -15,6 +15,8 @@ export type FeedbackSubmitState =
   | { status: "idle" }
   | { status: "submitting" }
   | { status: "error"; message: string }
+  /** Saved, but the reply could not be read here: the feedback is in the attempt history. */
+  | { status: "saved" }
   | { status: "done"; result: SubmissionResult };
 
 /** Sends resume/intro text to `POST /api/feedback`; validates locally first with the same schema as the server. */
@@ -36,7 +38,7 @@ export function useFeedbackSubmit(taskId: string, type: AiTaskType) {
     }
     const data = feedbackReplySchema.safeParse(reply.data);
     if (!data.success) {
-      setState({ status: "error", message: "Your feedback is saved. See “Your attempts” below." });
+      setState({ status: "saved" });
     } else {
       setState({ status: "done", result: data.data.submission.result });
     }

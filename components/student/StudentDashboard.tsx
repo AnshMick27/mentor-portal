@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { TextLink } from "@/components/ui/TextLink";
 import { dashboardNextSteps, skillAverages } from "@/lib/dashboard/student";
 import type { StudentDashboardData } from "@/lib/dashboard/studentQueries";
 import { formatIst } from "@/lib/dates/ist";
@@ -10,8 +11,6 @@ import { ProgressChart } from "./ProgressChart";
 import { SubmissionResultView } from "./SubmissionResultView";
 
 const CARD = "rounded-lg border border-black/10 p-4 dark:border-white/15";
-const LINK =
-  "font-medium text-blue-700 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 dark:text-blue-300";
 
 function Section({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
   return (
@@ -88,9 +87,9 @@ function LatestResult({ submission, task, open }: { submission: SubmissionView; 
         <div className="mt-3 flex flex-col gap-3 border-t border-black/10 pt-3 dark:border-white/15">
           <SubmissionResultView result={submission.result} />
           {task && (
-            <Link href={`/student/tasks/${task.id}`} className={`${LINK} text-sm`}>
+            <TextLink href={`/student/tasks/${task.id}`} className="text-sm">
               Open task
-            </Link>
+            </TextLink>
           )}
         </div>
       </details>
@@ -118,9 +117,9 @@ export function StudentDashboard({ name, data }: { name: string; data: StudentDa
       <Section
         title="This week"
         action={
-          <Link href="/student/tasks" className={`${LINK} text-sm`}>
+          <TextLink href="/student/tasks" className="text-sm">
             All tasks
-          </Link>
+          </TextLink>
         }
       >
         {data.week.length === 0 ? (

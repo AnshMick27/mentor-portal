@@ -1,7 +1,8 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { AttemptList } from "@/components/student/SubmissionHistory";
 import { Button } from "@/components/ui/Button";
+import { Note } from "@/components/ui/Note";
+import { BackLink } from "@/components/ui/TextLink";
 import { skillAverages } from "@/lib/dashboard/student";
 import { attemptsOnOtherTasks, PROFILE_STATE_LABEL, profileTaskRows, type ProfileTaskRow } from "@/lib/dashboard/profile";
 import type { StudentProfileData } from "@/lib/dashboard/profileQueries";
@@ -79,9 +80,7 @@ export function StudentProfile({
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-1">
-        <Link href="/mentor" className="self-start text-sm font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300">
-          ← Dashboard
-        </Link>
+        <BackLink href="/mentor/students">Students</BackLink>
         <h1 className="text-2xl font-bold tracking-tight break-words">{user.name}</h1>
         <p className="text-sm opacity-75 break-words">
           {user.rollNo ?? "No roll number yet"} · {user.branch ?? "—"} · {user.email}
@@ -90,16 +89,14 @@ export function StudentProfile({
       </div>
 
       {user.removed === true && (
-        <p role="note" className="rounded-lg border border-black/15 bg-black/[0.04] px-4 py-3 text-sm dark:border-white/20 dark:bg-white/[0.06]">
+        <Note tone="neutral">
           Removed from the portal: this student cannot sign in and is left out of dashboards and the export. Their work
           below is kept.
-        </p>
+        </Note>
       )}
 
       {stats?.needsAttention && (
-        <p role="note" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
-          Needs attention: {stats.needsAttentionReason ?? "flagged"}
-        </p>
+        <Note tone="warning">Needs attention: {stats.needsAttentionReason ?? "flagged"}</Note>
       )}
 
       <dl className={`${CARD} grid grid-cols-2 gap-4 sm:grid-cols-4`}>
