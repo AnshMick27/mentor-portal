@@ -20,7 +20,7 @@ describe("StudentList", () => {
     expect(html).toContain("(2)");
     expect(html).toContain("Removed <span");
     expect(html).toContain("(1)");
-    expect(html.indexOf("Outsider Ravi")).toBeGreaterThan(html.indexOf('aria-label="Removed"'));
+    expect(html.indexOf("Outsider Ravi")).toBeGreaterThan(html.indexOf("Removed <span"));
     expect(html).toContain('href="/mentor/students/s1"');
     expect(html).toContain("0827CS1 · CSE · Joined 25 Sept 2026");
     expect(html).toContain("Onboarding not finished");

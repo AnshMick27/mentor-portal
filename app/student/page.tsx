@@ -18,10 +18,10 @@ export default function StudentHomePage() {
     <>
       <PageHeader title={`Hi, ${name}`} tabTitle="Home" subtitle="Your progress and what is due this week." />
       {state.status === "ready" ? (
-        <>
+        <div className="flex flex-col gap-8">
           <StudentDashboard data={state.data} />
           <StudentLeaderboard />
-        </>
+        </div>
       ) : (
         <QueryStatus state={state} onRetry={reload} loadingLabel="Loading your dashboard…" />
       )}

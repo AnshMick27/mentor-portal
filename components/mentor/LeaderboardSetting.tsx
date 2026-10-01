@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Switch } from "@/components/leaderboard/LeaderboardParts";
+import { cardClasses } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { apiFetch } from "@/lib/api/client";
 import { configView, type ConfigView } from "@/lib/leaderboard/view";
 
@@ -53,10 +56,9 @@ export function LeaderboardSettingView({
   onToggle: (on: boolean) => void;
 }) {
   return (
-    <section className="flex flex-col gap-3 rounded-lg border border-black/10 p-4 dark:border-white/15" aria-label="Leaderboard setting">
-      <h2 className="text-lg font-semibold">Student leaderboard</h2>
+    <Section title="Student leaderboard" className={cardClasses()}>
       {view.status === "error" ? (
-        <p className="text-sm opacity-70">{view.message}</p>
+        <EmptyState>{view.message}</EmptyState>
       ) : (
         <Switch
           id="leaderboard-enabled"
@@ -68,6 +70,6 @@ export function LeaderboardSettingView({
           onChange={onToggle}
         />
       )}
-    </section>
+    </Section>
   );
 }

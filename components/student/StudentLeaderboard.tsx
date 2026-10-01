@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth, useSignedInProfile } from "@/components/auth/AuthProvider";
 import { LeaderboardTable, Switch } from "@/components/leaderboard/LeaderboardParts";
+import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { apiFetch } from "@/lib/api/client";
 import { leaderboardView, type LeaderboardView } from "@/lib/leaderboard/view";
 import { optInResponseSchema } from "@/lib/validation/config";
@@ -70,15 +73,14 @@ export function LeaderboardSection({
   onToggle: (checked: boolean) => void;
 }) {
   return (
-    <section className="flex flex-col gap-3" aria-label="Leaderboard">
-      <h2 className="text-lg font-semibold">Leaderboard</h2>
+    <Section title="Leaderboard">
       {view.status === "ready" && (
-        <div className="rounded-lg border border-black/10 p-4 dark:border-white/15">
+        <Card>
           <LeaderboardTable entries={view.entries} />
-        </div>
+        </Card>
       )}
-      {view.status === "off" && <p className="text-sm opacity-70">The leaderboard is switched off right now.</p>}
-      {view.status === "error" && <p className="text-sm opacity-70">{view.message}</p>}
+      {view.status === "off" && <EmptyState>The leaderboard is switched off right now.</EmptyState>}
+      {view.status === "error" && <EmptyState>{view.message}</EmptyState>}
       <Switch
         id="leaderboard-opt-in"
         label="Show me on the leaderboard"
@@ -88,6 +90,6 @@ export function LeaderboardSection({
         error={error}
         onChange={onToggle}
       />
-    </section>
+    </Section>
   );
 }

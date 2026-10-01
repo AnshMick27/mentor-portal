@@ -1,10 +1,11 @@
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Note } from "@/components/ui/Note";
 import type { LeaderboardEntry } from "@/lib/validation/config";
 
 /** Top 10: rank, name and average only (SPEC.md §8.5). */
 export function LeaderboardTable({ entries }: { entries: LeaderboardEntry[] }) {
   if (entries.length === 0) {
-    return <p className="text-sm opacity-70">Nobody is on the leaderboard yet.</p>;
+    return <EmptyState>Nobody is on the leaderboard yet.</EmptyState>;
   }
   return (
     <table className="w-full border-collapse text-left text-sm">

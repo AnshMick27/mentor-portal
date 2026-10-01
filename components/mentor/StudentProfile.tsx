@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
 import { AttemptList } from "@/components/student/SubmissionHistory";
 import { Button } from "@/components/ui/Button";
+import { cardClasses } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Note } from "@/components/ui/Note";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
 import { skillAverages } from "@/lib/dashboard/student";
 import { attemptsOnOtherTasks, PROFILE_STATE_LABEL, profileTaskRows, type ProfileTaskRow } from "@/lib/dashboard/profile";
 import type { StudentProfileData } from "@/lib/dashboard/profileQueries";
@@ -10,7 +13,6 @@ import { formatIst } from "@/lib/dates/ist";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import { TASK_TYPE_LABEL } from "@/lib/validation/task";
 
-const CARD = "rounded-lg border border-black/10 p-4 dark:border-white/15";
 
 const STATE_CLASS: Record<ProfileTaskRow["state"], string> = {
   submitted: "text-green-800 dark:text-green-300",
@@ -30,7 +32,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 function TaskRow({ row, now }: { row: ProfileTaskRow; now: Date }) {
   return (
     <li>
-      <details className={CARD}>
+      <details className={cardClasses()}>
         <summary className="flex min-h-11 cursor-pointer flex-col gap-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
           <span className="font-semibold break-words">{row.task.title}</span>
           <span className="text-sm opacity-75">
@@ -43,9 +45,9 @@ function TaskRow({ row, now }: { row: ProfileTaskRow; now: Date }) {
             {row.bestScore !== undefined && <> · Best {row.bestScore.toFixed(1)} / 10</>}
           </span>
         </summary>
-        <div className="mt-3 border-t border-black/10 pt-3 dark:border-white/15">
+        <div className="mt-3 border-t border-line pt-3">
           {row.attempts.length === 0 ? (
-            <p className="text-sm opacity-70">No attempts.</p>
+            <EmptyState>No attempts.</EmptyState>
           ) : (
             <AttemptList submissions={row.attempts} now={now} audience="mentor" />
           )}
@@ -99,7 +101,7 @@ export function StudentProfile({
         <Note tone="warning">Needs attention: {stats.needsAttentionReason ?? "flagged"}</Note>
       )}
 
-      <dl className={`${CARD} grid grid-cols-2 gap-4 sm:grid-cols-4`}>
+      <dl className={cardClasses({ className: "grid grid-cols-2 gap-4 sm:grid-cols-4" })}>
         <Stat label="Submitted" value={String(stats?.tasksSubmitted ?? 0)} />
         <Stat label="Missed" value={String(stats?.missedCount ?? 0)} />
         <Stat label="Average" value={stats?.overallAvg === undefined ? "—" : `${stats.overallAvg.toFixed(1)} / 10`} />
@@ -108,10 +110,9 @@ export function StudentProfile({
         ))}
       </dl>
 
-      <section className="flex flex-col gap-3" aria-label="Tasks">
-        <h2 className="text-lg font-semibold">Tasks</h2>
+      <Section title="Tasks">
         {rows.length === 0 ? (
-          <p className="text-sm opacity-70">No published tasks yet.</p>
+          <EmptyState>No published tasks yet.</EmptyState>
         ) : (
           <ul className="flex flex-col gap-3">
             {rows.map((row) => (
@@ -120,7 +121,7 @@ export function StudentProfile({
           </ul>
         )}
         {others > 0 && (
-          <p className="text-sm opacity-70">
+          <p className="text-sm text-muted">
             {others} more attempt{others === 1 ? "" : "s"} on tasks that are no longer published.
           </p>
         )}
@@ -129,7 +130,7 @@ export function StudentProfile({
             Load older attempts
           </Button>
         )}
-      </section>
+      </Section>
     </div>
   );
 }

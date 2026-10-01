@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/Button";
+import { cardClasses } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { formatIst } from "@/lib/dates/ist";
 import { TASK_TYPE_LABEL, type TaskDto } from "@/lib/validation/task";
@@ -29,11 +31,11 @@ export function TaskList({ tasks, canEdit }: { tasks: TaskDto[]; canEdit: boolea
   return (
     <section className="flex flex-col gap-4">
       {tasks.length === 0 ? (
-        <p className="opacity-70">No tasks yet.</p>
+        <EmptyState action={canEdit && <ButtonLink href="/mentor/tasks/new">Create your first task</ButtonLink>}>No tasks yet.</EmptyState>
       ) : (
         <ul className="flex flex-col gap-3">
           {tasks.map((task) => (
-            <li key={task.id} className="rounded-lg border border-black/10 p-4 dark:border-white/15">
+            <li key={task.id} className={cardClasses()}>
               <div className="flex items-start justify-between gap-3">
                 {canEdit ? (
                   <Link

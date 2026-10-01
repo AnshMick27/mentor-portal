@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
+import { cardClasses } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { TextLink } from "@/components/ui/TextLink";
 import {
   branchesOf,
@@ -15,18 +18,8 @@ import type { MentorDashboardData } from "@/lib/dashboard/mentorQueries";
 import { formatIst } from "@/lib/dates/ist";
 import { TASK_TYPE_LABEL } from "@/lib/validation/task";
 
-const CARD = "rounded-lg border border-black/10 p-4 dark:border-white/15";
 
 const score = (value: number | undefined) => (value === undefined ? "—" : value.toFixed(1));
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-3" aria-label={title}>
-      <h2 className="text-lg font-semibold">{title}</h2>
-      {children}
-    </section>
-  );
-}
 
 function StudentLink({ student }: { student: StudentRef }) {
   return (
@@ -36,7 +29,7 @@ function StudentLink({ student }: { student: StudentRef }) {
 
 function TaskStatus({ row }: { row: TaskStatusRow }) {
   return (
-    <li className={`${CARD} flex flex-col gap-2`}>
+    <li className={cardClasses({ className: "flex flex-col gap-2" })}>
       <div className="flex flex-col gap-0.5">
         <span className="font-semibold break-words">{row.task.title}</span>
         <span className="text-sm opacity-75">
@@ -62,11 +55,11 @@ function TaskStatus({ row }: { row: TaskStatusRow }) {
               </ul>
             </details>
           ) : (
-            <p className="text-sm opacity-70">Everyone has submitted.</p>
+            <EmptyState>Everyone has submitted.</EmptyState>
           )}
         </>
       ) : (
-        <p className="text-sm opacity-70">No numbers yet: they appear after the first submission or tonight&apos;s update.</p>
+        <EmptyState>No numbers yet: they appear after the first submission or tonight&apos;s update.</EmptyState>
       )}
     </li>
   );
@@ -106,7 +99,7 @@ export function MentorDashboardView({
 
       <Section title="Task status">
         {rows.length === 0 ? (
-          <p className="text-sm opacity-70">No published tasks yet.</p>
+          <EmptyState>No published tasks yet.</EmptyState>
         ) : (
           <ul className="flex flex-col gap-3">
             {rows.map((row) => (
@@ -118,11 +111,11 @@ export function MentorDashboardView({
 
       <Section title={`Needs attention (${attention.length})`}>
         {attention.length === 0 ? (
-          <p className="text-sm opacity-70">Nobody is flagged right now.</p>
+          <EmptyState>Nobody is flagged right now.</EmptyState>
         ) : (
           <ul className="flex flex-col gap-2">
             {attention.map((student) => (
-              <li key={student.uid} className={`${CARD} flex flex-col gap-0.5 text-sm`}>
+              <li key={student.uid} className={cardClasses({ className: "flex flex-col gap-0.5 text-sm" })}>
                 <span className="break-words">
                   <StudentLink student={student} />{" "}
                   <span className="opacity-70">
@@ -137,7 +130,7 @@ export function MentorDashboardView({
       </Section>
 
       <Section title="Class overview">
-        <dl className={`${CARD} grid grid-cols-1 gap-3 sm:grid-cols-3`}>
+        <dl className={cardClasses({ className: "grid grid-cols-1 gap-3 sm:grid-cols-3" })}>
           {skills.map((skill) => (
             <div key={skill.type} className="flex flex-col">
               <dt className="text-xs uppercase tracking-wide opacity-70">{skill.label}</dt>

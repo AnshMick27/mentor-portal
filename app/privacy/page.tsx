@@ -1,20 +1,11 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
+import { Section } from "@/components/ui/Section";
 import { BackLink } from "@/components/ui/TextLink";
 
 export const metadata: Metadata = {
   title: "How your data is used · CDC Mentor Portal",
   description: "What the CDC Mentor Portal stores, who can see it, and where your work is sent.",
 };
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      {children}
-    </section>
-  );
-}
 
 const LIST = "list-disc space-y-1 pl-5";
 

@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { cardClasses } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
 import { TextLink } from "@/components/ui/TextLink";
 import { formatIst } from "@/lib/dates/ist";
 import { searchStudents, splitStudents, type StudentRow } from "@/lib/students/list";
@@ -9,7 +12,7 @@ import { RemoveStudentButton } from "./RemoveStudentButton";
 
 function Row({ row, canEdit, onChanged }: { row: StudentRow; canEdit: boolean; onChanged: () => void }) {
   return (
-    <li className="flex flex-col gap-3 rounded-lg border border-black/10 p-4 sm:flex-row sm:items-start sm:justify-between dark:border-white/15">
+    <li className={cardClasses({ className: "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between" })}>
       <div className="flex min-w-0 flex-col gap-0.5 text-sm">
         <TextLink href={`/mentor/students/${row.uid}`} strong className="text-base break-words">
           {row.name}
@@ -44,12 +47,9 @@ function Group({
   onChanged: () => void;
 }) {
   return (
-    <section className="flex flex-col gap-3" aria-label={title}>
-      <h2 className="text-lg font-semibold">
-        {title} <span className="text-sm font-normal opacity-60">({rows.length})</span>
-      </h2>
+    <Section title={title} count={rows.length}>
       {rows.length === 0 ? (
-        <p className="text-sm opacity-70">{empty}</p>
+        <EmptyState>{empty}</EmptyState>
       ) : (
         <ul className="flex flex-col gap-3">
           {rows.map((row) => (
@@ -57,7 +57,7 @@ function Group({
           ))}
         </ul>
       )}
-    </section>
+    </Section>
   );
 }
 

@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
-import Link from "next/link";
+import { cardClasses, CardLink } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { TextLink } from "@/components/ui/TextLink";
 import { dashboardNextSteps, skillAverages } from "@/lib/dashboard/student";
 import type { StudentDashboardData } from "@/lib/dashboard/studentQueries";
@@ -9,20 +10,6 @@ import type { StudentTask } from "@/lib/tasks/studentBoard";
 import { TASK_TYPE_LABEL, type TaskDto } from "@/lib/validation/task";
 import { ProgressChart } from "./ProgressChart";
 import { SubmissionResultView } from "./SubmissionResultView";
-
-const CARD = "rounded-lg border border-black/10 p-4 dark:border-white/15";
-
-function Section({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-3" aria-label={title}>
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-lg font-semibold">{title}</h2>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
@@ -36,7 +23,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 function Summary({ stats }: { stats: StudentDashboardData["stats"] }) {
   const skills = skillAverages(stats);
   return (
-    <dl className={`${CARD} grid grid-cols-2 gap-4 sm:grid-cols-4`}>
+    <dl className={cardClasses({ className: "grid grid-cols-2 gap-4 sm:grid-cols-4" })}>
       <Stat label="Submitted" value={String(stats?.tasksSubmitted ?? 0)} />
       <Stat label="Missed" value={String(stats?.missedCount ?? 0)} />
       <Stat label="Average" value={stats?.overallAvg === undefined ? "—" : `${stats.overallAvg.toFixed(1)} / 10`} />
@@ -51,10 +38,7 @@ function WeekTask({ task }: { task: StudentTask }) {
   const submitted = task.bestScore !== undefined;
   return (
     <li>
-      <Link
-        href={`/student/tasks/${task.id}`}
-        className="flex flex-col gap-1 rounded-lg border border-black/10 p-4 hover:bg-black/[0.03] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 dark:border-white/15 dark:hover:bg-white/[0.05]"
-      >
+      <CardLink href={`/student/tasks/${task.id}`}>
         <span className="font-semibold break-words">{task.title}</span>
         <span className="text-sm opacity-75">
           {TASK_TYPE_LABEL[task.type]} · Due {formatIst(task.dueAt)}
@@ -68,7 +52,7 @@ function WeekTask({ task }: { task: StudentTask }) {
             <span className="font-medium text-amber-800 dark:text-amber-300">Not submitted yet</span>
           )}
         </span>
-      </Link>
+      </CardLink>
     </li>
   );
 }
@@ -77,14 +61,14 @@ function LatestResult({ submission, task, open }: { submission: SubmissionView; 
   if (!submission.result) return null;
   return (
     <li>
-      <details open={open} className={`${CARD} group`}>
+      <details open={open} className={cardClasses({ className: "group" })}>
         <summary className="flex min-h-11 cursor-pointer list-none flex-wrap items-center justify-between gap-x-3 gap-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
           <span className="font-semibold break-words">{task?.title ?? TASK_TYPE_LABEL[submission.type]}</span>
           <span className="text-sm opacity-75">
             {submission.result.score.toFixed(1)} / 10 · {formatIst(submission.createdAt.toISOString())}
           </span>
         </summary>
-        <div className="mt-3 flex flex-col gap-3 border-t border-black/10 pt-3 dark:border-white/15">
+        <div className="mt-3 flex flex-col gap-3 border-t border-line pt-3">
           <SubmissionResultView result={submission.result} />
           {task && (
             <TextLink href={`/student/tasks/${task.id}`} className="text-sm">
@@ -118,7 +102,7 @@ export function StudentDashboard({ data }: { data: StudentDashboardData }) {
         }
       >
         {data.week.length === 0 ? (
-          <p className="text-sm opacity-70">Nothing due in the next 7 days.</p>
+          <EmptyState>Nothing due in the next 7 days.</EmptyState>
         ) : (
           <ul className="flex flex-col gap-3">
             {data.week.map((task) => (
@@ -130,7 +114,7 @@ export function StudentDashboard({ data }: { data: StudentDashboardData }) {
 
       <Section title="Latest feedback">
         {data.latest.length === 0 ? (
-          <p className="text-sm opacity-70">No feedback yet. Submit a task to get your first score.</p>
+          <EmptyState>No feedback yet. Submit a task to get your first score.</EmptyState>
         ) : (
           <ul className="flex flex-col gap-3">
             {data.latest.map((submission, index) => (
@@ -147,9 +131,9 @@ export function StudentDashboard({ data }: { data: StudentDashboardData }) {
 
       <Section title="Next steps">
         {nextSteps.length === 0 ? (
-          <p className="text-sm opacity-70">Your next steps appear here after your first resume or intro feedback.</p>
+          <EmptyState>Your next steps appear here after your first resume or intro feedback.</EmptyState>
         ) : (
-          <ol className={`${CARD} list-decimal space-y-2 pl-9`}>
+          <ol className={cardClasses({ className: "list-decimal space-y-2 pl-9" })}>
             {nextSteps.map((step, index) => (
               <li key={index} className="break-words">
                 {step}

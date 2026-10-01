@@ -1,7 +1,9 @@
 import { Markdown } from "@/components/Markdown";
 import { SubmissionHistory } from "@/components/student/SubmissionHistory";
 import { TaskSubmitSection } from "@/components/student/TaskSubmitSection";
+import { cardClasses } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
 import { formatIst } from "@/lib/dates/ist";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import { taskProgress } from "@/lib/tasks/studentBoard";
@@ -46,23 +48,24 @@ export function StudentTaskDetail({
         }
       />
 
-      <Markdown>{task.description}</Markdown>
+      <Section title="What to do">
+        <Markdown>{task.description}</Markdown>
+      </Section>
 
       {task.coding && (
-        <section className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold">Sample tests</h2>
-          <p className="text-sm opacity-80">
+        <Section title="Sample tests" className="gap-4">
+          <p className="text-sm text-muted">
             Languages: {task.coding.languages.map((l) => LANGUAGE_LABEL[l]).join(", ")} · Time limit{" "}
             {task.coding.timeLimitMs / 1000} s
           </p>
           {task.coding.sampleTests.map((test, index) => (
-            <div key={index} className="flex flex-col gap-2 rounded-lg border border-black/10 p-3 dark:border-white/15">
+            <div key={index} className={cardClasses({ padding: "sm", className: "flex flex-col gap-2" })}>
               <span className="font-medium">Sample {index + 1}</span>
               <Sample label="Input" text={test.input} />
               <Sample label="Expected output" text={test.output} />
             </div>
           ))}
-        </section>
+        </Section>
       )}
 
       <TaskSubmitSection task={task} attemptsUsed={attemptsUsed} now={now} />

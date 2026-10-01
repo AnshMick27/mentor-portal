@@ -1,5 +1,6 @@
 "use client";
 
+import { Note } from "@/components/ui/Note";
 import { submitAvailability } from "@/lib/submissions/availability";
 import type { AiTaskType } from "@/lib/validation/submission";
 import type { Language, TaskDto } from "@/lib/validation/task";
@@ -21,7 +22,7 @@ function AttemptsLeft({ count }: { count: number }) {
 }
 
 function ClosedNote({ reason }: { reason: string }) {
-  return <p className="rounded-lg border border-black/10 px-4 py-3 text-sm dark:border-white/15">{reason}</p>;
+  return <Note tone="neutral">{reason}</Note>;
 }
 
 function CodeSubmitSection({ task, attemptsUsed, now }: SectionProps) {

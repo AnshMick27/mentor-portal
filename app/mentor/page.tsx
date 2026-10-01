@@ -32,12 +32,14 @@ export default function MentorHomePage() {
           </>
         }
       />
-      {state.status === "ready" ? (
-        <MentorDashboard data={state.data} />
-      ) : (
-        <QueryStatus state={state} onRetry={reload} loadingLabel="Loading the dashboard…" />
-      )}
-      {profile.role === "mentor" && <LeaderboardSetting />}
+      <div className="flex flex-col gap-8">
+        {state.status === "ready" ? (
+          <MentorDashboard data={state.data} />
+        ) : (
+          <QueryStatus state={state} onRetry={reload} loadingLabel="Loading the dashboard…" />
+        )}
+        {profile.role === "mentor" && <LeaderboardSetting />}
+      </div>
     </>
   );
 }
