@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ChangeEvent, type FormEvent } from "react";
+import { AiDataNote } from "@/components/PrivacyLink";
 import { MAX_RESUME_CHARS } from "@/lib/submissions/limits";
 import { extractPdfText, PdfTextError } from "@/lib/submissions/pdfText";
 import { ErrorNote, SubmitFooter, textareaClass } from "./FeedbackSubmitParts";
@@ -56,6 +57,7 @@ export function ResumeSubmitForm({ state, onSubmit }: { state: FeedbackSubmitSta
       <p id="resume-pdf-help" className="text-sm opacity-80">
         Your PDF stays on your device: only the text below is sent for feedback. You can also paste your text.
       </p>
+      <AiDataNote />
       {pdf.status === "reading" && <p role="status" className="text-sm">Reading your PDF…</p>}
       {pdf.status === "error" && <ErrorNote message={pdf.message} />}
 

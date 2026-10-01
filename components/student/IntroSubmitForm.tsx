@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { AiDataNote } from "@/components/PrivacyLink";
 import { checkIntroLength } from "@/lib/submissions/wordCount";
 import { MAX_INTRO_CHARS } from "@/lib/submissions/limits";
 import { SubmitFooter, textareaClass } from "./FeedbackSubmitParts";
@@ -31,6 +32,7 @@ export function IntroSubmitForm({ state, onSubmit }: { state: FeedbackSubmitStat
         placeholder="Greeting, background, skills, projects or achievements, and your goals."
         className={textareaClass}
       />
+      <AiDataNote />
       <p id="intro-count" aria-live="polite" className="flex flex-wrap justify-between gap-x-4 text-sm">
         <span className={check.wordsInTarget ? "text-green-800 dark:text-green-300" : "opacity-80"}>
           {check.words} words · {check.wordHint}

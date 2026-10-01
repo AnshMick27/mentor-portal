@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { PrivacyLink } from "@/components/PrivacyLink";
 import { guardRedirect } from "@/lib/auth/guards";
 import { useAuth } from "./AuthProvider";
 
@@ -44,6 +45,9 @@ export function LoginPanel({ allowedDomain }: { allowedDomain: string }) {
       >
         {waiting ? "Please wait…" : "Sign in with Google"}
       </button>
+      <p className="text-sm opacity-80">
+        Signing in creates your portal profile. <PrivacyLink />
+      </p>
     </main>
   );
 }
