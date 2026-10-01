@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/Button";
 import { homeFor } from "@/lib/auth/guards";
 import type { UserProfile } from "@/lib/validation/user";
 import { useAuth } from "./auth/AuthProvider";
@@ -43,13 +44,9 @@ export function AppHeader({ profile }: { profile: UserProfile }) {
         </Link>
         <div className="flex min-w-0 items-center gap-3">
           <span className="hidden truncate text-sm text-muted sm:inline">{profile.name}</span>
-          <button
-            type="button"
-            onClick={() => void signOut()}
-            className="min-h-11 shrink-0 rounded-lg border border-line-strong px-4 text-sm font-medium hover:bg-surface"
-          >
+          <Button variant="secondary" size="sm" onClick={() => void signOut()}>
             Sign out
-          </button>
+          </Button>
         </div>
       </div>
       {items.length > 0 && (

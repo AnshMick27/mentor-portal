@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AttemptList } from "@/components/student/SubmissionHistory";
+import { Button } from "@/components/ui/Button";
 import { skillAverages } from "@/lib/dashboard/student";
 import { attemptsOnOtherTasks, PROFILE_STATE_LABEL, profileTaskRows, type ProfileTaskRow } from "@/lib/dashboard/profile";
 import type { StudentProfileData } from "@/lib/dashboard/profileQueries";
@@ -127,14 +128,9 @@ export function StudentProfile({
           </p>
         )}
         {hasMore && (
-          <button
-            type="button"
-            onClick={onLoadMore}
-            disabled={loadingMore}
-            className="min-h-11 self-start rounded-lg border border-black/20 px-4 font-medium disabled:opacity-50 dark:border-white/25"
-          >
-            {loadingMore ? "Loading…" : "Load older attempts"}
-          </button>
+          <Button variant="secondary" size="sm" className="self-start" onClick={onLoadMore} busy={loadingMore} busyLabel="Loading…">
+            Load older attempts
+          </Button>
         )}
       </section>
     </div>

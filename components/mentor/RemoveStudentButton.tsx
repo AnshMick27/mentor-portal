@@ -2,13 +2,9 @@
 
 import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { Button } from "@/components/ui/Button";
 import { apiFetch } from "@/lib/api/client";
 import { removalResponseSchema } from "@/lib/students/list";
-
-const BUTTON =
-  "inline-flex min-h-11 items-center justify-center rounded-lg px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:opacity-50";
-const DANGER = `${BUTTON} bg-red-700 text-white hover:bg-red-800`;
-const SECONDARY = `${BUTTON} border border-black/20 hover:bg-black/[0.04] dark:border-white/25 dark:hover:bg-white/[0.06]`;
 
 type Step = "idle" | "confirm" | "working";
 
@@ -38,9 +34,9 @@ export function RemoveStudentControls({
   if (removed) {
     return (
       <div className="flex flex-col gap-1">
-        <button type="button" onClick={onConfirm} disabled={step === "working"} className={SECONDARY}>
-          {step === "working" ? "Restoring…" : "Restore access"}
-        </button>
+        <Button variant="secondary" size="sm" onClick={onConfirm} busy={step === "working"} busyLabel="Restoring…">
+          Restore access
+        </Button>
         {errorLine}
       </div>
     );
@@ -48,9 +44,9 @@ export function RemoveStudentControls({
   if (step === "idle") {
     return (
       <div className="flex flex-col gap-1">
-        <button type="button" onClick={onStart} className={SECONDARY}>
+        <Button variant="secondary" size="sm" onClick={onStart}>
           Remove from portal
-        </button>
+        </Button>
         {errorLine}
       </div>
     );
@@ -62,12 +58,12 @@ export function RemoveStudentControls({
         of the dashboards and export. Their work is kept, and you can restore them later.
       </p>
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={onConfirm} disabled={step === "working"} className={DANGER}>
-          {step === "working" ? "Removing…" : "Yes, remove"}
-        </button>
-        <button type="button" onClick={onCancel} disabled={step === "working"} className={SECONDARY}>
+        <Button variant="danger" size="sm" onClick={onConfirm} busy={step === "working"} busyLabel="Removing…">
+          Yes, remove
+        </Button>
+        <Button variant="secondary" size="sm" onClick={onCancel} disabled={step === "working"}>
           Cancel
-        </button>
+        </Button>
       </div>
       {errorLine}
     </div>

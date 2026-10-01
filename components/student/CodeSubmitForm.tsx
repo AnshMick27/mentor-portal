@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { Button } from "@/components/ui/Button";
 import { codeSize, insertIndent } from "@/lib/submissions/judgeDisplay";
 import { LANGUAGE_LABEL, type Language } from "@/lib/validation/task";
-import { buttonClass, ErrorNote, textareaClass } from "./FeedbackSubmitParts";
+import { ErrorNote, textareaClass } from "./FeedbackSubmitParts";
 import type { CodeSubmitState } from "./useCodeSubmit";
 
 type Props = {
@@ -87,9 +88,9 @@ export function CodeSubmitForm({ languages, state, onSubmit }: Props) {
         {size.tooBig ? `Too long: ${size.text}` : size.text}
       </p>
 
-      <button type="submit" disabled={submitting || size.tooBig || code.trim() === ""} className={buttonClass}>
-        {submitting ? "Sending…" : "Submit"}
-      </button>
+      <Button type="submit" disabled={size.tooBig || code.trim() === ""} busy={submitting} busyLabel="Sending…">
+        Submit
+      </Button>
       {state.status === "sent" && (
         <p role="status" className="text-sm">
           Sent to the judge. Watch the status under “Your attempts” below.

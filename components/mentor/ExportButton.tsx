@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { Button } from "@/components/ui/Button";
 import { fetchExport } from "@/lib/export/download";
 
 /** Downloads the Excel export (mentor and viewer). Fetches with the ID token, then saves the file. */
@@ -31,14 +32,9 @@ export function ExportButton() {
 
   return (
     <div className="flex flex-col gap-2">
-      <button
-        type="button"
-        onClick={() => void download()}
-        disabled={busy}
-        className="inline-flex min-h-11 items-center justify-center self-start rounded-lg border border-black/20 px-5 font-semibold hover:bg-black/[0.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:opacity-50 dark:border-white/25 dark:hover:bg-white/[0.06]"
-      >
-        {busy ? "Preparing Excel…" : "Export Excel"}
-      </button>
+      <Button variant="secondary" className="self-start" onClick={() => void download()} busy={busy} busyLabel="Preparing Excel…">
+        Export Excel
+      </Button>
       {error && (
         <p role="alert" className="text-sm text-red-700 dark:text-red-300">
           {error}

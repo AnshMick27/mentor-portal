@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ButtonLink } from "@/components/ui/Button";
 import { formatIst } from "@/lib/dates/ist";
 import { TASK_TYPE_LABEL, type TaskDto } from "@/lib/validation/task";
 
@@ -24,12 +25,7 @@ export function TaskList({ tasks, canEdit }: { tasks: TaskDto[]; canEdit: boolea
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Tasks</h1>
         {canEdit && (
-          <Link
-            href="/mentor/tasks/new"
-            className="inline-flex min-h-11 shrink-0 items-center rounded-lg bg-blue-700 px-4 font-semibold text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-          >
-            New task
-          </Link>
+          <ButtonLink href="/mentor/tasks/new">New task</ButtonLink>
         )}
       </div>
       {tasks.length === 0 ? (

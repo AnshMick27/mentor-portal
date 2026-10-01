@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { Button } from "@/components/ui/Button";
 import { apiFetch } from "@/lib/api/client";
 import { onboardingSchema } from "@/lib/validation/onboarding";
 import { BRANCHES } from "@/lib/validation/user";
@@ -68,13 +69,9 @@ export function OnboardingForm() {
           {error}
         </p>
       )}
-      <button
-        type="submit"
-        disabled={saving}
-        className="inline-flex min-h-11 items-center justify-center rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:opacity-60"
-      >
-        {saving ? "Saving…" : "Continue"}
-      </button>
+      <Button type="submit" busy={saving} busyLabel="Saving…">
+        Continue
+      </Button>
     </form>
   );
 }

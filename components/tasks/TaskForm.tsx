@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Markdown } from "@/components/Markdown";
+import { Button } from "@/components/ui/Button";
 import { apiFetch } from "@/lib/api/client";
 import { formToTaskInput, taskToPatch, type TaskFormState } from "@/lib/tasks/taskForm";
 import {
@@ -19,8 +20,6 @@ import {
 const inputClass =
   "min-h-11 w-full rounded-lg border border-black/20 bg-transparent px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 dark:border-white/25 disabled:opacity-60 read-only:opacity-60";
 const textareaClass = `${inputClass} py-2 font-mono text-sm`;
-const secondaryButton =
-  "min-h-11 rounded-lg border border-black/15 px-4 text-sm font-medium hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:opacity-50 dark:border-white/20 dark:hover:bg-white/10";
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
@@ -212,13 +211,13 @@ export function TaskForm(props: Props) {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Sample {index + 1}</span>
                   {form.sampleTests.length > 1 && (
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => update("sampleTests", form.sampleTests.filter((_, i) => i !== index))}
-                      className={secondaryButton}
                     >
                       Remove
-                    </button>
+                    </Button>
                   )}
                 </div>
                 <Field label="Input">
@@ -230,13 +229,14 @@ export function TaskForm(props: Props) {
               </div>
             ))}
             {form.sampleTests.length < 5 && (
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
+                className="self-start"
                 onClick={() => update("sampleTests", [...form.sampleTests, { input: "", output: "" }])}
-                className={`${secondaryButton} self-start`}
               >
                 Add sample test
-              </button>
+              </Button>
             )}
             <p className="text-sm opacity-70">Hidden tests are never entered here; they live only in the judge repo.</p>
           </div>
@@ -271,16 +271,12 @@ export function TaskForm(props: Props) {
       )}
 
       <div className="flex flex-wrap gap-3">
-        <button
-          type="submit"
-          disabled={saving}
-          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:opacity-60"
-        >
-          {saving ? "Saving…" : props.mode === "new" ? "Create task" : "Save changes"}
-        </button>
-        <button type="button" onClick={() => router.push("/mentor/tasks")} className={secondaryButton}>
+        <Button type="submit" busy={saving} busyLabel="Saving…">
+          {props.mode === "new" ? "Create task" : "Save changes"}
+        </Button>
+        <Button variant="secondary" onClick={() => router.push("/mentor/tasks")}>
           Back to tasks
-        </button>
+        </Button>
       </div>
     </form>
   );

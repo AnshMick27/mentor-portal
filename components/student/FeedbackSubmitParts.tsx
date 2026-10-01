@@ -1,11 +1,9 @@
+import { Button } from "@/components/ui/Button";
 import type { SubmissionResult } from "@/lib/validation/submission";
 import type { FeedbackSubmitState } from "./useFeedbackSubmit";
 
 export const textareaClass =
   "w-full rounded-lg border border-black/20 bg-transparent p-3 text-base leading-relaxed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 dark:border-white/25";
-
-export const buttonClass =
-  "inline-flex min-h-11 items-center justify-center rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:opacity-50";
 
 export function ErrorNote({ message }: { message: string }) {
   return (
@@ -23,9 +21,9 @@ export function SubmitFooter({ state, disabled }: { state: FeedbackSubmitState; 
   const submitting = state.status === "submitting";
   return (
     <div className="flex flex-col gap-3">
-      <button type="submit" disabled={disabled || submitting} className={buttonClass}>
-        {submitting ? "Getting feedback…" : "Submit for feedback"}
-      </button>
+      <Button type="submit" disabled={disabled} busy={submitting} busyLabel="Getting feedback…">
+        Submit for feedback
+      </Button>
       {submitting && (
         <p role="status" className="text-sm opacity-80">
           The AI is reading your text. This can take up to a minute; please keep this page open.

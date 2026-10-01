@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PrivacyLink } from "@/components/PrivacyLink";
+import { Button } from "@/components/ui/Button";
 import { guardRedirect } from "@/lib/auth/guards";
 import { useAuth } from "./AuthProvider";
 
@@ -37,14 +38,9 @@ export function LoginPanel({ allowedDomain }: { allowedDomain: string }) {
           {message}
         </p>
       )}
-      <button
-        type="button"
-        onClick={() => void handleSignIn()}
-        disabled={waiting}
-        className="inline-flex min-h-11 items-center justify-center rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:opacity-60"
-      >
-        {waiting ? "Please wait…" : "Sign in with Google"}
-      </button>
+      <Button onClick={() => void handleSignIn()} busy={waiting} busyLabel="Please wait…">
+        Sign in with Google
+      </Button>
       <p className="text-sm opacity-80">
         Signing in creates your portal profile. <PrivacyLink />
       </p>

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ButtonLink } from "@/components/ui/Button";
 
 export default function HomePage() {
   return (
@@ -7,12 +7,7 @@ export default function HomePage() {
       <p className="text-base leading-relaxed opacity-80">
         Placement preparation tasks, instant feedback and progress tracking for final-year students.
       </p>
-      <Link
-        href="/login"
-        className="inline-flex min-h-11 items-center justify-center rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-      >
-        Sign in
-      </Link>
+      <ButtonLink href="/login">Sign in</ButtonLink>
     </main>
   );
 }

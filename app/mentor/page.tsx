@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback } from "react";
 import { useSignedInProfile } from "@/components/auth/AuthProvider";
 import { ExportButton } from "@/components/mentor/ExportButton";
 import { LeaderboardSetting } from "@/components/mentor/LeaderboardSetting";
 import { MentorDashboard } from "@/components/mentor/MentorDashboard";
 import { QueryStatus } from "@/components/QueryStatus";
+import { ButtonLink } from "@/components/ui/Button";
 import { useAsyncData } from "@/components/useAsyncData";
 import { loadMentorDashboard } from "@/lib/dashboard/mentorQueries";
 import { getClientDb } from "@/lib/firebase/client";
@@ -25,18 +25,10 @@ export default function MentorHomePage() {
           </p>
         </div>
         <div className="flex flex-wrap items-start gap-3">
-          <Link
-            href="/mentor/tasks"
-            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-          >
-            {profile.role === "mentor" ? "Manage tasks" : "View tasks"}
-          </Link>
-          <Link
-            href="/mentor/students"
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-black/20 px-5 font-semibold hover:bg-black/[0.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 dark:border-white/25 dark:hover:bg-white/[0.06]"
-          >
+          <ButtonLink href="/mentor/tasks">{profile.role === "mentor" ? "Manage tasks" : "View tasks"}</ButtonLink>
+          <ButtonLink href="/mentor/students" variant="secondary">
             Students
-          </Link>
+          </ButtonLink>
           <ExportButton />
         </div>
       </div>
