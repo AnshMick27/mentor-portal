@@ -1,19 +1,17 @@
 "use client";
 
-import Link from "next/link";
+import { useCallback } from "react";
 import { useSignedInProfile } from "@/components/auth/AuthProvider";
-import { ProfileCard } from "@/components/ProfileCard";
+import { QueryStatus } from "@/components/QueryStatus";
+import { StudentDashboard } from "@/components/student/StudentDashboard";
+import { useAsyncData } from "@/components/useAsyncData";
+import { loadStudentDashboard } from "@/lib/dashboard/studentQueries";
+import { getClientDb } from "@/lib/firebase/client";
 
 export default function StudentHomePage() {
-  return (
-    <>
-      <ProfileCard profile={useSignedInProfile()} title="Your dashboard" />
-      <Link
-        href="/student/tasks"
-        className="inline-flex min-h-11 items-center justify-center self-start rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-      >
-        View your tasks
-      </Link>
-    </>
-  );
+  const { uid, name } = useSignedInProfile();
+  const load = useCallback(() => loadStudentDashboard(getClientDb(), uid, new Date()), [uid]);
+  const { state, reload } = useAsyncData(load, "Could not load your dashboard. Please try again.");
+  if (state.status !== "ready") return <QueryStatus state={state} onRetry={reload} />;
+  return <StudentDashboard name={name} data={state.data} />;
 }

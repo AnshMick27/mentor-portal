@@ -210,3 +210,9 @@
 - Demo story lives in `scripts/seedSubmissions.mts` (`STORY` by student number; task keys are seed ids without `seed-`). Stats are computed with `lib/stats/compute.ts` inside `buildSeedData`, so seeded dashboards match what recompute would write. Attempts are dated relative to the due date: for a task due in N days, use daysBeforeDue ≥ N + 1 or the attempt lands in the future (a test checks this).
 - Read the emulator back over REST with `Authorization: Bearer owner` (bypasses rules): `curl -H "Authorization: Bearer owner" "http://127.0.0.1:8080/v1/projects/<id>/databases/(default)/documents/studentStats"`.
 - Stopping a background `npm run emulators` task does NOT kill the Java Firestore emulator; it keeps port 8080 and the next `npm run test:rules` fails with "port taken". Free it: find the PID with `Get-NetTCPConnection -LocalPort 8080` and stop that process (and the firebase node process on 9099/4400).
+
+## Student dashboard (T24)
+- Dashboard code lives in `lib/dashboard/` (pure `student.ts`, client queries `studentQueries.ts`); the page is `app/student/page.tsx` → `StudentDashboard` (presentational, render-tested). Its rules tests are in `tests/rules/studentDashboard.test.ts`.
+- Run one rules file quickly: `npx firebase emulators:exec --only firestore --project demo-mentor-portal "npx vitest run --config vitest.rules.config.mts tests/rules/<file>"`.
+- `formatIst` takes an ISO string; pass `date.toISOString()` for a `SubmissionView.createdAt`.
+- Composite indexes so far: submissions (uid, taskId, createdAt desc) and (uid, status, createdAt desc). `uid == && taskId in [...]` needs no composite index (equality-only).
