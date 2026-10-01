@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSignedInProfile } from "@/components/auth/AuthProvider";
+import { LeaderboardSetting } from "@/components/mentor/LeaderboardSetting";
 import { ProfileCard } from "@/components/ProfileCard";
 
 export default function MentorHomePage() {
@@ -15,6 +16,7 @@ export default function MentorHomePage() {
       >
         {profile.role === "mentor" ? "Manage tasks" : "View tasks"}
       </Link>
+      {profile.role === "mentor" && <LeaderboardSetting />}
     </>
   );
 }
