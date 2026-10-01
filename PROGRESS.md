@@ -2,9 +2,9 @@
 
 Legend: `- [ ]` to do · `- [x]` done · 🔒 HUMAN = Ansh does this step, the loop stops and explains it.
 
-## Current loop: Loop 4 — Pilot and launch (Week 4)
+## Current loop: Loop 4 — Launch (Week 4)
 
-Goal: make the portal safe and understandable for real students, run a one-week pilot with 5 students, fix what they find, then launch to the whole batch. No new features beyond what the pilot shows is needed; every fix keeps `npm run check` green.
+Goal: make the portal safe and understandable for real students, let the mentor remove students who are not his mentees, polish the UI/UX with a dedicated design agent, launch directly to the batch (no separate pilot week, decided by Ansh on 2026-10-01), then fix what launch feedback shows. Every fix keeps `npm run check` green.
 
 - [ ] **T30 — Pre-pilot fixes from open questions**
   - Lock a task's `type` and coding `problemSlug` once it has any submission: `PATCH /api/tasks/[id]` answers 409 "This task already has submissions, so its type (or problem) can't change." (other edits and publish/unpublish still work). The form shows the fields read-only for such tasks.
@@ -28,30 +28,39 @@ Goal: make the portal safe and understandable for real students, run a one-week 
   - Link it from README.md.
   - Acceptance: every env var in `.env.example` appears in the runbook (a test checks this), and every command in it exists in package.json or is a documented CLI.
 
-- [ ] **H10 🔒 HUMAN — Pilot setup (about 30 minutes)**
-  1. Pick 5 students (mixed branches if possible) and tell them the pilot runs for one week.
-  2. As mentor, create and publish real tasks for the week: 1 coding task (add its hidden tests to the judge repo first), 1 resume review, 1 written intro. Due dates within the week.
-  3. Check spend limits: AI provider dashboard (or free-tier limits), GitHub → Settings → Billing → Actions minutes, Firebase console → Usage.
-  4. Put a calendar reminder 1 week before the GitHub judge token expires.
-  5. Share the site link with the 5 students. Tick H10 and say `Follow LOOP.md`.
+- [ ] **T34a — Remove (and restore) students: data, rules and API** (added by Ansh on 2026-10-01)
+  - Why: anyone with a college email can sign in and becomes a student; Ansh must be able to remove people who are not his mentees.
+  - "Removed" is a blocked state, not a deletion: `users/{uid}` gets `removed: true` (+ `removedAt`, `removedBy`). The user doc stays, so the next login does NOT re-create them as a fresh student; their submissions stay in Firestore for the record but leave every dashboard, stat, leaderboard and export.
+  - Server: `requireUser` refuses removed users (403 "Your access to the portal has been removed. Contact your mentor if this is a mistake."); `POST /api/me` returns that same 403 so the login screen shows it and signs them out; `/api/me` never un-removes anyone (only a mentor can restore).
+  - `POST /api/students/[uid]/remove` and `POST /api/students/[uid]/restore` (mentor only; viewer and student 403; staff accounts cannot be removed → 400). Remove deletes their `studentStats`, then recomputes all `taskStats` (they drop out of "not submitted" lists); restore recomputes their stats. `countedStudents` (lib/stats/compute.ts) skips removed users.
+  - Firestore rules: a removed user is treated as not provisioned (reads nothing). This only tightens the rules; add rules tests for it.
+  - Acceptance: API tests (roles, staff refused, remove → blocked on every student route and on `/api/me`, restore → works again, stats/taskStats updated, export and leaderboard exclude them), rules tests for a removed user, unit tests for `countedStudents`.
 
-- [ ] **H11 🔒 HUMAN — Run the pilot (one week)**
-  1. Let the 5 students use the portal for the week. Check `/mentor` every day or two.
-  2. Write every problem or wish they report (and anything you notice) under "Pilot feedback" below: one line each, with who/where/what happened. Screenshots can stay on your phone; describe them in words.
-  3. At the end, tick H11 and say `Follow LOOP.md`. Claude turns the feedback into fix tasks.
+- [ ] **T34b — Remove (and restore) students: UI**
+  - New `/mentor/students` page: every student account (users with role student, including not-yet-onboarded sign-ups), with name, email, roll no, branch, joined date, onboarded yes/no, and a search box. Shows active and removed students in separate groups. Linked from the mentor dashboard header.
+  - Mentor only: "Remove from portal" button per student with a confirm step that names the student and explains what happens (access blocked, data kept, can be restored); "Restore" on removed students. Viewers see the list read-only. The student profile page (T28) also gets the button.
+  - Students: a removed user who signs in sees the plain message on the login page.
+  - Acceptance: works at 360 px; render tests for both groups, the confirm step and viewer read-only; rules test for the list query (staff ✔, student ✘).
 
-- [ ] **T34 — Pilot fixes**
-  - Turn each "Pilot feedback" line into a small task (T34a, T34b, …) in this list, most serious first, then do them one per iteration. Anything that would need a new feature or a SPEC change goes to "Questions for Ansh" instead.
+- [ ] **T35 — UI/UX design pass by a dedicated design agent** (added by Ansh on 2026-10-01)
+  - Create a project subagent `.claude/agents/ui-ux-designer.md` (frontmatter: name, description, tools limited to read/search/run plus Edit/Write for UI files only; system prompt: mobile-first at 360 px, Tailwind 4 already in use, accessibility basics from SPEC §11, plain-English copy for Indian campus students, never touch API routes, rules, lib/ server code or tests' assertions about security).
+  - Run it on the whole portal (login, onboarding, student dashboard, task board, task page incl. the three submit forms, mentor dashboard, task list/form, student list and profile, privacy page). It writes `docs/UX_REVIEW.md`: findings ranked by impact (consistency, visual hierarchy, spacing, tap targets, colour/contrast incl. dark mode, empty/loading/error states, copy, navigation), each with the page, the problem and a concrete fix; plus shared design tokens/components to extract (buttons, cards, section headings, status chips) so pages stop repeating long class strings.
+  - Then split the review into T35a, T35b, … (most impact first, one per iteration): the main loop (or the agent, when the change is purely presentational) implements them, keeping every existing test green and adding render tests for new shared components.
+  - Acceptance for T35 itself: the agent file exists and is committed; `docs/UX_REVIEW.md` exists with ranked findings; the follow-up sub-tasks are written into this list.
+
+- [ ] **H12 🔒 HUMAN — Launch** (H10 pilot setup and H11 pilot week dropped by Ansh on 2026-10-01: launch directly)
+  1. Before announcing: as mentor, create and publish the first real tasks (for a coding task, add its hidden tests to the judge repo first). Check spend limits (AI provider, GitHub Actions minutes, Firebase usage) and set a calendar reminder a week before the GitHub judge token expires.
+  2. Run through H9's checks once more on the deployed site.
+  3. Announce the portal to the batch (WhatsApp: link + "sign in with your college email"). Remove anyone who is not your mentee on `/mentor/students`.
+  4. Watch the first days on `/mentor`. Write every problem or wish (yours or the students') under "Launch feedback" below: one line each — who, which page, what happened.
+  5. Push to GitHub, tick H12 and say `Follow LOOP.md`.
+
+- [ ] **T36 — Launch fixes**
+  - Turn each "Launch feedback" line into a small task (T36a, T36b, …) in this list, most serious first, then do them one per iteration. Anything that would need a new feature or a SPEC change goes to "Questions for Ansh" instead.
   - Acceptance: per sub-task, as written when it is split.
 
-- [ ] **H12 🔒 HUMAN — Launch**
-  1. Run through H9's checks once more on the deployed site.
-  2. Announce the portal to the whole batch (WhatsApp: link + "sign in with your college email").
-  3. Watch the first day's sign-ins and submissions on `/mentor`; note any problems under "Pilot feedback".
-  4. Push to GitHub. Loop 4 and v1 are complete.
-
-## Pilot feedback
-(Ansh: one line per problem or wish during H11/H12 — who, where, what happened.)
+## Launch feedback
+(Ansh: one line per problem or wish after launch (H12) — who, which page, what happened.)
 
 ## Finished: Loop 3 — Dashboards (Week 3)
 
@@ -320,7 +329,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 ## Roadmap (expanded one loop at a time)
 - Loop 2 — Submissions: resume and written-intro AI feedback; GitHub Actions code judge; attempts and limits.
 - Loop 3 — Dashboards: stats recompute + daily cron, mentee dashboard, mentor dashboard, Excel export, leaderboard flag.
-- Loop 4 — Pilot with 5 students, fixes, launch.
+- Loop 4 — Hardening, remove students, UI/UX design pass, launch, launch fixes (pilot week dropped by Ansh).
 
 ## Done log
 (one line per finished task: date — task id — what was built)
@@ -395,3 +404,4 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - T28: The profile loads a student's newest 50 attempts first; older ones appear with "Load older attempts", so on a very long history a task's row may show fewer attempts until more pages are loaded (the stats numbers are always complete). Attempts on draft/unpublished tasks are only counted, not shown. Inside the mentor view, a failed attempt still reads "…not counted, so you can try again" (shared wording with the student page). OK?
 - T29: The export includes only onboarded students (role student) and only published tasks; "All results" lists finished (`done`) attempts only, not errors. Dates are written as IST text (e.g. "20 Sept 2026, 1:30 am IST") rather than Excel date cells, so they never shift with the viewer's time zone. The file never contains what students sent (code, resume or intro text). exceljs brings its own `uuid@8`, which falls under the same moderate `uuid` advisory as before (it only affects v3/v5/v6 with a buffer; exceljs uses v4). The export reads every finished submission, so each download costs about one read per submission. OK?
 - Loop 4 (planning): Left OUT on purpose, tell me if you want any of them as tasks: (a) demoting staff removed from MENTOR_EMAILS/VIEWER_EMAILS at login (T6 question; today you edit the users doc in the console); (b) refreshing name/email on every login (T6); (c) forcing `uuid` ≥ 11.1.1 with an npm override to close Dependabot alert #1 (low risk as explained; dismissing the alert is the alternative); (d) allowing late submissions (still refused after the due date). Also: SPEC.md §10 and §13 still say `AI_PROVIDER=anthropic | gemini`; please add `groq` and `GROQ_API_KEY` when you next edit the spec (I may not edit SPEC.md).
+- Loop 4 (re-plan, 2026-10-01, at Ansh's request): added T34a/T34b (mentor removes and restores students) and T35 (UI/UX design agent); dropped H10/H11 (no pilot week; launch directly at H12, then T36 fixes from "Launch feedback"). Removing a student is NOT in SPEC: it adds a `removed` flag to `users/{uid}` (blocked, data kept, reversible) and new mentor-only routes, and tightens the Firestore rules so a removed user reads nothing. Please add this to SPEC §2/§6/§7 when you next edit it. If you would rather have an allow-list (only emails you list may enrol, e.g. `MENTEE_EMAILS`), say so before T34a starts: that would replace removal.
