@@ -221,3 +221,8 @@
 - Dependencies: `recharts` ^3.10 (SPEC §4) and `react-is` 19.2.x (NOT in SPEC): recharts' peer `react-is` resolved to the hoisted 16.13.1 from eslint-plugin-react, which predates React 19's element format; recharts asks for the version matching React. Keep `react-is` in step with `react` when upgrading.
 - Chart components are `"use client"`. Shape data in a pure helper (`lib/dashboard/progressChart.ts`) and unit-test that; `renderToStaticMarkup` renders ResponsiveContainer at 0 width (no SVG), so render tests check only the wrapper, empty state and the sr-only table.
 - `npm audit` (2026-10-01): 5 high `@grpc/grpc-js` advisories via firebase-admin → @google-cloud/firestore → google-gax, plus the old uuid moderates. Only `--force` (breaking) fixes; left as is.
+
+## Leaderboard API (T26a)
+- Server: `lib/leaderboard/store.ts` (`getAppConfig`, `setLeaderboardEnabled`, `setShowOnLeaderboard`, `loadLeaderboard`), pure `rankEntries` in `lib/leaderboard/rank.ts`; schemas + reply schemas for the client in `lib/validation/config.ts` (`leaderboardEntrySchema` is strict, so a leaked field fails parsing).
+- Client calls for T26b: `GET /api/leaderboard` → `{entries}` or 404 "Leaderboard is off." (hide the card on 404); `POST /api/me/leaderboard {showOnLeaderboard}` then `refreshProfile()` so `profile.showOnLeaderboard` updates; `GET/PATCH /api/config {leaderboardEnabled}` for the mentor switch.
+- Fake Admin queries now chain `orderBy` and, like Firestore, drop docs missing an ordered field.

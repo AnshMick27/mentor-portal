@@ -55,6 +55,7 @@ const full: StudentDashboardData = {
     latestNextSteps: ["Quantify impact", "Add links", "Fix grammar", "Fourth step"],
     needsAttention: true,
     needsAttentionReason: "Missed 2 of the last 4 tasks",
+    showOnLeaderboard: false,
     updatedAt: ts("2026-09-30T00:00:00Z"),
   },
 };

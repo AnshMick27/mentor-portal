@@ -17,6 +17,15 @@
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "studentStats",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "showOnLeaderboard", "order": "ASCENDING" },
+        { "fieldPath": "overallAvg", "order": "DESCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -138,6 +138,7 @@ export function computeStudentStats(
     recentScores,
     latestNextSteps: (latestAi?.nextSteps ?? []).slice(0, LATEST_NEXT_STEPS_LIMIT),
     ...needsAttention(pastDue, submittedIds, recentScores),
+    showOnLeaderboard: student.showOnLeaderboard ?? false,
   };
 }
 

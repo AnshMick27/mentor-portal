@@ -32,7 +32,7 @@ export async function completeOnboarding(uid: string, input: OnboardingInput): P
     const changes = { rollNo: input.rollNo, branch: input.branch, onboarded: true };
     tx.update(userRef, changes);
     tx.set(statsRef, {
-      ...initialStudentStats({ name: user.name, ...input }),
+      ...initialStudentStats({ name: user.name, showOnLeaderboard: user.showOnLeaderboard, ...input }),
       updatedAt: FieldValue.serverTimestamp(),
     });
     return { ok: true, profile: { uid, ...user, ...changes } };

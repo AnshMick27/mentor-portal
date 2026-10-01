@@ -18,8 +18,16 @@ function toUser(doc: Snapshot): StatsUser | undefined {
     console.error(`users/${doc.id} does not match the user schema; skipped in stats`);
     return undefined;
   }
-  const { name, role, onboarded, rollNo, branch } = parsed.data;
-  return { uid: doc.id, name, role, onboarded, ...(rollNo ? { rollNo } : {}), ...(branch ? { branch } : {}) };
+  const { name, role, onboarded, rollNo, branch, showOnLeaderboard } = parsed.data;
+  return {
+    uid: doc.id,
+    name,
+    role,
+    onboarded,
+    showOnLeaderboard,
+    ...(rollNo ? { rollNo } : {}),
+    ...(branch ? { branch } : {}),
+  };
 }
 
 function toTask(doc: Snapshot): StatsTask | undefined {

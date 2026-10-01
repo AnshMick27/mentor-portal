@@ -27,6 +27,8 @@ export const storedStudentStatsSchema = z.object({
   latestNextSteps: z.array(z.string()),
   needsAttention: z.boolean(),
   needsAttentionReason: z.string().optional(),
+  // Docs written before T26a lack it; recompute and the opt-in route keep it in step with the user doc.
+  showOnLeaderboard: z.boolean().default(false),
   updatedAt: timestampLike,
 });
 export type StoredStudentStats = z.infer<typeof storedStudentStatsSchema>;

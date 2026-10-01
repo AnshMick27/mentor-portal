@@ -20,6 +20,8 @@ export type StudentStatsFields = {
   latestNextSteps: string[];
   needsAttention: boolean;
   needsAttentionReason?: string;
+  /** Copy of `users/{uid}.showOnLeaderboard`, so the leaderboard is one indexed query on studentStats. */
+  showOnLeaderboard: boolean;
 };
 
 /** `taskStats/{taskId}` fields (SPEC.md §6 + `avgScoreByBranch`) except `updatedAt`. */
@@ -42,6 +44,7 @@ export type StatsUser = {
   onboarded: boolean;
   rollNo?: string;
   branch?: Branch;
+  showOnLeaderboard?: boolean;
 };
 
 /** The submission fields the stats need. */

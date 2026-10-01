@@ -58,7 +58,12 @@ describe("computeStudentStats — counting", () => {
       recentScores: [],
       latestNextSteps: [],
       needsAttention: false,
+      showOnLeaderboard: false,
     });
+  });
+
+  it("copies the user's leaderboard opt-in", () => {
+    expect(computeStudentStats({ ...stu, showOnLeaderboard: true }, [], [], now).showOnLeaderboard).toBe(true);
   });
 
   it("ignores draft tasks and their submissions", () => {

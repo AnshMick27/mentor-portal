@@ -14,6 +14,11 @@ describe("initialStudentStats", () => {
       recentScores: [],
       latestNextSteps: [],
       needsAttention: false,
+      showOnLeaderboard: false,
     });
+  });
+
+  it("copies the leaderboard opt-in from the user", () => {
+    expect(initialStudentStats({ name: "Stu", rollNo: "ABC123", branch: "IT", showOnLeaderboard: true }).showOnLeaderboard).toBe(true);
   });
 });

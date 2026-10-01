@@ -27,7 +27,7 @@ type QuerySnapshot = { empty: boolean; size: number; docs: DocSnapshot[] };
 /**
  * In-memory stand-in for the Admin SDK pieces we use: `verifyIdToken` (token string → decoded token) and
  * Firestore docs in any collection: auto ids, get/create/set/update/delete, whole-collection `get`,
- * `where(==)`/`orderBy`/`limit` queries, and transaction get/create/set/update.
+ * `where(==)`/chained `orderBy`/`limit` queries, and transaction get/create/set/update.
  * Register with `vi.mock("@/lib/firebase/admin", async () => (await import("./fakeAdmin")).fakeAdmin.module)`.
  */
 export function createFakeAdmin() {
@@ -82,24 +82,28 @@ export function createFakeAdmin() {
   }
 
   type Order = { field: string; direction: "asc" | "desc" };
-  function query(collection: string, filters: [string, unknown][], max: number, order?: Order): Query {
+  function query(collection: string, filters: [string, unknown][], max: number, orders: Order[] = []): Query {
     return {
       kind: "query",
-      where: (field, _op, value) => query(collection, [...filters, [field, value]], max, order),
-      orderBy: (field, direction = "asc") => query(collection, filters, max, { field, direction }),
-      limit: (n) => query(collection, filters, n, order),
+      where: (field, _op, value) => query(collection, [...filters, [field, value]], max, orders),
+      orderBy: (field, direction = "asc") => query(collection, filters, max, [...orders, { field, direction }]),
+      limit: (n) => query(collection, filters, n, orders),
       get: async () => {
-        const matching = [...collectionData(collection)].filter(([, data]) =>
-          filters.every(([field, value]) => data[field] === value),
+        // Like Firestore: docs missing an ordered field are left out; later orderBys break ties.
+        const matching = [...collectionData(collection)].filter(
+          ([, data]) =>
+            filters.every(([field, value]) => data[field] === value) &&
+            orders.every((order) => data[order.field] !== undefined),
         );
-        if (order) {
-          const sign = order.direction === "asc" ? 1 : -1;
-          matching.sort(([, a], [, b]) => {
+        matching.sort(([, a], [, b]) => {
+          for (const order of orders) {
+            const sign = order.direction === "asc" ? 1 : -1;
             const ka = sortKey(a[order.field]);
             const kb = sortKey(b[order.field]);
-            return ka < kb ? -sign : ka > kb ? sign : 0;
-          });
-        }
+            if (ka !== kb) return ka < kb ? -sign : sign;
+          }
+          return 0;
+        });
         const docs = matching.slice(0, max).map(([id]) => snapshot(collection, id));
         return { empty: docs.length === 0, size: docs.length, docs };
       },
