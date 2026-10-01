@@ -30,7 +30,11 @@ export function LoginPanel({ allowedDomain }: { allowedDomain: string }) {
   const waiting = busy || view.status === "loading" || target !== null;
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-6 px-4 py-12">
-      <h1 className="text-3xl font-bold tracking-tight">Sign in</h1>
+      <div className="flex flex-col gap-1">
+        <p className="text-sm font-semibold text-muted">CDC Mentor Portal</p>
+        <h1 className="text-3xl font-bold tracking-tight">Sign in</h1>
+        <p className="text-base">Tasks, feedback and progress for your placement preparation.</p>
+      </div>
       <p className="text-base leading-relaxed text-muted">
         Use your college Google account (<span className="font-medium">@{allowedDomain}</span>).
       </p>

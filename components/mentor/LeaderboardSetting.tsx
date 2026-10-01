@@ -63,7 +63,7 @@ export function LeaderboardSettingView({
         ) : (
           <Switch
             id="leaderboard-enabled"
-            label={view.status === "ready" && view.leaderboardEnabled ? "Leaderboard is on" : "Leaderboard is off"}
+            label="Show the leaderboard to students"
             hint={HINT}
             checked={view.status === "ready" && view.leaderboardEnabled}
             disabled={view.status === "loading" || saving}

@@ -59,7 +59,7 @@ function TaskStatus({ row }: { row: TaskStatusRow }) {
           )}
         </>
       ) : (
-        <EmptyState>No numbers yet: they appear after the first submission or tonight&apos;s update.</EmptyState>
+        <EmptyState>No numbers yet. They appear after the first submission, or after tonight&apos;s update.</EmptyState>
       )}
     </li>
   );

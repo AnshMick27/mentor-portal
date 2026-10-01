@@ -14,6 +14,14 @@ describe("Markdown", () => {
     expect(html).toContain("<li>item</li>");
   });
 
+  it("says links open in a new tab and replaces images with a note (UX-29)", () => {
+    const html = renderToStaticMarkup(<Markdown>{"[Docs](https://example.com) ![diagram](https://example.com/a.png)"}</Markdown>);
+    expect(html).toContain('target="_blank"');
+    expect(html).toContain('<span class="sr-only"> (opens in a new tab)</span>');
+    expect(html).not.toContain("<img");
+    expect(html).toContain("[Image not shown: diagram. Ask your mentor for the file.]");
+  });
+
   it("drops raw HTML such as script tags and event handlers", () => {
     const html = renderToStaticMarkup(
       <Markdown>{'Hello <script>alert(1)</script> <img src=x onerror="alert(2)"> <b>bold</b>'}</Markdown>,

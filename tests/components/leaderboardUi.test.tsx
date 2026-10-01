@@ -90,11 +90,13 @@ describe("mentor leaderboard setting", () => {
     renderToStaticMarkup(<LeaderboardSettingView {...props} />);
 
   it("shows the current state and disables the switch while loading or saving", () => {
-    expect(render({ view: { status: "ready", leaderboardEnabled: true }, saving: false, onToggle: () => undefined })).toContain(
-      "Leaderboard is on",
-    );
+    // The label stays the same; the switch itself says on or off (UX-32).
+    const on = render({ view: { status: "ready", leaderboardEnabled: true }, saving: false, onToggle: () => undefined });
+    expect(on).toContain("Show the leaderboard to students");
+    expect(on).toContain('aria-checked="true"');
     const loading = render({ view: { status: "loading" }, saving: false, onToggle: () => undefined });
-    expect(loading).toContain("Leaderboard is off");
+    expect(loading).toContain("Show the leaderboard to students");
+    expect(loading).toContain('aria-checked="false"');
     expect(loading).toContain("disabled");
     expect(render({ view: { status: "error", message: "Could not load." }, saving: false, onToggle: () => undefined })).toContain(
       "Could not load.",

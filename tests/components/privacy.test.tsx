@@ -46,6 +46,12 @@ describe("links to the privacy page", () => {
     expect(renderToStaticMarkup(<LoginPanel allowedDomain="college.ac.in" />)).toContain(PRIVACY_LINK);
   });
 
+  it("login names the portal and what it is for before asking to sign in (UX-27)", () => {
+    const html = renderToStaticMarkup(<LoginPanel allowedDomain="college.ac.in" />);
+    expect(html.indexOf("CDC Mentor Portal")).toBeLessThan(html.indexOf("<h1"));
+    expect(html).toContain("Tasks, feedback and progress for your placement preparation.");
+  });
+
   it("next to the resume and intro forms, saying the text goes to an AI service", () => {
     for (const html of [
       renderToStaticMarkup(<ResumeSubmitForm state={idle} onSubmit={() => undefined} />),
