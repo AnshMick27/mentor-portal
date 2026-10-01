@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { TextLink } from "@/components/ui/TextLink";
 import { formatIst } from "@/lib/dates/ist";
 import { searchStudents, splitStudents, type StudentRow } from "@/lib/students/list";
@@ -60,18 +61,23 @@ function Group({
   );
 }
 
+/** Page header, rendered by the page so it stays while the list loads. */
+export function StudentListHeader({ canEdit }: { canEdit: boolean }) {
+  return (
+    <PageHeader
+      title="Students"
+      back={{ href: "/mentor", label: "Dashboard" }}
+      subtitle={`Everyone who has signed in with a college email. ${canEdit ? "Remove anyone who is not your mentee." : "Read-only view."}`}
+    />
+  );
+}
+
 /** Every student account, searchable; mentors can remove and restore, viewers only read (T34b). */
 export function StudentList({ rows, canEdit, onChanged }: { rows: StudentRow[]; canEdit: boolean; onChanged: () => void }) {
   const [search, setSearch] = useState("");
   const { active, removed } = splitStudents(searchStudents(rows, search));
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight">Students</h1>
-        <p className="text-sm opacity-75">
-          Everyone who has signed in with a college email. {canEdit ? "Remove anyone who is not your mentee." : "Read-only view."}
-        </p>
-      </div>
       <label className="flex flex-col gap-1 text-sm font-medium">
         Search by name, email or roll number
         <input

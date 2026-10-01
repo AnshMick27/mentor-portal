@@ -6,6 +6,7 @@ import { QueryStatus } from "@/components/QueryStatus";
 import { MentorOnly } from "@/components/tasks/MentorOnly";
 import { TaskForm } from "@/components/tasks/TaskForm";
 import { StatusBadge } from "@/components/tasks/TaskList";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useApiQuery } from "@/components/useApiQuery";
 import { taskToForm } from "@/lib/tasks/taskForm";
 import { taskDtoSchema } from "@/lib/validation/task";
@@ -14,14 +15,19 @@ const taskResponseSchema = z.object({ task: taskDtoSchema, hasSubmissions: z.boo
 
 function EditTask({ id }: { id: string }) {
   const { state, reload } = useApiQuery(`/api/tasks/${encodeURIComponent(id)}`, taskResponseSchema);
-  if (state.status !== "ready") return <QueryStatus state={state} onRetry={reload} />;
+  const back = { href: "/mentor/tasks", label: "Tasks" };
+  if (state.status !== "ready") {
+    return (
+      <>
+        <PageHeader title="Edit task" back={back} />
+        <QueryStatus state={state} onRetry={reload} loadingLabel="Loading the task…" />
+      </>
+    );
+  }
   const { task, hasSubmissions } = state.data;
   return (
     <>
-      <div className="flex items-start justify-between gap-3">
-        <h1 className="min-w-0 text-2xl font-bold tracking-tight break-words">Edit task</h1>
-        <StatusBadge status={task.status} />
-      </div>
+      <PageHeader title="Edit task" back={back} badge={<StatusBadge status={task.status} />} />
       <TaskForm
         key={task.updatedAt}
         mode="edit"

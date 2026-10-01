@@ -55,8 +55,10 @@ Goal: make the portal safe and understandable for real students, let the mentor 
   - Acceptance: render tests for the component (variants, sizes, `busy` label, disabled); grep finds no `bg-blue-700`/`bg-red-700` button strings outside `components/ui`; all tests green.
 - [x] **T35c2 — `TextLink`/`BackLink` and `Note`, replacing the copies; success never shown as an error; back links go to the right place** (UX-15 links part, UX-09, UX-17)
   - Acceptance: render tests for the components (`role` per tone, `←` hidden from screen readers); a successful feedback submit is never shown as an error; no link inside an `opacity-*` element.
-- [ ] **T35d — `Card`, `Section`, `PageHeader`, `EmptyState`, a tab title per page, heading kept while loading** (UX-25, UX-18, UX-26, UX-11 section part)
-  - Acceptance: render tests for the four components; each data page keeps its h1 while loading.
+- [x] **T35d1 — `PageHeader` with a browser-tab title per page; loading and errors appear under the page heading** (UX-18, UX-26; T35d split in two because it touches ~15 files)
+  - Acceptance: `PageHeader` render test (h1, `<title>` "… · CDC Mentor Portal", back link, subtitle/actions); each data page keeps its h1 while loading; `QueryStatus` takes a loading label.
+- [ ] **T35d2 — `Card`/`CardLink`, `Section`, `EmptyState`; one page stack; task description under its own heading** (UX-25, UX-11 section part)
+  - Acceptance: render tests (`Section` uses `aria-labelledby` and no duplicate `aria-label`; `EmptyState` with an optional action); no `CARD` constants left in components.
 - [ ] **T35e — `Disclosure`, `StatusChip`, `Score`** (UX-05, UX-24, UX-31)
   - Acceptance: render tests (chevron present, chip text per tone, `Score` shows — when missing); chart legend readable in both themes.
 - [ ] **T35f — Student home: reorder so what is due comes first** (UX-04)
@@ -402,6 +404,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-10-01 — T35b — Header nav row (student: Home, My tasks; mentor/viewer: Dashboard, Tasks, Students; none before onboarding) with `aria-current="page"` incl. sub-pages, brand links to the role's home (`homeFor`), "Skip to content" link and `id="main"` in ProtectedShell; 7 render tests. Redirecting signed-in visitors away from `/` still waits for Ansh (T35 question 3).
 - 2026-10-01 — T35c1 — `components/ui/Button.tsx` (`Button` with primary/secondary/danger/ghost, md/sm, `busy`+`busyLabel`; `ButtonLink`; `buttonClasses`), replacing the hand-written button styles in 13 files (login, landing, onboarding, header sign-out, retry, export, remove/restore, load older, task list/form, submit forms); 10 render tests. Left for later batches: the switch track (T35i) and the Write/Preview tabs (T35j).
 - 2026-10-01 — T35c2 — `components/ui/TextLink.tsx` (`TextLink`, `textLinkClasses`, `BackLink`) and `components/ui/Note.tsx` (5 tones; danger = alert, `live` = status); replaced the LINK constants, PrivacyLink, back links (profile → Students, task page → My tasks, viewer notice → Tasks, privacy → Portal home) and the boxed/inline error and success notes in 17 files; an unreadable-but-saved feedback reply now shows a success note (`saved` state) instead of a red error; AI-data and login lines use `text-muted` instead of opacity; 13 render tests.
+- 2026-10-01 — T35d1 — `components/ui/PageHeader.tsx` (back link, h1, badge, actions, muted subtitle, React `<title>` "… · CDC Mentor Portal") on every signed-in page; static pages (home, My tasks, dashboard, Tasks, Students, task form, onboarding) keep their header while data loads, the task page and student profile keep their back link; `QueryStatus` takes a loading label ("Loading your tasks…"); `TaskListHeader`/`StudentListHeader` exported for the pages; 5 render tests. Tab titles not yet seen in a real browser (pages render only after sign-in).
 
 ## Blockers
 (none)

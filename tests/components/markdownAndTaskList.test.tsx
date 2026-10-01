@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { Markdown } from "@/components/Markdown";
-import { TaskList } from "@/components/tasks/TaskList";
+import { TaskList, TaskListHeader } from "@/components/tasks/TaskList";
 import type { TaskDto } from "@/lib/validation/task";
 
 describe("Markdown", () => {
@@ -57,14 +57,22 @@ describe("TaskList", () => {
     expect(html).toContain("5 Oct 2026, 11:59 pm IST");
   });
 
+  const page = (canEdit: boolean) =>
+    renderToStaticMarkup(
+      <>
+        <TaskListHeader canEdit={canEdit} />
+        <TaskList tasks={tasks} canEdit={canEdit} />
+      </>,
+    );
+
   it("gives mentors a New task button and edit links", () => {
-    const html = renderToStaticMarkup(<TaskList tasks={tasks} canEdit />);
+    const html = page(true);
     expect(html).toContain('href="/mentor/tasks/new"');
     expect(html).toContain('href="/mentor/tasks/t2"');
   });
 
   it("shows viewers the list without any buttons or edit links", () => {
-    const html = renderToStaticMarkup(<TaskList tasks={tasks} canEdit={false} />);
+    const html = page(false);
     expect(html).toContain("Two sum");
     expect(html).not.toContain("/mentor/tasks/new");
     expect(html).not.toContain('href="/mentor/tasks/t');

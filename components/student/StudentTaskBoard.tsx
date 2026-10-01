@@ -45,7 +45,6 @@ function Group({ title, tasks, empty }: { title: string; tasks: StudentTask[]; e
 export function StudentTaskBoard({ board }: { board: StudentBoard }) {
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-2xl font-bold tracking-tight">Your tasks</h1>
       <Group title="Due soon" tasks={board.dueSoon} empty="Nothing due right now." />
       <Group title="Submitted" tasks={board.submitted} empty="You have not submitted anything yet." />
       <Group title="Missed" tasks={board.missed} empty="No missed tasks. Keep it up!" />

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { AttemptList } from "@/components/student/SubmissionHistory";
 import { Button } from "@/components/ui/Button";
 import { Note } from "@/components/ui/Note";
-import { BackLink } from "@/components/ui/TextLink";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { skillAverages } from "@/lib/dashboard/student";
 import { attemptsOnOtherTasks, PROFILE_STATE_LABEL, profileTaskRows, type ProfileTaskRow } from "@/lib/dashboard/profile";
 import type { StudentProfileData } from "@/lib/dashboard/profileQueries";
@@ -79,13 +79,13 @@ export function StudentProfile({
   const others = attemptsOnOtherTasks(data.tasks, submissions);
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-1">
-        <BackLink href="/mentor/students">Students</BackLink>
-        <h1 className="text-2xl font-bold tracking-tight break-words">{user.name}</h1>
-        <p className="text-sm opacity-75 break-words">
-          {user.rollNo ?? "No roll number yet"} · {user.branch ?? "—"} · {user.email}
-        </p>
-        {actions && <div className="mt-2">{actions}</div>}
+      <div className="flex flex-col gap-3">
+        <PageHeader
+          title={user.name}
+          back={{ href: "/mentor/students", label: "Students" }}
+          subtitle={`${user.rollNo ?? "No roll number yet"} · ${user.branch ?? "—"} · ${user.email}`}
+        />
+        {actions}
       </div>
 
       {user.removed === true && (

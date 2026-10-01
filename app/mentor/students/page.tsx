@@ -2,9 +2,8 @@
 
 import { useCallback } from "react";
 import { useSignedInProfile } from "@/components/auth/AuthProvider";
-import { StudentList } from "@/components/mentor/StudentList";
+import { StudentList, StudentListHeader } from "@/components/mentor/StudentList";
 import { QueryStatus } from "@/components/QueryStatus";
-import { BackLink } from "@/components/ui/TextLink";
 import { useAsyncData } from "@/components/useAsyncData";
 import { getClientDb } from "@/lib/firebase/client";
 import { loadStudentList } from "@/lib/students/listQuery";
@@ -14,13 +13,14 @@ export default function StudentsPage() {
   const profile = useSignedInProfile();
   const load = useCallback(() => loadStudentList(getClientDb()), []);
   const { state, reload } = useAsyncData(load, "Could not load the students. Please try again.");
+  const canEdit = profile.role === "mentor";
   return (
     <>
-      <BackLink href="/mentor">Dashboard</BackLink>
+      <StudentListHeader canEdit={canEdit} />
       {state.status === "ready" ? (
-        <StudentList rows={state.data} canEdit={profile.role === "mentor"} onChanged={reload} />
+        <StudentList rows={state.data} canEdit={canEdit} onChanged={reload} />
       ) : (
-        <QueryStatus state={state} onRetry={reload} />
+        <QueryStatus state={state} onRetry={reload} loadingLabel="Loading the students…" />
       )}
     </>
   );

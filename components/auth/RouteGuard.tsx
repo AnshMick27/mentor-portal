@@ -50,10 +50,10 @@ function SignedInHeader() {
   return <AppHeader profile={useSignedInProfile()} />;
 }
 
-export function LoadingScreen() {
+export function LoadingScreen({ label = "Loading…" }: { label?: string }) {
   return (
     <div className="flex flex-1 items-center justify-center px-4 py-12" role="status" aria-live="polite">
-      <p className="text-base opacity-70">Loading…</p>
+      <p className="text-base text-muted">{label}</p>
     </div>
   );
 }

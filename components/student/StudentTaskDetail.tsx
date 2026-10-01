@@ -1,7 +1,7 @@
 import { Markdown } from "@/components/Markdown";
 import { SubmissionHistory } from "@/components/student/SubmissionHistory";
 import { TaskSubmitSection } from "@/components/student/TaskSubmitSection";
-import { BackLink } from "@/components/ui/TextLink";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { formatIst } from "@/lib/dates/ist";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import { taskProgress } from "@/lib/tasks/studentBoard";
@@ -30,17 +30,21 @@ export function StudentTaskDetail({
   const pastDue = Date.parse(task.dueAt) < now.getTime();
   return (
     <article className="flex flex-col gap-6">
-      <BackLink href="/student/tasks">My tasks</BackLink>
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold tracking-tight break-words">{task.title}</h1>
-        <p className="text-sm opacity-80">
-          {TASK_TYPE_LABEL[task.type]} · {pastDue ? "Was due" : "Due"} {formatIst(task.dueAt)}
-        </p>
-        <p className="text-sm opacity-80">
-          Attempts: {attemptsUsed} of {task.maxAttempts} used
-          {bestScore !== undefined && <> · Best score {bestScore.toFixed(1)} / 10</>}
-        </p>
-      </header>
+      <PageHeader
+        title={task.title}
+        back={{ href: "/student/tasks", label: "My tasks" }}
+        subtitle={
+          <>
+            <p>
+              {TASK_TYPE_LABEL[task.type]} · {pastDue ? "Was due" : "Due"} {formatIst(task.dueAt)}
+            </p>
+            <p>
+              Attempts: {attemptsUsed} of {task.maxAttempts} used
+              {bestScore !== undefined && <> · Best score {bestScore.toFixed(1)} / 10</>}
+            </p>
+          </>
+        }
+      />
 
       <Markdown>{task.description}</Markdown>
 

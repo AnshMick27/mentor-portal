@@ -60,12 +60,11 @@ const full: StudentDashboardData = {
   },
 };
 
-const render = (data: StudentDashboardData) => renderToStaticMarkup(<StudentDashboard name="Asha" data={data} />);
+const render = (data: StudentDashboardData) => renderToStaticMarkup(<StudentDashboard data={data} />);
 
 describe("StudentDashboard", () => {
   it("shows summary numbers, skill averages and this week's tasks with their state", () => {
     const html = render(full);
-    expect(html).toContain("Hi, Asha");
     expect(html).toContain("8.8 / 10");
     expect(html).toContain("Coding</dt>");
     expect(html).not.toContain("Written intro</dt>"); // no intro score yet

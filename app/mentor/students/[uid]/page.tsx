@@ -6,6 +6,7 @@ import { RemoveStudentButton } from "@/components/mentor/RemoveStudentButton";
 import { StudentProfile } from "@/components/mentor/StudentProfile";
 import { QueryStatus } from "@/components/QueryStatus";
 import { Note } from "@/components/ui/Note";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { BackLink } from "@/components/ui/TextLink";
 import { useAsyncData } from "@/components/useAsyncData";
 import { useNow } from "@/components/useNow";
@@ -15,11 +16,10 @@ import { getClientDb } from "@/lib/firebase/client";
 
 function NotFound() {
   return (
-    <section className="flex flex-col gap-3">
-      <h1 className="text-2xl font-bold tracking-tight">Student not found</h1>
-      <p className="opacity-80">There is no student with this link.</p>
-      <BackLink href="/mentor/students">Students</BackLink>
-    </section>
+    <>
+      <PageHeader title="Student not found" back={{ href: "/mentor/students", label: "Students" }} />
+      <p>There is no student with this link.</p>
+    </>
   );
 }
 
@@ -71,7 +71,14 @@ function LoadedProfile({ data, onChanged }: { data: StudentProfileData; onChange
 function Profile({ uid }: { uid: string }) {
   const load = useCallback(() => loadStudentProfile(getClientDb(), uid), [uid]);
   const { state, reload } = useAsyncData(load, "Could not load this student. Please try again.");
-  if (state.status !== "ready") return <QueryStatus state={state} onRetry={reload} />;
+  if (state.status !== "ready") {
+    return (
+      <>
+        <BackLink href="/mentor/students">Students</BackLink>
+        <QueryStatus state={state} onRetry={reload} loadingLabel="Loading this student…" />
+      </>
+    );
+  }
   return state.data ? <LoadedProfile key={uid} data={state.data} onChanged={reload} /> : <NotFound />;
 }
 

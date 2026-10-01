@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { RemoveStudentControls } from "@/components/mentor/RemoveStudentButton";
-import { StudentList } from "@/components/mentor/StudentList";
+import { StudentList, StudentListHeader } from "@/components/mentor/StudentList";
 import type { StudentRow } from "@/lib/students/list";
 
 vi.mock("@/components/auth/AuthProvider", () => ({ useAuth: () => ({ getIdToken: async () => "token" }) }));
@@ -34,7 +34,12 @@ describe("StudentList", () => {
   });
 
   it("is read-only for viewers", () => {
-    const html = renderToStaticMarkup(<StudentList rows={rows} canEdit={false} onChanged={noop} />);
+    const html = renderToStaticMarkup(
+      <>
+        <StudentListHeader canEdit={false} />
+        <StudentList rows={rows} canEdit={false} onChanged={noop} />
+      </>,
+    );
     expect(html).toContain("Read-only view.");
     expect(html).not.toContain("Remove from portal");
     expect(html).not.toContain("Restore access");

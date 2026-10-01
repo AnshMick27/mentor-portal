@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { formatIst } from "@/lib/dates/ist";
 import { TASK_TYPE_LABEL, type TaskDto } from "@/lib/validation/task";
 
@@ -18,16 +19,15 @@ export function StatusBadge({ status }: { status: TaskDto["status"] }) {
   );
 }
 
+/** Page header; the "New task" button only for mentors. Rendered by the page so it stays while the list loads. */
+export function TaskListHeader({ canEdit }: { canEdit: boolean }) {
+  return <PageHeader title="Tasks" actions={canEdit && <ButtonLink href="/mentor/tasks/new">New task</ButtonLink>} />;
+}
+
 /** Mentor/viewer task list. `canEdit` false (viewers) hides every create/edit control. */
 export function TaskList({ tasks, canEdit }: { tasks: TaskDto[]; canEdit: boolean }) {
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">Tasks</h1>
-        {canEdit && (
-          <ButtonLink href="/mentor/tasks/new">New task</ButtonLink>
-        )}
-      </div>
       {tasks.length === 0 ? (
         <p className="opacity-70">No tasks yet.</p>
       ) : (

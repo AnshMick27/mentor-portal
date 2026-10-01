@@ -98,16 +98,11 @@ function LatestResult({ submission, task, open }: { submission: SubmissionView; 
 }
 
 /** The student home screen (SPEC.md §8.5). Presentational: the page loads the data. */
-export function StudentDashboard({ name, data }: { name: string; data: StudentDashboardData }) {
+export function StudentDashboard({ data }: { data: StudentDashboardData }) {
   const taskById = new Map(data.tasks.map((task) => [task.id, task]));
   const nextSteps = dashboardNextSteps(data.stats);
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight">Hi, {name}</h1>
-        <p className="text-sm opacity-75">Your progress and what is due this week.</p>
-      </div>
-
       <Summary stats={data.stats} />
 
       <Section title="Progress">
