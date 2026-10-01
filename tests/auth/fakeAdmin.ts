@@ -12,6 +12,7 @@ type DocRef = {
   create: (data: Data) => Promise<void>;
   set: (data: Data) => Promise<void>;
   update: (data: Data) => Promise<void>;
+  delete: () => Promise<void>;
 };
 type DocSnapshot = { id: string; exists: boolean; data: () => Data | undefined };
 type Query = {
@@ -25,8 +26,8 @@ type QuerySnapshot = { empty: boolean; size: number; docs: DocSnapshot[] };
 
 /**
  * In-memory stand-in for the Admin SDK pieces we use: `verifyIdToken` (token string → decoded token) and
- * Firestore docs in any collection: auto ids, get/create/set/update, `where(==)`/`orderBy`/`limit` queries,
- * and transaction get/create/set/update.
+ * Firestore docs in any collection: auto ids, get/create/set/update/delete, whole-collection `get`,
+ * `where(==)`/`orderBy`/`limit` queries, and transaction get/create/set/update.
  * Register with `vi.mock("@/lib/firebase/admin", async () => (await import("./fakeAdmin")).fakeAdmin.module)`.
  */
 export function createFakeAdmin() {
@@ -68,6 +69,7 @@ export function createFakeAdmin() {
       create: async (data) => createDoc(collection, id, data),
       set: async (data) => void collectionData(collection).set(id, data),
       update: async (data) => updateDoc(collection, id, data),
+      delete: async () => void collectionData(collection).delete(id),
     };
   }
 
@@ -109,6 +111,7 @@ export function createFakeAdmin() {
       doc: (id?: string) => docRef(name, id),
       where: (field: string, op: "==", value: unknown) => query(name, [], Infinity).where(field, op, value),
       orderBy: (field: string, direction?: "asc" | "desc") => query(name, [], Infinity).orderBy(field, direction),
+      get: () => query(name, [], Infinity).get(),
     }),
     runTransaction: vi.fn(async <T>(fn: (tx: unknown) => Promise<T>): Promise<T> => {
       const tx = {

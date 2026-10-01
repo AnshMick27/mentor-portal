@@ -194,3 +194,10 @@
 - `lib/stats/compute.ts` is pure: `computeStudentStats(user, tasks, submissions, now)` / `computeTaskStats(task, users, submissions)` take plain `Stats*` inputs (Dates, not Timestamps; see `lib/stats/types.ts`) and ignore unrelated docs, so T21 can pass whole collections. Averages go through `averageScore` (sums whole tenths, no float drift).
 - compute.ts and `lib/submissions/scoring.ts` use RELATIVE `.ts` value imports (only `import type` from `@/`) so plain Node can load them for the seed (T23). Keep it that way; check with `node --input-type=module -e "import('./lib/stats/compute.ts')"`. Next/Turbopack builds these imports fine.
 - Stored docs parse with `storedStudentStatsSchema` / `storedTaskStatsSchema` (`lib/validation/stats.ts`); never write `undefined` (optional fields like `overallAvg`, `avgScore`, `needsAttentionReason` are omitted instead).
+
+## Recompute (T21)
+- `lib/stats/recompute.ts`: `recomputeStudent(uid)` (false = not an onboarded student, nothing written), `recomputeTask(id)` (deletes stats of draft/missing tasks), `recomputeAll()` → `{students, tasks}` (T22 cron), `recomputeAllAfter(reason)` (logs, never throws). All take an optional `now` for tests.
+- Get `getAdminDb()` ONCE before starting parallel reads: a synchronous throw while building a `Promise.all` array leaves earlier promises rejected and unhandled (vitest reports "Unhandled Errors").
+- Route tests that create/patch tasks mock `@/lib/stats/recompute`; tests/stats/recompute.test.ts runs the real thing on the fake Admin (now with `doc.delete()` and `collection.get()`).
+- `npm run check` once died at the rules step with `java -version` exit 3221225794 (0xC0000142, a transient Windows DLL-init failure) and the emulator hung; `java -version` and `npm run test:rules` passed on retry.
+- Many repo files are CRLF (core.autocrlf=false), others LF. Python text-mode read/write silently converts CRLF files to LF (whole-file diffs, happened in T20/T21 and was fixed); prefer the Edit tool, or open files in binary and keep their endings.

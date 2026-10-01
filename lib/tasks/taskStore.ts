@@ -12,9 +12,13 @@ import {
 
 const LIST_LIMIT = 200;
 
-export type TaskResult = { ok: true; task: TaskDto } | { ok: false; status: number; message: string };
+type TaskError = { ok: false; status: number; message: string };
+export type TaskResult = { ok: true; task: TaskDto } | TaskError;
 
-const NOT_FOUND: TaskResult = { ok: false, status: 404, message: "Task not found." };
+/** `updateTask`'s result; `affectsStats` is true when status, type or due date changed (stats must be recomputed). */
+export type TaskUpdateResult = { ok: true; task: TaskDto; affectsStats: boolean } | TaskError;
+
+const NOT_FOUND: TaskError = { ok: false, status: 404, message: "Task not found." };
 
 function tasks() {
   return getAdminDb().collection("tasks");
@@ -57,10 +61,10 @@ export function mergeTaskPatch(existing: TaskDto, patch: TaskPatch): TaskInput {
 }
 
 /** Edits (incl. publish/unpublish) a task: merge, re-validate the whole task, then write it in one transaction. */
-export async function updateTask(id: string, patch: TaskPatch): Promise<TaskResult> {
+export async function updateTask(id: string, patch: TaskPatch): Promise<TaskUpdateResult> {
   const db = getAdminDb();
   const ref = tasks().doc(id);
-  return db.runTransaction(async (tx): Promise<TaskResult> => {
+  return db.runTransaction(async (tx): Promise<TaskUpdateResult> => {
     const snapshot = await tx.get(ref);
     const existing = snapshot.exists ? taskDocToDto(id, snapshot.data()) : undefined;
     if (!existing) return NOT_FOUND;
@@ -70,14 +74,18 @@ export async function updateTask(id: string, patch: TaskPatch): Promise<TaskResu
       return { ok: false, status: 400, message: merged.error.issues[0]?.message ?? "Invalid task." };
     }
 
+    const dueAt = new Date(merged.data.dueAt).toISOString();
+    const affectsStats =
+      existing.status !== merged.data.status || existing.type !== merged.data.type || existing.dueAt !== dueAt;
     const now = Timestamp.now();
     const createdAt = Timestamp.fromDate(new Date(existing.createdAt));
     tx.set(ref, { ...toStored(merged.data), createdBy: existing.createdBy, createdAt, updatedAt: now });
     return {
       ok: true,
+      affectsStats,
       task: {
         ...merged.data,
-        dueAt: new Date(merged.data.dueAt).toISOString(),
+        dueAt,
         id,
         createdBy: existing.createdBy,
         createdAt: existing.createdAt,

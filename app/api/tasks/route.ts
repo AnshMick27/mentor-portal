@@ -1,6 +1,7 @@
 import { jsonError } from "@/lib/api/errors";
 import { parseBody } from "@/lib/api/parseBody";
 import { requireUser } from "@/lib/auth/requireUser";
+import { recomputeAllAfter } from "@/lib/stats/recompute";
 import { createTask, listTasks } from "@/lib/tasks/taskStore";
 import { taskInputSchema } from "@/lib/validation/task";
 
@@ -22,10 +23,14 @@ export async function POST(request: Request): Promise<Response> {
   if (!auth.ok) return auth.response;
   const body = await parseBody(request, taskInputSchema);
   if (!body.ok) return body.response;
+  let task;
   try {
-    return Response.json({ task: await createTask(body.data, auth.value.uid) }, { status: 201 });
+    task = await createTask(body.data, auth.value.uid);
   } catch (error) {
     console.error("POST /api/tasks failed:", error);
     return jsonError(500, "Could not save the task. Please try again.");
   }
+  // A task created as published appears on every board, so its stats (and the students') are due now.
+  if (task.status === "published") await recomputeAllAfter(`POST /api/tasks (${task.id})`);
+  return Response.json({ task }, { status: 201 });
 }

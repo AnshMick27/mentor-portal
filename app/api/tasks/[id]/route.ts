@@ -1,6 +1,7 @@
 import { jsonError } from "@/lib/api/errors";
 import { parseBody } from "@/lib/api/parseBody";
 import { requireUser } from "@/lib/auth/requireUser";
+import { recomputeAllAfter } from "@/lib/stats/recompute";
 import { getTask, updateTask, type TaskResult } from "@/lib/tasks/taskStore";
 import { isValidTaskId, taskPatchSchema } from "@/lib/validation/task";
 
@@ -22,7 +23,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/tasks/[id]">
   }
 }
 
-/** Mentor only: edit any fields, including `status` to publish or unpublish. */
+/** Mentor only: edit any fields, including `status` to publish or unpublish. Recomputes stats when needed. */
 export async function PATCH(request: Request, ctx: RouteContext<"/api/tasks/[id]">): Promise<Response> {
   const auth = await requireUser(request, ["mentor"]);
   if (!auth.ok) return auth.response;
@@ -30,10 +31,14 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/tasks/[id]
   if (!isValidTaskId(id)) return jsonError(404, "Task not found.");
   const body = await parseBody(request, taskPatchSchema);
   if (!body.ok) return body.response;
+  let result;
   try {
-    return respond(await updateTask(id, body.data));
+    result = await updateTask(id, body.data);
   } catch (error) {
     console.error(`PATCH /api/tasks/${id} failed:`, error);
     return jsonError(500, "Could not save the task. Please try again.");
   }
+  // Publishing, unpublishing, or moving a due date changes every student's due/missed counts.
+  if (result.ok && result.affectsStats) await recomputeAllAfter(`PATCH /api/tasks/${id}`);
+  return respond(result);
 }

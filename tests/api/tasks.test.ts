@@ -2,6 +2,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as getOne, PATCH } from "@/app/api/tasks/[id]/route";
 import { GET as list, POST } from "@/app/api/tasks/route";
+import { recomputeAllAfter } from "@/lib/stats/recompute";
 import { fakeAdmin } from "../auth/fakeAdmin";
 
 vi.mock("@/lib/firebase/admin", async () => (await import("../auth/fakeAdmin")).fakeAdmin.module);
@@ -9,6 +10,9 @@ vi.mock("@/lib/config/env", async () => {
   const { fakeEnv } = await import("../auth/fakeAdmin");
   return { getServerEnv: () => fakeEnv };
 });
+vi.mock("@/lib/stats/recompute", () => ({ recomputeAllAfter: vi.fn(async () => undefined) }));
+
+const recomputeMock = vi.mocked(recomputeAllAfter);
 
 type TaskBody = Record<string, unknown> & { id: string };
 type Body = { task?: TaskBody; tasks?: TaskBody[]; error?: string };
@@ -67,6 +71,7 @@ function seedTask(id: string, fields: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   fakeAdmin.reset();
+  recomputeMock.mockClear();
   const user = (role: string) => ({ name: role, email: `${role}@college.ac.in`, role, onboarded: true, showOnLeaderboard: false });
   fakeAdmin.tokens.set("mentor", { uid: "m1", email: "ansh@college.ac.in", email_verified: true });
   fakeAdmin.tokens.set("viewer", { uid: "v1", email: "boss@college.ac.in", email_verified: true });
@@ -203,5 +208,32 @@ describe("GET/PATCH /api/tasks/[id]", () => {
     expect((await callPatch("mentor", "t1", { createdBy: "evil" })).status).toBe(400);
     expect((await callPatch("mentor", "t1", {})).status).toBe(400);
     expect(fakeAdmin.collection("tasks").get("t1")).toMatchObject({ createdBy: "m1", title: "Seeded" });
+  });
+});
+
+describe("stats recompute after task changes", () => {
+  it("recomputes after creating a published task, not a draft", async () => {
+    expect((await callCreate("mentor", resumeTask)).status).toBe(201);
+    expect(recomputeMock).not.toHaveBeenCalled();
+    const { status, body } = await callCreate("mentor", { ...resumeTask, status: "published" });
+    expect(status).toBe(201);
+    expect(recomputeMock).toHaveBeenCalledExactlyOnceWith(`POST /api/tasks (${body.task?.id})`);
+  });
+
+  it("recomputes when status, due date or type changes", async () => {
+    await callPatch("mentor", "t1", { status: "published" });
+    await callPatch("mentor", "t1", { dueAt: "2026-10-20T23:59:00+05:30" });
+    await callPatch("mentor", "t1", { type: "intro_written" });
+    expect(recomputeMock).toHaveBeenCalledTimes(3);
+    expect(recomputeMock).toHaveBeenCalledWith("PATCH /api/tasks/t1");
+  });
+
+  it("does not recompute for other edits, unchanged values, or refused patches", async () => {
+    await callPatch("mentor", "t1", { title: "New title", description: "New", maxAttempts: 2 });
+    await callPatch("mentor", "t1", { status: "draft", dueAt: "2026-09-20T10:00:00Z", type: "resume" });
+    await callPatch("mentor", "t1", { type: "coding" }); // 400: missing coding settings
+    await callPatch("viewer", "t1", { status: "published" }); // 403
+    await callPatch("mentor", "nope", { status: "published" }); // 404
+    expect(recomputeMock).not.toHaveBeenCalled();
   });
 });
