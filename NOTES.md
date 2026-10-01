@@ -236,3 +236,8 @@
 - `/mentor/students/[uid]`: `loadStudentProfile(db, uid)` (undefined = not a student → "not found") + `loadSubmissionPage(db, uid, cursor?)` (50 per page; `cursor` only when a full page came back). Index: submissions (uid, createdAt↓) — 5th composite index.
 - `AttemptList` (components/student/SubmissionHistory.tsx) renders attempts for both the student task page and the mentor profile (`sentLabel`).
 - The rules fixture's `sub-alice` is dated 2026-09-26 10:00 IST; date generated test docs after it if a test depends on "newest first".
+
+## Excel export (T29)
+- Dependency `exceljs` ^4.4 (SPEC §4), server-only (`lib/export/workbook.ts` imports `server-only`). `buildExportWorkbook(input, now)` returns `Uint8Array<ArrayBuffer>`: TS's `BodyInit` refuses an `ArrayBufferLike`-backed array, so the bytes are copied into a fresh ArrayBuffer.
+- Read a workbook back in tests: `new ExcelJS.Workbook().xlsx.load(bytes.buffer)`, then `row.values.slice(1)` (exceljs rows are 1-based; trailing blank cells are dropped).
+- To make the fake Admin fail INSIDE a route (after `requireUser` has read `users`), spy on `db.collection` and throw only for the collection the route reads; restore the spy.

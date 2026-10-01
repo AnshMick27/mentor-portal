@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback } from "react";
 import { useSignedInProfile } from "@/components/auth/AuthProvider";
+import { ExportButton } from "@/components/mentor/ExportButton";
 import { LeaderboardSetting } from "@/components/mentor/LeaderboardSetting";
 import { MentorDashboard } from "@/components/mentor/MentorDashboard";
 import { QueryStatus } from "@/components/QueryStatus";
@@ -23,12 +24,15 @@ export default function MentorHomePage() {
             {profile.role === "viewer" ? "Read-only view" : `Welcome, ${profile.name}`}
           </p>
         </div>
-        <Link
-          href="/mentor/tasks"
-          className="inline-flex min-h-11 items-center justify-center self-start rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-        >
-          {profile.role === "mentor" ? "Manage tasks" : "View tasks"}
-        </Link>
+        <div className="flex flex-wrap items-start gap-3">
+          <Link
+            href="/mentor/tasks"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+          >
+            {profile.role === "mentor" ? "Manage tasks" : "View tasks"}
+          </Link>
+          <ExportButton />
+        </div>
       </div>
       {state.status === "ready" ? <MentorDashboard data={state.data} /> : <QueryStatus state={state} onRetry={reload} />}
       {profile.role === "mentor" && <LeaderboardSetting />}
