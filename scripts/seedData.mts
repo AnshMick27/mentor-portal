@@ -1,7 +1,8 @@
-// Demo data for the local emulators (T11). Pure: no Firebase calls, so it is unit-tested in tests/scripts/.
+// Demo data for the local emulators (T11, T23). Pure: no Firebase calls, so it is unit-tested in tests/scripts/.
 // Imports use `.ts` extensions because `node` runs this file directly (native type stripping).
-import { initialStudentStats } from "../lib/stats/initialStudentStats.ts";
-import type { StudentStatsFields } from "../lib/stats/types.ts";
+import { computeStudentStats, computeTaskStats } from "../lib/stats/compute.ts";
+import type { StatsTask, StatsUser, StudentStatsFields, TaskStatsFields } from "../lib/stats/types.ts";
+import { buildSeedSubmissions, type SeedSubmission } from "./seedSubmissions.mts";
 import { taskInputSchema, type TaskInput, type ValidTask } from "../lib/validation/task.ts";
 import type { Branch, Role, StoredUser } from "../lib/validation/user.ts";
 
@@ -10,6 +11,9 @@ export type SeedData = {
   users: SeedUser[];
   studentStats: { uid: string; doc: StudentStatsFields }[];
   tasks: { id: string; task: ValidTask }[];
+  submissions: SeedSubmission[];
+  taskStats: { id: string; doc: TaskStatsFields }[];
+  config: { leaderboardEnabled: boolean };
 };
 
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]", "::1"]);
@@ -33,12 +37,13 @@ export function emulatorHosts(env: Record<string, string | undefined>): { firest
   return hosts;
 }
 
-const STUDENTS: { name: string; branch: Branch; rollNo: string }[] = [
-  { name: "Aarav Sharma", branch: "CSE", rollNo: "0827CS231001" },
-  { name: "Diya Patel", branch: "IT", rollNo: "0827IT231002" },
+/** Students 1, 2 and 5 opted in to the leaderboard (it stays switched off in `config/app` until a mentor enables it). */
+const STUDENTS: { name: string; branch: Branch; rollNo: string; showOnLeaderboard?: boolean }[] = [
+  { name: "Aarav Sharma", branch: "CSE", rollNo: "0827CS231001", showOnLeaderboard: true },
+  { name: "Diya Patel", branch: "IT", rollNo: "0827IT231002", showOnLeaderboard: true },
   { name: "Kabir Singh", branch: "CSIT", rollNo: "0827CI231003" },
   { name: "Meera Iyer", branch: "CSE-AIML", rollNo: "0827AL231004" },
-  { name: "Rohan Verma", branch: "CY", rollNo: "0827CY231005" },
+  { name: "Rohan Verma", branch: "CY", rollNo: "0827CY231005", showOnLeaderboard: true },
   { name: "Sana Khan", branch: "EC", rollNo: "0827EC231006" },
 ];
 
@@ -52,13 +57,17 @@ function dueInDays(now: Date, days: number): string {
   return `${ist.toISOString().slice(0, 10)}T23:59:00+05:30`;
 }
 
-/** 1 mentor, 1 viewer, 6 onboarded students across branches, 4 tasks (2 published, 1 draft, 1 past due). */
+/**
+ * 1 mentor, 1 viewer, 6 onboarded students across branches; 6 tasks (2 published upcoming, 1 draft, 3 published
+ * past due); demo submissions (seedSubmissions.mts) and the stats docs computed from them exactly as the app does.
+ */
 export function buildSeedData(domain: string, now: Date): SeedData {
   const email = (local: string) => `${local}@${domain}`;
   const students = STUDENTS.map((s, i) =>
     user(`seed-student-${i + 1}`, s.name, email(`demo.student${i + 1}`), "student", {
       rollNo: s.rollNo,
       branch: s.branch,
+      showOnLeaderboard: s.showOnLeaderboard ?? false,
     }),
   );
   const users = [
@@ -121,15 +130,60 @@ export function buildSeedData(domain: string, now: Date): SeedData {
         description: "Pick a company you are targeting and explain in 80–250 words why you want to join it.",
       },
     },
+    {
+      id: "seed-sum-past",
+      input: {
+        title: "Sum of two numbers",
+        type: "coding",
+        status: "published",
+        dueAt: dueInDays(now, -8),
+        description: "Read two integers `a` and `b` (|a|, |b| ≤ 10^18) on one line and print `a + b`.",
+        coding: {
+          problemSlug: "sum-two-numbers",
+          languages: ["cpp", "java", "python"],
+          sampleTests: [{ input: "2 3", output: "5" }],
+          timeLimitMs: 2000,
+        },
+      },
+    },
+    {
+      id: "seed-resume-past",
+      input: {
+        title: "Resume review: baseline",
+        type: "resume",
+        status: "published",
+        dueAt: dueInDays(now, -12),
+        description: "Send the resume you have today, before any changes, so we can measure your progress.",
+      },
+    },
   ];
+
+  // Validated with the same schema as the API, so seeded tasks are always ones a mentor could create.
+  const validTasks = tasks.map(({ id, input }) => ({ id, task: taskInputSchema.parse(input) }));
+  const submissions = buildSeedSubmissions(
+    validTasks.map(({ id, task }) => ({ id, type: task.type, dueAt: task.dueAt })),
+  );
+
+  // Stats exactly as lib/stats/recompute.ts would write them.
+  const statsTasks: StatsTask[] = validTasks.map(({ id, task }) => ({
+    id,
+    type: task.type,
+    status: task.status,
+    dueAt: new Date(task.dueAt),
+  }));
+  const statsUsers: StatsUser[] = users.map(({ uid, doc }) => ({ uid, ...doc }));
+  const statsSubmissions = submissions.map(({ doc }) => doc);
 
   return {
     users,
-    studentStats: students.map(({ uid, doc }) => ({
-      uid,
-      doc: initialStudentStats({ name: doc.name, rollNo: doc.rollNo ?? "", branch: doc.branch ?? "OTHER" }),
-    })),
-    // Validated with the same schema as the API, so seeded tasks are always ones a mentor could create.
-    tasks: tasks.map(({ id, input }) => ({ id, task: taskInputSchema.parse(input) })),
+    studentStats: statsUsers
+      .filter((u) => u.role === "student")
+      .map((u) => ({ uid: u.uid, doc: computeStudentStats(u, statsTasks, statsSubmissions, now) })),
+    tasks: validTasks,
+    submissions,
+    taskStats: statsTasks
+      .filter((t) => t.status === "published")
+      .map((t) => ({ id: t.id, doc: computeTaskStats(t, statsUsers, statsSubmissions) })),
+    config: { leaderboardEnabled: false },
   };
 }

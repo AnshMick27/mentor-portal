@@ -60,12 +60,22 @@ async function main(): Promise<void> {
       updatedAt: now,
     });
   }
+  for (const { id, doc } of data.submissions) {
+    batch.set(db.doc(`submissions/${id}`), { ...doc, createdAt: Timestamp.fromDate(doc.createdAt) });
+  }
+  // Dates inside the stats (recentScores[].at) are stored as Timestamps by the Admin SDK.
+  for (const { id, doc } of data.taskStats) batch.set(db.doc(`taskStats/${id}`), { ...doc, updatedAt: now });
+  batch.set(db.doc("config/app"), data.config);
   await batch.commit();
   await deleteApp(app);
 
   console.log(`Seeded project "${projectId}" in the emulators (Firestore ${hosts.firestore}, Auth ${hosts.auth}):`);
   for (const { doc } of data.users) console.log(`  ${doc.role.padEnd(7)} ${doc.email}`);
   for (const { id, task } of data.tasks) console.log(`  task    ${id} (${task.status}, due ${task.dueAt})`);
+  console.log(`  ${data.submissions.length} submissions; stats for ${data.studentStats.length} students and ${data.taskStats.length} tasks`);
+  for (const { uid, doc } of data.studentStats) {
+    if (doc.needsAttention) console.log(`  needs attention: ${uid} (${doc.needsAttentionReason})`);
+  }
 }
 
 main().catch((error: unknown) => {

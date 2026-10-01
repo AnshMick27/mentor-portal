@@ -26,7 +26,9 @@ Needs Java 21 on the PATH (the Firebase emulators are Java programs).
    npm run seed
    ```
    It prints the demo accounts: `demo.mentor@…`, `demo.viewer@…` and `demo.student1@…` to `demo.student6@…`
-   (on your `ALLOWED_EMAIL_DOMAIN`), and 4 tasks: 2 published, 1 draft, 1 past due.
+   (on your `ALLOWED_EMAIL_DOMAIN`), 6 tasks (2 upcoming, 1 draft, 3 past due), demo submissions with feedback,
+   and the dashboard stats. Students 3, 4 and 6 are flagged "needs attention" (missed tasks / low average);
+   student 6 has submitted nothing. Students 1, 2 and 5 opted in to the leaderboard, which starts switched off.
    The script refuses to run if the emulator host variables point anywhere other than this machine.
 4. Terminal 2 — start the app:
    ```bash

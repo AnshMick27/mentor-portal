@@ -205,3 +205,8 @@
 ## Cron (T22)
 - `vercel.json` holds the only cron (`/api/cron/recompute`, `0 19 * * *` UTC = 00:30 IST). Vercel Cron sends GET with `Authorization: Bearer $CRON_SECRET` automatically when that env var exists in the project; Hobby runs it once a day, timing within that hour. A test pins the schedule.
 - Manual run: `curl -H "Authorization: Bearer <secret>" https://<app>/api/cron/recompute`, or Vercel → Settings → Cron Jobs → Run.
+
+## Seed v2 (T23)
+- Demo story lives in `scripts/seedSubmissions.mts` (`STORY` by student number; task keys are seed ids without `seed-`). Stats are computed with `lib/stats/compute.ts` inside `buildSeedData`, so seeded dashboards match what recompute would write. Attempts are dated relative to the due date: for a task due in N days, use daysBeforeDue ≥ N + 1 or the attempt lands in the future (a test checks this).
+- Read the emulator back over REST with `Authorization: Bearer owner` (bypasses rules): `curl -H "Authorization: Bearer owner" "http://127.0.0.1:8080/v1/projects/<id>/databases/(default)/documents/studentStats"`.
+- Stopping a background `npm run emulators` task does NOT kill the Java Firestore emulator; it keeps port 8080 and the next `npm run test:rules` fails with "port taken". Free it: find the PID with `Get-NetTCPConnection -LocalPort 8080` and stop that process (and the firebase node process on 9099/4400).

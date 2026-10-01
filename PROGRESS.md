@@ -28,7 +28,7 @@ Definitions used by every task below (SPEC.md §6 leaves them open; see Question
   - Checks `Authorization: Bearer <CRON_SECRET>` with a timing-safe compare (401 otherwise; 500 with a log line if `CRON_SECRET` is unset), then `recomputeAll()`; replies with counts only. `maxDuration` set. `vercel.json` cron once a day at 00:30 IST (`0 19 * * *` UTC; Vercel Hobby allows one run a day).
   - Acceptance: route tests (missing/wrong/right secret, secret unset, recompute failure → 500 without details) and a test that `vercel.json` points at the route with a daily schedule.
 
-- [ ] **T23 — Seed demo submissions and stats**
+- [x] **T23 — Seed demo submissions and stats**
   - Extend `scripts/seed.mts` so local dashboards have data: `done` submissions (coding, resume, intro; several attempts, one `error`) for most demo students, at least one student who trips each needs-attention rule, then write `studentStats`/`taskStats` with the T20 functions (import them by relative path; keep the file importable by Node's type stripping) and `config/app` with `leaderboardEnabled: false`.
   - Acceptance: seed data unit tests updated; seed runs against the emulator from an empty database.
 
@@ -295,6 +295,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-09-30 — T20 — lib/stats/compute.ts (pure computeStudentStats/computeTaskStats per the Loop 3 definitions: best of done attempts, past-due/missed, tenths-exact averages incl. overallAvg and avgScoreByBranch, newest-8 recentScores, next steps from the newest AI result, both needs-attention rules with reasons), lib/stats/types.ts, zod schemas for stored studentStats/taskStats (lib/validation/stats.ts); compute + scoring loadable by plain Node for the T23 seed; 26 new unit tests.
 - 2026-10-01 — T21 — lib/stats/recompute.ts (recomputeStudent / recomputeTask / recomputeAll write whole studentStats/taskStats docs with updatedAt, idempotent; draft or missing task stats deleted; malformed docs skipped and logged; recomputeAllAfter logs instead of throwing), onFinished now recomputes the student and the task (never throws), task POST (created published) and PATCH (status, type or due date changed) trigger a full recompute; fake Admin gained doc delete + whole-collection get; 13 new tests.
 - 2026-10-01 — T22 — GET /api/cron/recompute (CRON_SECRET bearer checked by lib/cron/cronAuth.ts with a constant-time SHA-256 digest compare; 500 + log if unset, 401 if wrong; recomputeAll → `{students, tasks}` only; 500 without details on failure; maxDuration 60) and vercel.json cron `0 19 * * *` (00:30 IST); 7 new tests.
+- 2026-10-01 — T23 — Seed now has 6 tasks (adds past-due `seed-sum-past` coding and `seed-resume-past`), 19 demo submissions from scripts/seedSubmissions.mts (AI results with criteria, Accepted / Wrong Answer / TLE / Compilation Error judge results, one error attempt), studentStats + taskStats computed with lib/stats/compute.ts, `config/app` leaderboard off, students 1/2/5 opted in; students 3, 4, 6 trip the needs-attention rules. Verified from an empty emulator database (counts and stored values read back); README updated; 6 new tests.
 
 ## Blockers
 (none)
