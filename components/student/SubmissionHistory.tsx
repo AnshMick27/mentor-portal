@@ -24,7 +24,7 @@ const TONE_CLASS = {
 } as const;
 
 /** Live judge status for a coding attempt; the full result (score, compile output) follows when done. */
-function JudgeStatus({ submission, now }: { submission: SubmissionView; now: Date }) {
+export function JudgeStatus({ submission, now }: { submission: SubmissionView; now: Date }) {
   const view = judgeStatusView(submission, now);
   return (
     <div role="status" className={`flex flex-col gap-1 rounded-lg border px-4 py-3 text-sm ${TONE_CLASS[view.tone]}`}>

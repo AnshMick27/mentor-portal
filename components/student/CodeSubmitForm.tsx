@@ -4,7 +4,7 @@ import { useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { codeSize, insertIndent } from "@/lib/submissions/judgeDisplay";
 import { LANGUAGE_LABEL, type Language } from "@/lib/validation/task";
-import { ErrorNote, textareaClass } from "./FeedbackSubmitParts";
+import { DisabledReason, ErrorNote, LimitStatus, textareaClass } from "./FeedbackSubmitParts";
 import type { CodeSubmitState } from "./useCodeSubmit";
 
 type Props = {
@@ -21,6 +21,7 @@ export function CodeSubmitForm({ languages, state, onSubmit }: Props) {
   const escaped = useRef(false);
   const size = codeSize(code);
   const submitting = state.status === "submitting";
+  const disabledReason = size.tooBig ? "Shorten your code to submit." : code.trim() === "" ? "Paste or type your code to submit." : undefined;
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Escape") {
@@ -63,11 +64,15 @@ export function CodeSubmitForm({ languages, state, onSubmit }: Props) {
           </option>
         ))}
       </select>
-      {language === "java" && <p className="text-sm opacity-80">Java: your class must be named Main.</p>}
+      {language === "java" && <p className="text-sm text-muted">Java: your class must be named Main.</p>}
 
       <label htmlFor="code-text" className="font-medium">
         Your code
       </label>
+      <p id="code-help" className="text-sm text-muted">
+        Read the input from standard input and print the answer.
+        <span className="hidden sm:inline"> Tab adds spaces; press Esc then Tab to leave the box.</span>
+      </p>
       <textarea
         id="code-text"
         value={code}
@@ -81,21 +86,21 @@ export function CodeSubmitForm({ languages, state, onSubmit }: Props) {
         aria-describedby="code-help code-size"
         className={`${textareaClass} font-mono text-sm leading-normal whitespace-pre`}
       />
-      <p id="code-help" className="text-sm opacity-70">
-        Read input from standard input and print the answer. Tab adds spaces; press Esc then Tab to leave the box.
-      </p>
-      <p id="code-size" aria-live="polite" className={`text-sm ${size.tooBig ? "text-red-700 dark:text-red-300" : "opacity-80"}`}>
+      <p id="code-size" className={`text-sm ${size.tooBig ? "text-red-700 dark:text-red-300" : "text-muted"}`}>
         {size.tooBig ? `Too long: ${size.text}` : size.text}
       </p>
+      <LimitStatus message={size.tooBig ? "Too long" : ""} />
 
-      <Button type="submit" disabled={size.tooBig || code.trim() === ""} busy={submitting} busyLabel="Sending…">
+      <Button
+        type="submit"
+        disabled={disabledReason !== undefined}
+        busy={submitting}
+        busyLabel="Sending…"
+        aria-describedby={disabledReason && !submitting ? "code-submit-reason" : undefined}
+      >
         Submit code
       </Button>
-      {state.status === "sent" && (
-        <p role="status" className="text-sm">
-          Sent to the judge. Watch the status under “Your attempts” below.
-        </p>
-      )}
+      {!submitting && <DisabledReason id="code-submit-reason" reason={disabledReason} />}
       {state.status === "error" && <ErrorNote message={state.message} />}
     </form>
   );

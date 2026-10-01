@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { AiDataNote } from "@/components/PrivacyLink";
 import { checkIntroLength } from "@/lib/submissions/wordCount";
 import { MAX_INTRO_CHARS } from "@/lib/submissions/limits";
-import { SubmitFooter, textareaClass } from "./FeedbackSubmitParts";
+import { LimitStatus, SubmitFooter, textareaClass } from "./FeedbackSubmitParts";
 import type { FeedbackSubmitState } from "./useFeedbackSubmit";
 
 /** Written intro: textarea with a live word count (target 80–250) and the 300–2,500 character limit. */
@@ -32,16 +32,17 @@ export function IntroSubmitForm({ state, onSubmit }: { state: FeedbackSubmitStat
         placeholder="Greeting, background, skills, projects or achievements, and your goals."
         className={textareaClass}
       />
-      <AiDataNote />
-      <p id="intro-count" aria-live="polite" className="flex flex-wrap justify-between gap-x-4 text-sm">
-        <span className={check.wordsInTarget ? "text-green-800 dark:text-green-300" : "opacity-80"}>
+      <p id="intro-count" className="flex flex-wrap justify-between gap-x-4 text-sm">
+        <span className={check.wordsInTarget ? "text-green-800 dark:text-green-300" : "text-muted"}>
           {check.words} words · {check.wordHint}
         </span>
-        <span className={check.charError && check.chars > 0 ? "text-red-700 dark:text-red-300" : "opacity-80"}>
+        <span className={check.charError && check.chars > 0 ? "text-red-700 dark:text-red-300" : "text-muted"}>
           {check.charError ?? `${check.chars} / ${MAX_INTRO_CHARS.toLocaleString("en-IN")} characters`}
         </span>
       </p>
-      <SubmitFooter state={state} disabled={check.charError !== undefined} />
+      <LimitStatus message={check.chars > MAX_INTRO_CHARS ? "Too long" : check.wordsInTarget ? "In the target range" : ""} />
+      <AiDataNote />
+      <SubmitFooter state={state} disabledReason={check.charError} />
     </form>
   );
 }

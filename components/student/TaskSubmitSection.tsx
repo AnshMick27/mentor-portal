@@ -2,22 +2,48 @@
 
 import { Note } from "@/components/ui/Note";
 import { submitAvailability } from "@/lib/submissions/availability";
+import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import type { AiTaskType } from "@/lib/validation/submission";
 import type { Language, TaskDto } from "@/lib/validation/task";
 import { CodeSubmitForm } from "./CodeSubmitForm";
 import { FeedbackReady, FeedbackSaved } from "./FeedbackSubmitParts";
 import { IntroSubmitForm } from "./IntroSubmitForm";
 import { ResumeSubmitForm } from "./ResumeSubmitForm";
-import { useCodeSubmit } from "./useCodeSubmit";
+import { JudgeStatus } from "./SubmissionHistory";
+import { useCodeSubmit, type CodeSubmitState } from "./useCodeSubmit";
 import { useFeedbackSubmit } from "./useFeedbackSubmit";
 
-type SectionProps = { task: TaskDto; attemptsUsed: number; now: Date };
+type SectionProps = { task: TaskDto; attemptsUsed: number; now: Date; submissions?: readonly SubmissionView[] };
 
-function AttemptsLeft({ count }: { count: number }) {
+/** The last attempt gets a warning: it cannot be undone (UX-10). */
+export function AttemptsLeft({ count }: { count: number }) {
+  if (count === 1) return <Note tone="warning">This is your last attempt. Check your work before you submit.</Note>;
+  return <p className="text-sm text-muted">{count} attempts left. Your best score counts.</p>;
+}
+
+/** Right under the form after sending code: this attempt's live status, so nobody scrolls or sends it twice (UX-08). */
+export function SentStatus({
+  state,
+  submissions,
+  now,
+}: {
+  state: CodeSubmitState;
+  submissions: readonly SubmissionView[];
+  now: Date;
+}) {
+  if (state.status !== "sent") return null;
+  const attempt = state.submissionId ? submissions.find((submission) => submission.id === state.submissionId) : undefined;
   return (
-    <p className="text-sm opacity-80">
-      {count} {count === 1 ? "attempt" : "attempts"} left. Your best score counts.
-    </p>
+    <div className="flex flex-col gap-2">
+      {attempt ? (
+        <JudgeStatus submission={attempt} now={now} />
+      ) : (
+        <p role="status" className="text-sm">
+          Sent to the judge. The status appears here in a moment.
+        </p>
+      )}
+      <p className="text-sm text-muted">Full details are under “Your attempts” below.</p>
+    </div>
   );
 }
 
@@ -25,7 +51,7 @@ function ClosedNote({ reason }: { reason: string }) {
   return <Note tone="neutral">{reason}</Note>;
 }
 
-function CodeSubmitSection({ task, attemptsUsed, now }: SectionProps) {
+function CodeSubmitSection({ task, attemptsUsed, now, submissions = [] }: SectionProps) {
   const { state, submit } = useCodeSubmit(task.id);
   const availability = submitAvailability(task, attemptsUsed, now);
   const onSubmit = (language: Language, code: string) => void submit(language, code);
@@ -38,10 +64,11 @@ function CodeSubmitSection({ task, attemptsUsed, now }: SectionProps) {
         <>
           <AttemptsLeft count={availability.attemptsLeft} />
           <CodeSubmitForm languages={task.coding?.languages ?? []} state={state} onSubmit={onSubmit} />
+          <SentStatus state={state} submissions={submissions} now={now} />
         </>
       ) : (
         <>
-          {state.status === "sent" && <p role="status" className="text-sm">Sent to the judge. Watch the status below.</p>}
+          <SentStatus state={state} submissions={submissions} now={now} />
           <ClosedNote reason={availability.reason} />
         </>
       )}

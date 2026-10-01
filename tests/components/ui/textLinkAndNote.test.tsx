@@ -59,7 +59,7 @@ describe("feedback submit outcome (UX-09)", () => {
     expect(html).toContain('role="status"');
     expect(html).not.toContain('role="alert"');
     expect(html).toContain("Your feedback is ready.");
-    expect(renderToStaticMarkup(<SubmitFooter state={{ status: "saved" }} disabled={false} />)).not.toContain('role="alert"');
+    expect(renderToStaticMarkup(<SubmitFooter state={{ status: "saved" }} />)).not.toContain('role="alert"');
   });
 });
 

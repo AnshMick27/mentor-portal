@@ -4,6 +4,7 @@ import { CodeSubmitForm } from "@/components/student/CodeSubmitForm";
 import { SubmissionHistory, statusLabel } from "@/components/student/SubmissionHistory";
 import { SubmissionResultView } from "@/components/student/SubmissionResultView";
 import { StudentTaskDetail } from "@/components/student/StudentTaskDetail";
+import { AttemptsLeft, SentStatus } from "@/components/student/TaskSubmitSection";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import type { TaskDto } from "@/lib/validation/task";
 
@@ -70,9 +71,14 @@ describe("CodeSubmitForm", () => {
     expect(html).toMatch(/<button type="submit" disabled=""/);
   });
 
-  it("shows the sent note and server errors", () => {
-    const sent = renderToStaticMarkup(<CodeSubmitForm languages={["python"]} state={{ status: "sent" }} onSubmit={() => {}} />);
-    expect(sent).toContain("Sent to the judge");
+  it("explains why Submit is greyed out, linked to the button", () => {
+    expect(html).toContain('aria-describedby="code-submit-reason"');
+    expect(html).toContain('<p id="code-submit-reason" class="text-sm text-muted">Paste or type your code to submit.</p>');
+    expect(html).not.toContain("aria-live"); // counters don't speak on every key
+    expect(html.indexOf('id="code-help"')).toBeLessThan(html.indexOf('id="code-text"')); // hint above the box
+  });
+
+  it("shows server errors", () => {
     const error = renderToStaticMarkup(
       <CodeSubmitForm languages={["python"]} state={{ status: "error", message: "Try again later." }} onSubmit={() => {}} />,
     );
@@ -139,5 +145,28 @@ describe("coding attempt history", () => {
     );
     expect(html).toContain("Compiler output");
     expect(html).toMatch(/<pre class="[^"]*overflow-auto[^"]*font-mono[^"]*">main.cpp:3: error: expected &#x27;;&#x27;<\/pre>/);
+  });
+});
+
+describe("live status right after sending (UX-08) and the last-attempt warning (UX-10)", () => {
+  it("shows this attempt's judge status under the form once it appears", () => {
+    const queued = attempt("new1", 1, { status: "queued" });
+    const html = renderToStaticMarkup(<SentStatus state={{ status: "sent", submissionId: "new1" }} submissions={[queued]} now={now} />);
+    expect(html).toContain('role="status"');
+    expect(html).toContain("Full details are under “Your attempts” below.");
+    expect(html).not.toContain("appears here in a moment");
+  });
+
+  it("says it was sent while the attempt has not arrived yet, and nothing before sending", () => {
+    const waiting = renderToStaticMarkup(<SentStatus state={{ status: "sent", submissionId: "x" }} submissions={[]} now={now} />);
+    expect(waiting).toContain("Sent to the judge. The status appears here in a moment.");
+    expect(renderToStaticMarkup(<SentStatus state={{ status: "idle" }} submissions={[]} now={now} />)).toBe("");
+  });
+
+  it("warns before the last attempt only", () => {
+    const last = renderToStaticMarkup(<AttemptsLeft count={1} />);
+    expect(last).toContain("This is your last attempt.");
+    expect(last).toContain("bg-amber-50");
+    expect(renderToStaticMarkup(<AttemptsLeft count={2} />)).toBe('<p class="text-sm text-muted">2 attempts left. Your best score counts.</p>');
   });
 });

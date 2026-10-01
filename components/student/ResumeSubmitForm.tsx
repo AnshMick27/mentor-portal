@@ -4,8 +4,16 @@ import { useState, type ChangeEvent, type FormEvent } from "react";
 import { AiDataNote } from "@/components/PrivacyLink";
 import { MAX_RESUME_CHARS } from "@/lib/submissions/limits";
 import { extractPdfText, PdfTextError } from "@/lib/submissions/pdfText";
-import { ErrorNote, SubmitFooter, textareaClass } from "./FeedbackSubmitParts";
+import { ErrorNote, LimitStatus, SubmitFooter, textareaClass } from "./FeedbackSubmitParts";
 import type { FeedbackSubmitState } from "./useFeedbackSubmit";
+
+/** Why Submit is greyed out, in words (UX-10); undefined when it can be pressed. */
+export function resumeDisabledReason(chars: number, tooLong: boolean, reading: boolean): string | undefined {
+  if (reading) return "Wait until your PDF has been read.";
+  if (chars === 0) return "Add your resume text (or choose a PDF) to submit.";
+  if (tooLong) return "Shorten your resume text to submit.";
+  return undefined;
+}
 
 type PdfState = { status: "none" } | { status: "reading" } | { status: "read"; fileName: string } | { status: "error"; message: string };
 
@@ -54,10 +62,9 @@ export function ResumeSubmitForm({ state, onSubmit }: { state: FeedbackSubmitSta
         aria-describedby="resume-pdf-help"
         className="text-sm file:mr-3 file:min-h-11 file:rounded-lg file:border-0 file:bg-black/[0.07] file:px-4 file:font-medium dark:file:bg-white/[0.12]"
       />
-      <p id="resume-pdf-help" className="text-sm opacity-80">
+      <p id="resume-pdf-help" className="text-sm text-muted">
         Your PDF stays on your device: only the text below is sent for feedback. You can also paste your text.
       </p>
-      <AiDataNote />
       {pdf.status === "reading" && <p role="status" className="text-sm">Reading your PDF…</p>}
       {pdf.status === "error" && <ErrorNote message={pdf.message} />}
 
@@ -79,11 +86,13 @@ export function ResumeSubmitForm({ state, onSubmit }: { state: FeedbackSubmitSta
         placeholder="Paste your resume text here, or choose a PDF above."
         className={textareaClass}
       />
-      <p id="resume-count" aria-live="polite" className={`text-sm ${tooLong ? "text-red-700 dark:text-red-300" : "opacity-80"}`}>
+      <p id="resume-count" className={`text-sm ${tooLong ? "text-red-700 dark:text-red-300" : "text-muted"}`}>
         {chars.toLocaleString("en-IN")} / {MAX_RESUME_CHARS.toLocaleString("en-IN")} characters
         {tooLong && " — please shorten it"}
       </p>
-      <SubmitFooter state={state} disabled={chars === 0 || tooLong || pdf.status === "reading"} />
+      <LimitStatus message={tooLong ? "Too long" : ""} />
+      <AiDataNote />
+      <SubmitFooter state={state} disabledReason={resumeDisabledReason(chars, tooLong, pdf.status === "reading")} />
     </form>
   );
 }

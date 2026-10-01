@@ -78,7 +78,7 @@ export function StudentTaskDetail({
         </Section>
       )}
 
-      <TaskSubmitSection task={task} attemptsUsed={progress.attemptsUsed} now={now} />
+      <TaskSubmitSection task={task} attemptsUsed={progress.attemptsUsed} now={now} submissions={submissions} />
       <SubmissionHistory submissions={submissions} now={now} />
     </article>
   );

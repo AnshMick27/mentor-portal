@@ -2,6 +2,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { StudentTaskDetail } from "@/components/student/StudentTaskDetail";
 import { FeedbackReady, SubmitFooter } from "@/components/student/FeedbackSubmitParts";
+import { IntroSubmitForm } from "@/components/student/IntroSubmitForm";
+import { resumeDisabledReason } from "@/components/student/ResumeSubmitForm";
+import { SubmissionResultView } from "@/components/student/SubmissionResultView";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import type { TaskDto } from "@/lib/validation/task";
 
@@ -82,10 +85,10 @@ describe("closed submit area", () => {
 
 describe("submit feedback notes", () => {
   it("shows progress while the AI works and the server's message on error", () => {
-    const busy = renderToStaticMarkup(<SubmitFooter state={{ status: "submitting" }} disabled={false} />);
+    const busy = renderToStaticMarkup(<SubmitFooter state={{ status: "submitting" }} />);
     expect(busy).toContain("Getting feedback…");
     expect(busy).toContain("up to a minute");
-    const failed = renderToStaticMarkup(<SubmitFooter state={{ status: "error", message: "No attempts left." }} disabled={false} />);
+    const failed = renderToStaticMarkup(<SubmitFooter state={{ status: "error", message: "No attempts left." }} />);
     expect(failed).toContain('role="alert"');
     expect(failed).toContain("No attempts left.");
   });
@@ -96,5 +99,32 @@ describe("submit feedback notes", () => {
     );
     expect(html).toContain("Feedback ready: 7.0 / 10");
     expect(html).toContain("Clear and confident.");
+  });
+});
+
+describe("disabled reasons, order and headings (T35h)", () => {
+  it("the intro form says why Submit is greyed out and puts the counter right under the field", () => {
+    const html = renderToStaticMarkup(<IntroSubmitForm state={{ status: "idle" }} onSubmit={() => {}} />);
+    expect(html).toContain('aria-describedby="submit-reason"');
+    expect(html).toContain('<p id="submit-reason" class="text-sm text-muted">Write at least 300 characters (0 so far).</p>');
+    expect(html).not.toContain("aria-live");
+    const field = html.indexOf('id="intro-text"');
+    expect(field).toBeLessThan(html.indexOf('id="intro-count"'));
+    expect(html.indexOf('id="intro-count"')).toBeLessThan(html.indexOf('href="/privacy"'));
+  });
+
+  it("names each reason the resume Submit button is off", () => {
+    expect(resumeDisabledReason(0, false, false)).toBe("Add your resume text (or choose a PDF) to submit.");
+    expect(resumeDisabledReason(9_000, true, false)).toBe("Shorten your resume text to submit.");
+    expect(resumeDisabledReason(10, false, true)).toBe("Wait until your PDF has been read.");
+    expect(resumeDisabledReason(10, false, false)).toBeUndefined();
+  });
+
+  it("feedback lists use h3, never a skipped level", () => {
+    const html = renderToStaticMarkup(
+      <SubmissionResultView result={{ score: 6, summary: "", strengths: ["Clear"], improvements: ["Shorter"], nextSteps: [] }} />,
+    );
+    expect(html).toContain("<h3");
+    expect(html).not.toContain("<h4");
   });
 });

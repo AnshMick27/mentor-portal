@@ -7,7 +7,8 @@ import type { TaskDto } from "@/lib/validation/task";
 describe("Markdown", () => {
   it("renders basic markdown", () => {
     const html = renderToStaticMarkup(<Markdown>{"# Title\n\n**bold** and `code`\n\n- item"}</Markdown>);
-    expect(html).toContain("<h1>Title</h1>");
+    expect(html).toContain("<h3>Title</h3>"); // shifted under the page's "What to do" h2 (UX-11)
+    expect(html).not.toContain("<h1");
     expect(html).toContain("<strong>bold</strong>");
     expect(html).toContain("<code>code</code>");
     expect(html).toContain("<li>item</li>");

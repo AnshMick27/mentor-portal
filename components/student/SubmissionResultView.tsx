@@ -6,7 +6,7 @@ function List({ title, items }: { title: string; items: string[] }) {
   if (items.length === 0) return null;
   return (
     <div className="flex flex-col gap-1">
-      <h4 className="font-semibold">{title}</h4>
+      <h3 className="font-semibold">{title}</h3>
       <ul className="list-disc space-y-1 pl-5">
         {items.map((item, index) => (
           <li key={index} className="break-words">
@@ -32,7 +32,7 @@ export function SubmissionResultView({ result }: { result: SubmissionResult }) {
       )}
       {result.judge?.compileOutput && (
         <div className="flex flex-col gap-1">
-          <h4 className="font-semibold">Compiler output</h4>
+          <h3 className="font-semibold">Compiler output</h3>
           <pre className="max-h-64 overflow-auto rounded-lg bg-black/[0.05] p-3 font-mono text-xs whitespace-pre dark:bg-white/[0.08]">
             {result.judge.compileOutput}
           </pre>
