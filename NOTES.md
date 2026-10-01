@@ -231,3 +231,8 @@
 - `loadMentorDashboard(db)` → `{tasks, taskStats: Map, students: MentorStudent[]}` (MentorStudent = stored studentStats + uid). Pure filters/aggregates in `lib/dashboard/mentor.ts` take a `BranchFilter` ("all" | Branch); T29's export can reuse `classSkillAverages`/`inBranch`.
 - Firestore indexes now: submissions (uid, taskId, createdAt↓), submissions (uid, status, createdAt↓), studentStats (showOnLeaderboard, overallAvg↓, name), tasks (status, dueAt↓). The emulator ignores indexes, so only H8's deploy proves them.
 - The rules fixture's `taskStats` doc has no `avgScoreByBranch`; the schema defaults it to `{}`.
+
+## Student profile (T28)
+- `/mentor/students/[uid]`: `loadStudentProfile(db, uid)` (undefined = not a student → "not found") + `loadSubmissionPage(db, uid, cursor?)` (50 per page; `cursor` only when a full page came back). Index: submissions (uid, createdAt↓) — 5th composite index.
+- `AttemptList` (components/student/SubmissionHistory.tsx) renders attempts for both the student task page and the mentor profile (`sentLabel`).
+- The rules fixture's `sub-alice` is dated 2026-09-26 10:00 IST; date generated test docs after it if a test depends on "newest first".
