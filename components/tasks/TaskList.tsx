@@ -43,7 +43,7 @@ export function TaskList({ tasks, canEdit }: { tasks: TaskDto[]; canEdit: boolea
                 )}
                 <StatusBadge status={task.status} />
               </div>
-              <p className="mt-1 text-sm opacity-75">
+              <p className="mt-1 text-sm text-muted">
                 {TASK_TYPE_LABEL[task.type]} · Due {formatIst(task.dueAt)}
               </p>
             </li>

@@ -15,7 +15,7 @@ export default function PrivacyPage() {
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8 leading-relaxed">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight">How your data is used</h1>
-        <p className="opacity-80">
+        <p className="text-muted">
           The CDC Mentor Portal helps you prepare for placements. This page explains, in plain words, what it keeps
           about you, who can see it, and where your work goes.
         </p>

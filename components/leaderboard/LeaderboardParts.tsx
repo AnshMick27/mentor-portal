@@ -64,11 +64,11 @@ export function Switch({ id, label, hint, checked, disabled = false, error, onCh
         />
         <span
           aria-hidden="true"
-          className="relative h-7 w-12 shrink-0 rounded-full bg-black/25 transition-colors peer-checked:bg-blue-700 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-700 peer-disabled:opacity-50 after:absolute after:top-1 after:left-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-5 dark:bg-white/25"
+          className="relative h-7 w-12 shrink-0 rounded-full bg-black/50 transition-colors peer-checked:bg-blue-700 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-700 peer-disabled:opacity-50 after:absolute after:top-1 after:left-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-5 dark:bg-white/45"
         />
         <span className="font-medium">{label}</span>
       </label>
-      <p id={`${id}-hint`} className="text-sm opacity-70">
+      <p id={`${id}-hint`} className="text-sm text-muted">
         {hint}
       </p>
       {error && (

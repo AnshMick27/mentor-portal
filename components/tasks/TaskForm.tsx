@@ -5,6 +5,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Markdown } from "@/components/Markdown";
 import { Button } from "@/components/ui/Button";
+import { inputClasses } from "@/components/ui/Field";
 import { Note } from "@/components/ui/Note";
 import { apiFetch } from "@/lib/api/client";
 import { formToTaskInput, taskToPatch, type TaskFormState } from "@/lib/tasks/taskForm";
@@ -18,8 +19,7 @@ import {
   type Language,
 } from "@/lib/validation/task";
 
-const inputClass =
-  "min-h-11 w-full rounded-lg border border-black/20 bg-transparent px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 dark:border-white/25 disabled:opacity-60 read-only:opacity-60";
+const inputClass = inputClasses;
 const textareaClass = `${inputClass} py-2 font-mono text-sm`;
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
@@ -27,7 +27,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
     <label className="flex flex-col gap-1.5">
       <span className="font-medium">{label}</span>
       {children}
-      {hint && <span className="text-sm opacity-70">{hint}</span>}
+      {hint && <span className="text-sm text-muted">{hint}</span>}
     </label>
   );
 }
@@ -117,7 +117,7 @@ export function TaskForm(props: Props) {
                 aria-selected={tab === name}
                 onClick={() => setTab(name)}
                 className={`min-h-9 rounded-md px-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-blue-700 ${
-                  tab === name ? "bg-black/10 dark:bg-white/15" : "opacity-70"
+                  tab === name ? "bg-black/10 dark:bg-white/15" : "text-muted"
                 }`}
               >
                 {name === "write" ? "Write" : "Preview"}
@@ -135,7 +135,7 @@ export function TaskForm(props: Props) {
           />
         ) : (
           <div className="min-h-40 rounded-lg border border-black/10 p-3 dark:border-white/15">
-            {form.description.trim() ? <Markdown>{form.description}</Markdown> : <p className="opacity-60">Nothing to preview.</p>}
+            {form.description.trim() ? <Markdown>{form.description}</Markdown> : <p className="text-muted">Nothing to preview.</p>}
           </div>
         )}
       </div>
@@ -239,7 +239,7 @@ export function TaskForm(props: Props) {
                 Add sample test
               </Button>
             )}
-            <p className="text-sm opacity-70">Hidden tests are never entered here; they live only in the judge repo.</p>
+            <p className="text-sm text-muted">Hidden tests are never entered here; they live only in the judge repo.</p>
           </div>
         </fieldset>
       )}

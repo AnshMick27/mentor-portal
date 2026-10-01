@@ -26,7 +26,7 @@ const STATE_TONE: Record<ProfileTaskRow["state"], ChipTone> = {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col">
-      <dt className="text-xs uppercase tracking-wide opacity-70">{label}</dt>
+      <dt className="text-xs uppercase tracking-wide text-muted">{label}</dt>
       <dd className="text-xl font-bold">{value}</dd>
     </div>
   );
@@ -40,7 +40,7 @@ function TaskRow({ row, now }: { row: ProfileTaskRow; now: Date }) {
         summary={
           <span className="flex flex-col gap-0.5">
           <span className="font-semibold break-words">{row.task.title}</span>
-          <span className="text-sm opacity-75">
+          <span className="text-sm text-muted">
             {TASK_TYPE_LABEL[row.task.type]} · Due {formatIst(row.task.dueAt)}
           </span>
           <span className="text-sm">

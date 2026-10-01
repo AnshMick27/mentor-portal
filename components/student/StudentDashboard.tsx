@@ -17,7 +17,7 @@ import { SubmissionResultView } from "./SubmissionResultView";
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col">
-      <dt className="text-xs uppercase tracking-wide opacity-70">{label}</dt>
+      <dt className="text-xs uppercase tracking-wide text-muted">{label}</dt>
       <dd className="text-xl font-bold">{value}</dd>
     </div>
   );

@@ -59,7 +59,7 @@ export function SubmissionResultView({ result }: { result: SubmissionResult }) {
               <tr key={criterion.name} className="border-b border-black/10 align-top dark:border-white/10">
                 <td className="py-2 pr-2">
                   <span className="font-medium break-words">{criterion.name}</span>
-                  {criterion.comment && <span className="mt-0.5 block break-words opacity-80">{criterion.comment}</span>}
+                  {criterion.comment && <span className="mt-0.5 block break-words text-muted">{criterion.comment}</span>}
                 </td>
                 <td className="py-2 text-right whitespace-nowrap tabular-nums">{criterion.score.toFixed(1)}</td>
               </tr>

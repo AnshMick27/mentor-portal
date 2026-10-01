@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cardClasses } from "@/components/ui/Card";
 import { Disclosure } from "@/components/ui/Disclosure";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { inputClasses } from "@/components/ui/Field";
 import { formatScore } from "@/components/ui/Score";
 import { Section } from "@/components/ui/Section";
 import { TextLink } from "@/components/ui/TextLink";
@@ -34,7 +35,7 @@ function TaskStatus({ row }: { row: TaskStatusRow }) {
     <li className={cardClasses({ className: "flex flex-col gap-2" })}>
       <div className="flex flex-col gap-0.5">
         <span className="font-semibold break-words">{row.task.title}</span>
-        <span className="text-sm opacity-75">
+        <span className="text-sm text-muted">
           {TASK_TYPE_LABEL[row.task.type]} · Due {formatIst(row.task.dueAt)}
         </span>
       </div>
@@ -48,7 +49,7 @@ function TaskStatus({ row }: { row: TaskStatusRow }) {
               <ul className="flex flex-col gap-1 pl-1 text-sm">
                 {row.notSubmitted.map((student) => (
                   <li key={student.uid} className="break-words">
-                    <StudentLink student={student} /> <span className="opacity-70">{student.rollNo}</span>
+                    <StudentLink student={student} /> <span className="text-muted">{student.rollNo}</span>
                   </li>
                 ))}
               </ul>
@@ -85,7 +86,7 @@ export function MentorDashboardView({
         <select
           value={branch}
           onChange={(event) => onBranch(event.target.value as BranchFilter)}
-          className="min-h-11 rounded-lg border border-black/20 bg-transparent px-3 text-base dark:border-white/25"
+          className={`${inputClasses} font-normal sm:w-auto`}
         >
           <option value="all">All branches ({data.students.length} students)</option>
           {branches.map((b) => (
@@ -117,7 +118,7 @@ export function MentorDashboardView({
               <li key={student.uid} className={cardClasses({ className: "flex flex-col gap-0.5 text-sm" })}>
                 <span className="break-words">
                   <StudentLink student={student} />{" "}
-                  <span className="opacity-70">
+                  <span className="text-muted">
                     {student.rollNo} · {student.branch}
                   </span>
                 </span>
@@ -132,9 +133,9 @@ export function MentorDashboardView({
         <dl className={cardClasses({ className: "grid grid-cols-1 gap-3 sm:grid-cols-3" })}>
           {skills.map((skill) => (
             <div key={skill.type} className="flex flex-col">
-              <dt className="text-xs uppercase tracking-wide opacity-70">{skill.label}</dt>
+              <dt className="text-xs uppercase tracking-wide text-muted">{skill.label}</dt>
               <dd className="text-xl font-bold">{formatScore(skill.average)}</dd>
-              <dd className="text-xs opacity-70">
+              <dd className="text-xs text-muted">
                 {skill.students} student{skill.students === 1 ? "" : "s"} with a score
               </dd>
             </div>

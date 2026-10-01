@@ -2,6 +2,7 @@
 
 import { useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/Button";
+import { inputClasses } from "@/components/ui/Field";
 import { codeSize, insertIndent } from "@/lib/submissions/judgeDisplay";
 import { LANGUAGE_LABEL, type Language } from "@/lib/validation/task";
 import { DisabledReason, ErrorNote, LimitStatus, textareaClass } from "./FeedbackSubmitParts";
@@ -56,7 +57,7 @@ export function CodeSubmitForm({ languages, state, onSubmit }: Props) {
           const picked = languages.find((lang) => lang === event.target.value);
           if (picked) setLanguage(picked);
         }}
-        className="min-h-11 rounded-lg border border-black/20 bg-transparent px-3 dark:border-white/25"
+        className={inputClasses}
       >
         {languages.map((lang) => (
           <option key={lang} value={lang}>

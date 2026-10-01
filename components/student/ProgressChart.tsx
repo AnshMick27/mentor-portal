@@ -20,7 +20,7 @@ export function ProgressChart({ recentScores }: { recentScores: StoredStudentSta
   const data = progressChartData(recentScores);
   if (!data.hasChart) {
     return (
-      <p className="text-sm opacity-70">
+      <p className="text-sm text-muted">
         Your progress chart appears after you have scores on at least two tasks.
       </p>
     );
@@ -70,7 +70,7 @@ export function ProgressChart({ recentScores }: { recentScores: StoredStudentSta
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <figcaption className="text-xs opacity-70">Best score per task, last {data.points.length} tasks (IST dates).</figcaption>
+      <figcaption className="text-xs text-muted">Best score per task, last {data.points.length} tasks (IST dates).</figcaption>
       <table className="sr-only">
         <caption>Your scores over time</caption>
         <thead>

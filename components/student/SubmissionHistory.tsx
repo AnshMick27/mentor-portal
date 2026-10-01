@@ -64,7 +64,7 @@ function AttemptBody({ submission, now, audience }: { submission: SubmissionView
     );
   }
   return (
-    <p role="status" className="text-sm opacity-80">
+    <p role="status" className="text-sm text-muted">
       {WORDING[audience].pending}
     </p>
   );
@@ -124,7 +124,7 @@ export function SubmissionHistory({ submissions, now }: { submissions: readonly 
         Your attempts
       </h2>
       {submissions.length === 0 ? (
-        <p className="text-sm opacity-70">No attempts yet. Your feedback will appear here.</p>
+        <p className="text-sm text-muted">No attempts yet. Your feedback will appear here.</p>
       ) : (
         <AttemptList submissions={submissions} now={now} />
       )}

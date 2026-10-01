@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/Button";
+import { textareaClasses } from "@/components/ui/Field";
 import { Note } from "@/components/ui/Note";
 import type { SubmissionResult } from "@/lib/validation/submission";
 import type { FeedbackSubmitState } from "./useFeedbackSubmit";
 
-export const textareaClass =
-  "w-full rounded-lg border border-black/20 bg-transparent p-3 text-base leading-relaxed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 dark:border-white/25";
+export const textareaClass = textareaClasses;
 
 export function ErrorNote({ message }: { message: string }) {
   return (

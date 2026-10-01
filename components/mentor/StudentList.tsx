@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cardClasses } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { inputClasses } from "@/components/ui/Field";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
 import { StatusChip } from "@/components/ui/StatusChip";
@@ -18,8 +19,8 @@ function Row({ row, canEdit, onChanged }: { row: StudentRow; canEdit: boolean; o
         <TextLink href={`/mentor/students/${row.uid}`} strong className="text-base break-words">
           {row.name}
         </TextLink>
-        <span className="break-all opacity-75">{row.email}</span>
-        <span className="opacity-75">
+        <span className="break-all text-muted">{row.email}</span>
+        <span className="text-muted">
           {row.rollNo ?? "No roll number"} · {row.branch ?? "—"}
           {row.joinedAt && <> · Joined {formatIst(row.joinedAt.toISOString())}</>}
         </span>
@@ -90,7 +91,7 @@ export function StudentList({ rows, canEdit, onChanged }: { rows: StudentRow[]; 
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          className="min-h-11 rounded-lg border border-black/20 bg-transparent px-3 text-base font-normal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 dark:border-white/25"
+          className={`${inputClasses} font-normal`}
         />
       </label>
       <Group
