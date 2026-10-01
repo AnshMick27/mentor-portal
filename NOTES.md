@@ -201,3 +201,7 @@
 - Route tests that create/patch tasks mock `@/lib/stats/recompute`; tests/stats/recompute.test.ts runs the real thing on the fake Admin (now with `doc.delete()` and `collection.get()`).
 - `npm run check` once died at the rules step with `java -version` exit 3221225794 (0xC0000142, a transient Windows DLL-init failure) and the emulator hung; `java -version` and `npm run test:rules` passed on retry.
 - Many repo files are CRLF (core.autocrlf=false), others LF. Python text-mode read/write silently converts CRLF files to LF (whole-file diffs, happened in T20/T21 and was fixed); prefer the Edit tool, or open files in binary and keep their endings.
+
+## Cron (T22)
+- `vercel.json` holds the only cron (`/api/cron/recompute`, `0 19 * * *` UTC = 00:30 IST). Vercel Cron sends GET with `Authorization: Bearer $CRON_SECRET` automatically when that env var exists in the project; Hobby runs it once a day, timing within that hour. A test pins the schedule.
+- Manual run: `curl -H "Authorization: Bearer <secret>" https://<app>/api/cron/recompute`, or Vercel → Settings → Cron Jobs → Run.
