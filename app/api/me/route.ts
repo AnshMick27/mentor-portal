@@ -8,8 +8,8 @@ export async function POST(request: Request): Promise<Response> {
   if (!identity.ok) return identity.response;
 
   try {
-    const profile = await provisionUser(identity.value);
-    return Response.json({ profile });
+    const result = await provisionUser(identity.value);
+    return result.ok ? Response.json({ profile: result.profile }) : jsonError(result.status, result.message);
   } catch (error) {
     console.error(`POST /api/me failed for uid ${identity.value.uid}:`, error);
     return jsonError(500, "Could not load your account. Please try again.");

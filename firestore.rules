@@ -13,9 +13,10 @@ service cloud.firestore {
       return /databases/$(database)/documents/users/$(request.auth.uid);
     }
 
-    // A users/{uid} doc exists; the server creates it only after the domain check.
+    // A users/{uid} doc exists (the server creates it only after the domain check) and a mentor has not
+    // removed the account (T34a): a removed user reads nothing.
     function isProvisioned() {
-      return isSignedIn() && exists(userPath());
+      return isSignedIn() && exists(userPath()) && get(userPath()).data.get('removed', false) != true;
     }
 
     // Role comes from the server-written user doc, never from the client or token claims.

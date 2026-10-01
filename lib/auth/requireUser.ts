@@ -1,5 +1,5 @@
 import "server-only";
-import { jsonError, WRONG_DOMAIN_MESSAGE } from "@/lib/api/errors";
+import { jsonError, REMOVED_MESSAGE, WRONG_DOMAIN_MESSAGE } from "@/lib/api/errors";
 import { getServerEnv } from "@/lib/config/env";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { storedUserSchema, type Role, type UserProfile } from "@/lib/validation/user";
@@ -61,6 +61,7 @@ export async function requireUser(request: Request, roles: readonly Role[]): Pro
     return fail(500, "Your account data is invalid. Please contact a mentor.");
   }
 
+  if (parsed.data.removed === true) return fail(403, REMOVED_MESSAGE);
   if (!roles.includes(parsed.data.role)) return fail(403, "You do not have access to this.");
   return { ok: true, value: { uid, ...parsed.data } };
 }

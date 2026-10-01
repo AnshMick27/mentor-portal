@@ -202,6 +202,12 @@ describe("computeTaskStats", () => {
     expect(countedStudents(users).map((user) => user.uid)).toEqual(["s1", "s2", "s3"]);
   });
 
+  it("leaves out students a mentor removed, including from the not-submitted list", () => {
+    const withRemoved = users.map((user) => (user.uid === "s2" ? { ...user, removed: true } : user));
+    expect(countedStudents(withRemoved).map((user) => user.uid)).toEqual(["s1", "s3"]);
+    expect(computeTaskStats(t, withRemoved, []).notSubmittedUids).toEqual(["s1", "s3"]);
+  });
+
   it("lists every counted student as not submitted when nobody has finished", () => {
     const stats = computeTaskStats(t, users, [other("t", "error", "s1"), other("t", "queued", "s2")]);
     expect(stats).toEqual({ submittedCount: 0, notSubmittedUids: ["s1", "s2", "s3"], avgScoreByBranch: {} });

@@ -18,6 +18,8 @@ export const storedUserSchema = z.object({
   branch: branchSchema.optional(),
   onboarded: z.boolean(),
   showOnLeaderboard: z.boolean().default(false),
+  /** Set by a mentor (T34a): access blocked, data kept, reversible. Absent = active. */
+  removed: z.boolean().optional(),
 });
 export type StoredUser = z.infer<typeof storedUserSchema>;
 

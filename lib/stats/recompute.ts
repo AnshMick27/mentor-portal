@@ -18,13 +18,14 @@ function toUser(doc: Snapshot): StatsUser | undefined {
     console.error(`users/${doc.id} does not match the user schema; skipped in stats`);
     return undefined;
   }
-  const { name, role, onboarded, rollNo, branch, showOnLeaderboard } = parsed.data;
+  const { name, role, onboarded, rollNo, branch, showOnLeaderboard, removed } = parsed.data;
   return {
     uid: doc.id,
     name,
     role,
     onboarded,
     showOnLeaderboard,
+    ...(removed === true ? { removed } : {}),
     ...(rollNo ? { rollNo } : {}),
     ...(branch ? { branch } : {}),
   };
@@ -104,9 +105,12 @@ export async function recomputeAll(now = new Date()): Promise<RecomputeAllResult
   ]);
   const subs = parseAll(subsSnapshot.docs, toSubmission);
   const students = countedStudents(users);
+  // A removed student's stats doc goes, so they leave dashboards, the leaderboard and the export.
+  const removed = users.filter((user) => user.removed === true);
   await Promise.all([
     ...students.map((user) => writeStudentStats(db, user, tasks, subs, now)),
     ...tasks.map((task) => writeTaskStats(db, task, users, subs, now)),
+    ...removed.map((user) => db.collection("studentStats").doc(user.uid).delete()),
   ]);
   return { students: students.length, tasks: tasks.filter((task) => task.status === "published").length };
 }

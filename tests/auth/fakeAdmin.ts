@@ -27,7 +27,7 @@ type QuerySnapshot = { empty: boolean; size: number; docs: DocSnapshot[] };
 /**
  * In-memory stand-in for the Admin SDK pieces we use: `verifyIdToken` (token string → decoded token) and
  * Firestore docs in any collection: auto ids, get/create/set/update/delete, whole-collection `get`,
- * `where(==)`/chained `orderBy`/`limit` queries, and transaction get/create/set/update.
+ * `where(==)`/chained `orderBy`/`limit` queries, and transaction get/create/set/update/delete.
  * Register with `vi.mock("@/lib/firebase/admin", async () => (await import("./fakeAdmin")).fakeAdmin.module)`.
  */
 export function createFakeAdmin() {
@@ -125,6 +125,9 @@ export function createFakeAdmin() {
           collectionData(ref.collection).set(ref.id, data);
         },
         update: (ref: DocRef, data: Data) => updateDoc(ref.collection, ref.id, data),
+        delete: (ref: DocRef) => {
+          collectionData(ref.collection).delete(ref.id);
+        },
       };
       return fn(tx);
     }),

@@ -28,7 +28,7 @@ export async function loadExportInput(): Promise<ExportInput> {
 
   const students: ExportStudent[] = users.docs.flatMap((doc) => {
     const parsed = storedUserSchema.safeParse(doc.data());
-    if (!parsed.success || !parsed.data.onboarded) return [];
+    if (!parsed.success || !parsed.data.onboarded || parsed.data.removed === true) return [];
     const user = parsed.data;
     const s = statsByUid.get(doc.id);
     return [

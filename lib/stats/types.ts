@@ -45,6 +45,8 @@ export type StatsUser = {
   rollNo?: string;
   branch?: Branch;
   showOnLeaderboard?: boolean;
+  /** Removed by a mentor: left out of every stat (T34a). */
+  removed?: boolean;
 };
 
 /** The submission fields the stats need. */
