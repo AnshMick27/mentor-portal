@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { ButtonLink } from "@/components/ui/Button";
-import { cardClasses } from "@/components/ui/Card";
+import { cardClasses, CardLink } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
@@ -28,26 +27,29 @@ export function TaskList({ tasks, canEdit }: { tasks: TaskDto[]; canEdit: boolea
         <EmptyState action={canEdit && <ButtonLink href="/mentor/tasks/new">Create your first task</ButtonLink>}>No tasks yet.</EmptyState>
       ) : (
         <ul className="flex flex-col gap-3">
-          {tasks.map((task) => (
-            <li key={task.id} className={cardClasses()}>
-              <div className="flex items-start justify-between gap-3">
-                {canEdit ? (
-                  <Link
-                    href={`/mentor/tasks/${task.id}`}
-                    className="min-w-0 font-semibold break-words underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-blue-700"
-                  >
-                    {task.title}
-                  </Link>
-                ) : (
+          {tasks.map((task) => {
+            const body = (
+              <>
+                <span className="flex items-start justify-between gap-3">
                   <span className="min-w-0 font-semibold break-words">{task.title}</span>
+                  <StatusBadge status={task.status} />
+                </span>
+                <span className="text-sm text-muted">
+                  {TASK_TYPE_LABEL[task.type]} · Due {formatIst(task.dueAt)}
+                </span>
+              </>
+            );
+            // Mentors tap anywhere on the card to edit (UX-13); viewers get the same card without a link.
+            return (
+              <li key={task.id}>
+                {canEdit ? (
+                  <CardLink href={`/mentor/tasks/${task.id}`}>{body}</CardLink>
+                ) : (
+                  <div className={cardClasses({ className: "flex flex-col gap-1" })}>{body}</div>
                 )}
-                <StatusBadge status={task.status} />
-              </div>
-              <p className="mt-1 text-sm text-muted">
-                {TASK_TYPE_LABEL[task.type]} · Due {formatIst(task.dueAt)}
-              </p>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

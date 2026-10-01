@@ -3,6 +3,15 @@ import { Button } from "@/components/ui/Button";
 import { Note } from "@/components/ui/Note";
 import type { QueryState } from "@/components/useApiQuery";
 
+/** Small "Updating…" line while a page refreshes data it is still showing. */
+export function Refreshing() {
+  return (
+    <p role="status" className="text-sm text-muted">
+      Updating…
+    </p>
+  );
+}
+
 /** Loading line or error box for a `useApiQuery` state; renders nothing once ready. Pages render their header above it. */
 export function QueryStatus<T>({
   state,

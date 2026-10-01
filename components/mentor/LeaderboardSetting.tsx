@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Switch } from "@/components/leaderboard/LeaderboardParts";
-import { cardClasses } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 import { apiFetch } from "@/lib/api/client";
@@ -56,20 +56,22 @@ export function LeaderboardSettingView({
   onToggle: (on: boolean) => void;
 }) {
   return (
-    <Section title="Student leaderboard" className={cardClasses()}>
-      {view.status === "error" ? (
-        <EmptyState>{view.message}</EmptyState>
-      ) : (
-        <Switch
-          id="leaderboard-enabled"
-          label={view.status === "ready" && view.leaderboardEnabled ? "Leaderboard is on" : "Leaderboard is off"}
-          hint={HINT}
-          checked={view.status === "ready" && view.leaderboardEnabled}
-          disabled={view.status === "loading" || saving}
-          error={error}
-          onChange={onToggle}
-        />
-      )}
+    <Section title="Student leaderboard">
+      <Card>
+        {view.status === "error" ? (
+          <EmptyState>{view.message}</EmptyState>
+        ) : (
+          <Switch
+            id="leaderboard-enabled"
+            label={view.status === "ready" && view.leaderboardEnabled ? "Leaderboard is on" : "Leaderboard is off"}
+            hint={HINT}
+            checked={view.status === "ready" && view.leaderboardEnabled}
+            disabled={view.status === "loading" || saving}
+            error={error}
+            onChange={onToggle}
+          />
+        )}
+      </Card>
     </Section>
   );
 }

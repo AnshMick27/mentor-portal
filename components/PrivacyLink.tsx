@@ -3,9 +3,9 @@ import { TextLink } from "@/components/ui/TextLink";
 export const PRIVACY_PATH = "/privacy";
 
 /** "How your data is used" link to the privacy page. */
-export function PrivacyLink({ children = "How your data is used" }: { children?: string }) {
+export function PrivacyLink({ children = "How your data is used", className }: { children?: string; className?: string }) {
   return (
-    <TextLink href={PRIVACY_PATH} inline>
+    <TextLink href={PRIVACY_PATH} inline className={className}>
       {children}
     </TextLink>
   );

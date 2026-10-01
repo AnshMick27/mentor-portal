@@ -46,9 +46,9 @@ function TaskStatus({ row }: { row: TaskStatusRow }) {
           </p>
           {row.notSubmitted.length > 0 ? (
             <Disclosure summary={`${row.notSubmitted.length} not submitted`} summaryClassName="text-sm font-medium">
-              <ul className="flex flex-col gap-1 pl-1 text-sm">
+              <ul className="flex flex-col pl-1 text-sm">
                 {row.notSubmitted.map((student) => (
-                  <li key={student.uid} className="break-words">
+                  <li key={student.uid} className="flex min-h-11 flex-wrap items-center gap-x-2 break-words">
                     <StudentLink student={student} /> <span className="text-muted">{student.rollNo}</span>
                   </li>
                 ))}

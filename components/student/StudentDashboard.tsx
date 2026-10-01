@@ -74,7 +74,7 @@ function LatestResult({ submission, task }: { submission: SubmissionView; task?:
         <div className="mt-3 flex flex-col gap-3 border-t border-line pt-3">
           <SubmissionResultView result={submission.result} />
           {task && (
-            <TextLink href={`/student/tasks/${task.id}`} className="text-sm">
+            <TextLink href={`/student/tasks/${task.id}`} className="inline-flex min-h-11 items-center self-start text-sm">
               Open task
             </TextLink>
           )}
@@ -97,7 +97,7 @@ export function StudentDashboard({ data, now = new Date() }: { data: StudentDash
       <Section
         title="This week"
         action={
-          <TextLink href="/student/tasks" className="text-sm">
+          <TextLink href="/student/tasks" className="inline-flex min-h-11 items-center text-sm">
             All tasks
           </TextLink>
         }

@@ -6,7 +6,6 @@ import { ExportButton } from "@/components/mentor/ExportButton";
 import { LeaderboardSetting } from "@/components/mentor/LeaderboardSetting";
 import { MentorDashboard } from "@/components/mentor/MentorDashboard";
 import { QueryStatus } from "@/components/QueryStatus";
-import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useAsyncData } from "@/components/useAsyncData";
 import { loadMentorDashboard } from "@/lib/dashboard/mentorQueries";
@@ -22,15 +21,7 @@ export default function MentorHomePage() {
         title="Mentor dashboard"
         tabTitle="Dashboard"
         subtitle={profile.role === "viewer" ? "Read-only view" : `Welcome, ${profile.name}`}
-        actions={
-          <>
-            <ButtonLink href="/mentor/tasks">{profile.role === "mentor" ? "Manage tasks" : "View tasks"}</ButtonLink>
-            <ButtonLink href="/mentor/students" variant="secondary">
-              Students
-            </ButtonLink>
-            <ExportButton />
-          </>
-        }
+        actions={<ExportButton />}
       />
       <div className="flex flex-col gap-8">
         {state.status === "ready" ? (

@@ -4,7 +4,7 @@ import { use, useCallback, useState } from "react";
 import { useSignedInProfile } from "@/components/auth/AuthProvider";
 import { RemoveStudentButton } from "@/components/mentor/RemoveStudentButton";
 import { StudentProfile } from "@/components/mentor/StudentProfile";
-import { QueryStatus } from "@/components/QueryStatus";
+import { QueryStatus, Refreshing } from "@/components/QueryStatus";
 import { Note } from "@/components/ui/Note";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { BackLink } from "@/components/ui/TextLink";
@@ -70,7 +70,7 @@ function LoadedProfile({ data, onChanged }: { data: StudentProfileData; onChange
 
 function Profile({ uid }: { uid: string }) {
   const load = useCallback(() => loadStudentProfile(getClientDb(), uid), [uid]);
-  const { state, reload } = useAsyncData(load, "Could not load this student. Please try again.");
+  const { state, reload, refresh, refreshing } = useAsyncData(load, "Could not load this student. Please try again.");
   if (state.status !== "ready") {
     return (
       <>
@@ -79,7 +79,13 @@ function Profile({ uid }: { uid: string }) {
       </>
     );
   }
-  return state.data ? <LoadedProfile key={uid} data={state.data} onChanged={reload} /> : <NotFound />;
+  if (!state.data) return <NotFound />;
+  return (
+    <>
+      {refreshing && <Refreshing />}
+      <LoadedProfile key={uid} data={state.data} onChanged={refresh} />
+    </>
+  );
 }
 
 /** Mentor and viewer: one student's stats, tasks and every attempt; mentors can also remove or restore them. */

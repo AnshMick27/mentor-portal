@@ -32,7 +32,7 @@ function Row({ row, canEdit, onChanged }: { row: StudentRow; canEdit: boolean; o
         )}
       </div>
       {canEdit && (
-        <div className="shrink-0 sm:max-w-xs">
+        <div className="shrink-0 self-start sm:max-w-xs">
           <RemoveStudentButton uid={row.uid} name={row.name} removed={row.removed} onChanged={onChanged} />
         </div>
       )}

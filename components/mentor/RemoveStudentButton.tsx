@@ -33,7 +33,7 @@ export function RemoveStudentControls({
   );
   if (removed) {
     return (
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col items-start gap-1">
         <Button variant="secondary" size="sm" onClick={onConfirm} busy={step === "working"} busyLabel="Restoring…">
           Restore access
         </Button>
@@ -43,7 +43,7 @@ export function RemoveStudentControls({
   }
   if (step === "idle") {
     return (
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col items-start gap-1">
         <Button variant="secondary" size="sm" onClick={onStart}>
           Remove from portal
         </Button>

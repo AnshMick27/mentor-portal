@@ -104,6 +104,15 @@ describe("StudentProfile", () => {
     expect(render()).not.toContain("Removed from the portal");
   });
 
+  it("puts Remove/Restore in an Access section at the end, after the student's work (UX-14)", () => {
+    const html = render({ actions: <button type="button">Remove from portal</button> });
+    expect(html).toContain(">Access</h2>");
+    expect(html.indexOf(">Tasks</h2>")).toBeLessThan(html.indexOf(">Access</h2>"));
+    expect(html.indexOf(">Access</h2>")).toBeLessThan(html.indexOf("Remove from portal"));
+    expect(html).toContain("Remove this student if they are not your mentee. Their work is kept.");
+    expect(render()).not.toContain(">Access</h2>"); // viewers get no Access section
+  });
+
   it("copes with a student who has no stats doc or roll number yet", () => {
     const html = render({
       data: { ...data, stats: undefined, user: { ...data.user, rollNo: undefined, branch: undefined } },

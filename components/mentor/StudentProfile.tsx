@@ -102,7 +102,6 @@ export function StudentProfile({
             </>
           }
         />
-        {actions}
       </div>
 
       {user.removed === true && (
@@ -146,6 +145,17 @@ export function StudentProfile({
           </Button>
         )}
       </Section>
+
+      {actions && (
+        <Section title="Access">
+          <p className="text-sm text-muted">
+            {user.removed === true
+              ? "Restore this student to give them their access back."
+              : "Remove this student if they are not your mentee. Their work is kept."}
+          </p>
+          {actions}
+        </Section>
+      )}
     </div>
   );
 }
