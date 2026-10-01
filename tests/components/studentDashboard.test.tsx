@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { StudentDashboard } from "@/components/student/StudentDashboard";
+import { primaryWeekTaskId, StudentDashboard } from "@/components/student/StudentDashboard";
 import type { StudentDashboardData } from "@/lib/dashboard/studentQueries";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import type { TaskDto } from "@/lib/validation/task";
@@ -74,12 +74,33 @@ describe("StudentDashboard", () => {
     expect(html).toContain('href="/student/tasks"');
   });
 
-  it("lists the latest results expandable, newest open, with a type label when the task is gone", () => {
+  it("lists the latest results expandable, all closed, with a type label when the task is gone", () => {
     const html = render(full);
     expect(html.match(/<details/g)).toHaveLength(3);
-    expect(html.match(/<details open=""/g)).toHaveLength(1);
+    expect(html).not.toContain("<details open"); // collapsed so the list stays short at 360 px (UX-04)
     expect(html).toContain("Summary s1");
     expect(html).toContain(">Resume<"); // task "gone" falls back to its type label
+  });
+
+  it("puts what is due first: This week, Next steps, Latest feedback, then numbers and Progress (UX-04)", () => {
+    const html = render(full);
+    const order = ["This week", "Next steps", "Latest feedback", "Your numbers", "Progress"].map((title) =>
+      html.indexOf(`>${title}</h2>`),
+    );
+    expect(order.every((index) => index >= 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+
+  it("highlights only the first task with nothing sent yet, with a Start label", () => {
+    const html = render(full);
+    expect(html.match(/bg-blue-50/g)).toHaveLength(1);
+    expect(html.match(/Start →/g)).toHaveLength(1);
+    const linkTag = (id: string) => /<a [^>]*>/.exec(html.slice(html.lastIndexOf("<a ", html.indexOf(`href="/student/tasks/${id}"`))))?.[0];
+    expect(linkTag("c1")).toContain("bg-blue-50");
+    expect(linkTag("r1")).not.toContain("bg-blue-50");
+    expect(primaryWeekTaskId(full.week)).toBe("c1");
+    expect(primaryWeekTaskId([{ ...full.week[1]! }])).toBeUndefined(); // already submitted
+    expect(primaryWeekTaskId([{ ...full.week[0]!, attemptsUsed: 1 }])).toBeUndefined(); // being checked
   });
 
   it("shows at most 3 next steps and never the needs-attention flag", () => {

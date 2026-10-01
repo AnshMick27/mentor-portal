@@ -16,7 +16,7 @@ export default function StudentHomePage() {
   const { state, reload } = useAsyncData(load, "Could not load your dashboard. Please try again.");
   return (
     <>
-      <PageHeader title={`Hi, ${name}`} tabTitle="Home" subtitle="Your progress and what is due this week." />
+      <PageHeader title={`Hi, ${name}`} tabTitle="Home" subtitle="What is due this week, and how you are doing." />
       {state.status === "ready" ? (
         <div className="flex flex-col gap-8">
           <StudentDashboard data={state.data} />

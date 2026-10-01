@@ -37,35 +37,41 @@ function Summary({ stats }: { stats: StudentDashboardData["stats"] }) {
   );
 }
 
-function WeekTask({ task }: { task: StudentTask }) {
+/** The first task this week with nothing sent yet: the one thing to do next on this screen. */
+export function primaryWeekTaskId(week: readonly StudentTask[]): string | undefined {
+  return week.find((task) => task.bestScore === undefined && task.attemptsUsed === 0)?.id;
+}
+
+function WeekTask({ task, primary }: { task: StudentTask; primary: boolean }) {
   const submitted = task.bestScore !== undefined;
   return (
     <li>
-      <CardLink href={`/student/tasks/${task.id}`}>
+      <CardLink href={`/student/tasks/${task.id}`} primary={primary}>
         <span className="font-semibold break-words">{task.title}</span>
-        <span className="text-sm opacity-75">
+        <span className="text-sm text-muted">
           {TASK_TYPE_LABEL[task.type]} · Due {formatIst(task.dueAt)}
         </span>
-        <span className="text-sm">
+        <span className="flex flex-wrap items-center justify-between gap-2 text-sm">
           {submitted ? (
-            <>Submitted · Best {task.bestScore?.toFixed(1)} / 10</>
+            <>Submitted · Best {formatScore(task.bestScore)}</>
           ) : task.attemptsUsed > 0 ? (
             "Being checked…"
           ) : (
             <StatusChip tone="warning">Not submitted yet</StatusChip>
           )}
+          {primary && <span className="font-semibold text-link">Start →</span>}
         </span>
       </CardLink>
     </li>
   );
 }
 
-function LatestResult({ submission, task, open }: { submission: SubmissionView; task?: TaskDto; open: boolean }) {
+/** Collapsed: the summary row already shows "score · date", so the list stays short on a phone. */
+function LatestResult({ submission, task }: { submission: SubmissionView; task?: TaskDto }) {
   if (!submission.result) return null;
   return (
     <li>
       <Disclosure
-        defaultOpen={open}
         className={cardClasses()}
         summary={
           <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
@@ -89,18 +95,16 @@ function LatestResult({ submission, task, open }: { submission: SubmissionView; 
   );
 }
 
-/** The student home screen (SPEC.md §8.5). Presentational: the page loads the data. */
+/**
+ * The student home screen (SPEC.md §8.5). Presentational: the page loads the data. Order follows the students' first
+ * question, "what is due?" (UX-04): this week, next steps, latest feedback, then the numbers and the chart.
+ */
 export function StudentDashboard({ data }: { data: StudentDashboardData }) {
   const taskById = new Map(data.tasks.map((task) => [task.id, task]));
   const nextSteps = dashboardNextSteps(data.stats);
+  const primaryId = primaryWeekTaskId(data.week);
   return (
     <div className="flex flex-col gap-8">
-      <Summary stats={data.stats} />
-
-      <Section title="Progress">
-        <ProgressChart recentScores={data.stats?.recentScores} />
-      </Section>
-
       <Section
         title="This week"
         action={
@@ -114,24 +118,7 @@ export function StudentDashboard({ data }: { data: StudentDashboardData }) {
         ) : (
           <ul className="flex flex-col gap-3">
             {data.week.map((task) => (
-              <WeekTask key={task.id} task={task} />
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <Section title="Latest feedback">
-        {data.latest.length === 0 ? (
-          <EmptyState>No feedback yet. Submit a task to get your first score.</EmptyState>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {data.latest.map((submission, index) => (
-              <LatestResult
-                key={submission.id}
-                submission={submission}
-                task={taskById.get(submission.taskId)}
-                open={index === 0}
-              />
+              <WeekTask key={task.id} task={task} primary={task.id === primaryId} />
             ))}
           </ul>
         )}
@@ -149,6 +136,26 @@ export function StudentDashboard({ data }: { data: StudentDashboardData }) {
             ))}
           </ol>
         )}
+      </Section>
+
+      <Section title="Latest feedback">
+        {data.latest.length === 0 ? (
+          <EmptyState>No feedback yet. Submit a task to get your first score.</EmptyState>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {data.latest.map((submission) => (
+              <LatestResult key={submission.id} submission={submission} task={taskById.get(submission.taskId)} />
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      <Section title="Your numbers">
+        <Summary stats={data.stats} />
+      </Section>
+
+      <Section title="Progress">
+        <ProgressChart recentScores={data.stats?.recentScores} />
       </Section>
     </div>
   );
