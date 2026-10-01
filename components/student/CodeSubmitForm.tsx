@@ -89,7 +89,7 @@ export function CodeSubmitForm({ languages, state, onSubmit }: Props) {
       </p>
 
       <Button type="submit" disabled={size.tooBig || code.trim() === ""} busy={submitting} busyLabel="Sending…">
-        Submit
+        Submit code
       </Button>
       {state.status === "sent" && (
         <p role="status" className="text-sm">

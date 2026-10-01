@@ -29,5 +29,5 @@ export default function StudentTasksPage() {
 function Board({ data }: { data: Awaited<ReturnType<typeof loadStudentBoard>> }) {
   const now = new Date();
   const progress = summarizeByTask(data.submissions, now);
-  return <StudentTaskBoard board={groupStudentTasks(data.tasks, progress, now)} />;
+  return <StudentTaskBoard board={groupStudentTasks(data.tasks, progress, now)} now={now} />;
 }

@@ -60,7 +60,8 @@ const full: StudentDashboardData = {
   },
 };
 
-const render = (data: StudentDashboardData) => renderToStaticMarkup(<StudentDashboard data={data} />);
+const NOW = new Date("2026-10-01T06:00:00Z"); // 11:30 am IST, two days before the tasks are due
+const render = (data: StudentDashboardData) => renderToStaticMarkup(<StudentDashboard data={data} now={NOW} />);
 
 describe("StudentDashboard", () => {
   it("shows summary numbers, skill averages and this week's tasks with their state", () => {
@@ -69,8 +70,10 @@ describe("StudentDashboard", () => {
     expect(html).toContain("Coding</dt>");
     expect(html).not.toContain("Written intro</dt>"); // no intro score yet
     expect(html).toContain('href="/student/tasks/c1"');
-    expect(html).toContain("Not submitted yet");
-    expect(html).toContain("Submitted · Best 7.5 / 10");
+    expect(html).toContain(">Not started</span>");
+    expect(html).toContain("Due in 2 days (3 Oct 2026, 11:59 pm IST)");
+    expect(html).toContain("Best 7.5 / 10 · 1 of 3 attempts used");
+    expect(html).toContain(">Can improve · 2 tries left</span>");
     expect(html).toContain('href="/student/tasks"');
   });
 

@@ -1,13 +1,18 @@
 import { Markdown } from "@/components/Markdown";
 import { SubmissionHistory } from "@/components/student/SubmissionHistory";
 import { TaskSubmitSection } from "@/components/student/TaskSubmitSection";
+import { ButtonLink } from "@/components/ui/Button";
 import { cardClasses } from "@/components/ui/Card";
+import { dueText } from "@/components/ui/dueText";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { formatScore } from "@/components/ui/Score";
 import { Section } from "@/components/ui/Section";
-import { formatIst } from "@/lib/dates/ist";
+import { StatusChip } from "@/components/ui/StatusChip";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
+import { submitAvailability } from "@/lib/submissions/availability";
 import { taskProgress } from "@/lib/tasks/studentBoard";
 import { LANGUAGE_LABEL, TASK_TYPE_LABEL, type TaskDto } from "@/lib/validation/task";
+import { progressText, taskChip } from "./taskStatus";
 
 function Sample({ label, text }: { label: string; text: string }) {
   return (
@@ -28,23 +33,28 @@ export function StudentTaskDetail({
   submissions: readonly SubmissionView[];
   now: Date;
 }) {
-  const { attemptsUsed, bestScore } = taskProgress(submissions, now);
-  const pastDue = Date.parse(task.dueAt) < now.getTime();
+  const progress = taskProgress(submissions, now);
+  const studentTask = { ...task, ...progress };
+  const chip = taskChip(studentTask, now);
+  const open = submitAvailability(task, progress.attemptsUsed, now).open;
   return (
     <article className="flex flex-col gap-6">
       <PageHeader
         title={task.title}
         back={{ href: "/student/tasks", label: "My tasks" }}
         subtitle={
-          <>
+          <div className="flex flex-col items-start gap-2">
+            <StatusChip tone={chip.tone}>{chip.label}</StatusChip>
             <p>
-              {TASK_TYPE_LABEL[task.type]} · {pastDue ? "Was due" : "Due"} {formatIst(task.dueAt)}
+              {TASK_TYPE_LABEL[task.type]} · {dueText(task.dueAt, now)}
             </p>
-            <p>
-              Attempts: {attemptsUsed} of {task.maxAttempts} used
-              {bestScore !== undefined && <> · Best score {bestScore.toFixed(1)} / 10</>}
-            </p>
-          </>
+            <p>{progressText(studentTask, formatScore)}</p>
+            {open && (
+              <ButtonLink href="#submit-heading" variant="secondary" size="sm">
+                Go to submit
+              </ButtonLink>
+            )}
+          </div>
         }
       />
 
@@ -68,7 +78,7 @@ export function StudentTaskDetail({
         </Section>
       )}
 
-      <TaskSubmitSection task={task} attemptsUsed={attemptsUsed} now={now} />
+      <TaskSubmitSection task={task} attemptsUsed={progress.attemptsUsed} now={now} />
       <SubmissionHistory submissions={submissions} now={now} />
     </article>
   );

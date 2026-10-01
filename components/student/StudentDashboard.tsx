@@ -3,7 +3,6 @@ import { Disclosure } from "@/components/ui/Disclosure";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatScore } from "@/components/ui/Score";
 import { Section } from "@/components/ui/Section";
-import { StatusChip } from "@/components/ui/StatusChip";
 import { TextLink } from "@/components/ui/TextLink";
 import { dashboardNextSteps, skillAverages } from "@/lib/dashboard/student";
 import type { StudentDashboardData } from "@/lib/dashboard/studentQueries";
@@ -12,6 +11,7 @@ import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import type { StudentTask } from "@/lib/tasks/studentBoard";
 import { TASK_TYPE_LABEL, type TaskDto } from "@/lib/validation/task";
 import { ProgressChart } from "./ProgressChart";
+import { TaskCardBody } from "./StudentTaskBoard";
 import { SubmissionResultView } from "./SubmissionResultView";
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -42,25 +42,14 @@ export function primaryWeekTaskId(week: readonly StudentTask[]): string | undefi
   return week.find((task) => task.bestScore === undefined && task.attemptsUsed === 0)?.id;
 }
 
-function WeekTask({ task, primary }: { task: StudentTask; primary: boolean }) {
-  const submitted = task.bestScore !== undefined;
+function WeekTask({ task, primary, now }: { task: StudentTask; primary: boolean; now: Date }) {
+  const checking = task.attemptsUsed > 0 && task.bestScore === undefined;
   return (
     <li>
       <CardLink href={`/student/tasks/${task.id}`} primary={primary}>
-        <span className="font-semibold break-words">{task.title}</span>
-        <span className="text-sm text-muted">
-          {TASK_TYPE_LABEL[task.type]} · Due {formatIst(task.dueAt)}
-        </span>
-        <span className="flex flex-wrap items-center justify-between gap-2 text-sm">
-          {submitted ? (
-            <>Submitted · Best {formatScore(task.bestScore)}</>
-          ) : task.attemptsUsed > 0 ? (
-            "Being checked…"
-          ) : (
-            <StatusChip tone="warning">Not submitted yet</StatusChip>
-          )}
-          {primary && <span className="font-semibold text-link">Start →</span>}
-        </span>
+        <TaskCardBody task={task} now={now} />
+        {checking && <span className="text-sm">Being checked. Open the task to see the status.</span>}
+        {primary && <span className="text-sm font-semibold text-link">Start →</span>}
       </CardLink>
     </li>
   );
@@ -99,7 +88,7 @@ function LatestResult({ submission, task }: { submission: SubmissionView; task?:
  * The student home screen (SPEC.md §8.5). Presentational: the page loads the data. Order follows the students' first
  * question, "what is due?" (UX-04): this week, next steps, latest feedback, then the numbers and the chart.
  */
-export function StudentDashboard({ data }: { data: StudentDashboardData }) {
+export function StudentDashboard({ data, now = new Date() }: { data: StudentDashboardData; now?: Date }) {
   const taskById = new Map(data.tasks.map((task) => [task.id, task]));
   const nextSteps = dashboardNextSteps(data.stats);
   const primaryId = primaryWeekTaskId(data.week);
@@ -118,7 +107,7 @@ export function StudentDashboard({ data }: { data: StudentDashboardData }) {
         ) : (
           <ul className="flex flex-col gap-3">
             {data.week.map((task) => (
-              <WeekTask key={task.id} task={task} primary={task.id === primaryId} />
+              <WeekTask key={task.id} task={task} primary={task.id === primaryId} now={now} />
             ))}
           </ul>
         )}

@@ -47,9 +47,11 @@ describe("StudentTaskDetail", () => {
   it("shows title, type, IST due date and attempts", () => {
     expect(html).toContain("Two sum");
     expect(html).toContain("Coding");
-    expect(html).toContain("Due 5 Oct 2026, 11:59 pm IST");
-    expect(html).toContain("Attempts: 1 of 5 used");
-    expect(html).toContain("Best score 7.5 / 10");
+    expect(html).toContain("Due in 4 days (5 Oct 2026, 11:59 pm IST)");
+    expect(html).toContain("Best 7.5 / 10 · 1 of 5 attempts used");
+    expect(html).toContain(">Can improve · 4 tries left</span>");
+    expect(html).toContain('href="#submit-heading"'); // "Go to submit" while open
+    expect(html).toContain("Go to submit");
   });
 
   it("renders the description as sanitised markdown", () => {
@@ -75,20 +77,26 @@ describe("StudentTaskDetail", () => {
     const late = renderToStaticMarkup(
       <StudentTaskDetail task={codingTask} submissions={[]} now={new Date("2026-11-01T00:00:00Z")} />,
     );
-    expect(late).toContain("Was due");
+    expect(late).toContain("Was due 5 Oct 2026, 11:59 pm IST");
+    expect(late).toContain(">Missed</span>");
+    expect(late).not.toContain("Go to submit");
   });
 });
 
 describe("StudentTaskBoard", () => {
   it("shows all three groups with counts and links to each task", () => {
     const html = renderToStaticMarkup(
-      <StudentTaskBoard board={{ dueSoon: [{ ...codingTask, attemptsUsed: 0 }], submitted: [], missed: [] }} />,
+      <StudentTaskBoard
+        board={{ dueSoon: [{ ...codingTask, attemptsUsed: 0 }], submitted: [], missed: [] }}
+        now={new Date("2026-10-01T00:00:00Z")}
+      />,
     );
     expect(html).toContain("Due soon");
     expect(html).toContain("Submitted");
     expect(html).toContain("Missed");
     expect(html).toContain('href="/student/tasks/t1"');
-    expect(html).toContain("Attempts: 0 of 5 used");
+    expect(html).toContain("0 of 5 attempts used");
+    expect(html).toContain(">Not started</span>");
     expect(html).toContain("No missed tasks");
   });
 });
