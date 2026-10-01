@@ -17,7 +17,7 @@ import {
 } from "@/lib/validation/task";
 
 const inputClass =
-  "min-h-11 w-full rounded-lg border border-black/20 bg-transparent px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 dark:border-white/25";
+  "min-h-11 w-full rounded-lg border border-black/20 bg-transparent px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 dark:border-white/25 disabled:opacity-60 read-only:opacity-60";
 const textareaClass = `${inputClass} py-2 font-mono text-sm`;
 const secondaryButton =
   "min-h-11 rounded-lg border border-black/15 px-4 text-sm font-medium hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:opacity-50 dark:border-white/20 dark:hover:bg-white/10";
@@ -32,7 +32,10 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
-type Props = { initial: TaskFormState } & ({ mode: "new" } | { mode: "edit"; taskId: string });
+/** In edit mode, `hasSubmissions` locks the type and problem slug (the API refuses those changes too). */
+type Props = { initial: TaskFormState } & ({ mode: "new" } | { mode: "edit"; taskId: string; hasSubmissions?: boolean });
+
+const LOCKED_HINT = "Locked: students have already submitted to this task.";
 
 /** Create/edit form for mentors. Validates with the same zod schema as the API before sending. */
 export function TaskForm(props: Props) {
@@ -78,15 +81,17 @@ export function TaskForm(props: Props) {
   }
 
   const isCoding = form.type === "coding";
+  const locked = props.mode === "edit" && props.hasSubmissions === true;
   return (
     <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5" noValidate>
       <Field label="Title">
         <input value={form.title} onChange={(e) => update("title", e.target.value)} maxLength={120} className={inputClass} />
       </Field>
 
-      <Field label="Type">
+      <Field label="Type" hint={locked ? LOCKED_HINT : undefined}>
         <select
           value={form.type}
+          disabled={locked}
           onChange={(e) => update("type", TASK_TYPES.find((type) => type === e.target.value) ?? form.type)}
           className={inputClass}
         >
@@ -159,9 +164,10 @@ export function TaskForm(props: Props) {
       {isCoding && (
         <fieldset className="flex flex-col gap-5 rounded-lg border border-black/10 p-4 dark:border-white/15">
           <legend className="px-1 font-semibold">Coding settings</legend>
-          <Field label="Problem slug" hint="Must match a folder in the judge repo, e.g. two-sum.">
+          <Field label="Problem slug" hint={locked ? LOCKED_HINT : "Must match a folder in the judge repo, e.g. two-sum."}>
             <input
               value={form.problemSlug}
+              readOnly={locked}
               onChange={(e) => update("problemSlug", e.target.value.toLowerCase())}
               autoCapitalize="none"
               spellCheck={false}

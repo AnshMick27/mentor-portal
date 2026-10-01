@@ -237,3 +237,54 @@ describe("stats recompute after task changes", () => {
     expect(recomputeMock).not.toHaveBeenCalled();
   });
 });
+
+describe("type and problem lock once a task has submissions", () => {
+  function submitTo(taskId: string) {
+    fakeAdmin.collection("submissions").set(`sub-${taskId}`, {
+      taskId,
+      uid: "s1",
+      type: "resume",
+      attempt: 1,
+      createdAt: Timestamp.now(),
+      status: "done",
+      content: "x",
+    });
+  }
+
+  it("refuses a type change with 409 and leaves the task unchanged", async () => {
+    submitTo("t1");
+    const { status, body } = await callPatch("mentor", "t1", { type: "intro_written" });
+    expect(status).toBe(409);
+    expect(body.error).toBe("This task already has submissions, so its type can't change.");
+    expect(fakeAdmin.collection("tasks").get("t1")).toMatchObject({ type: "resume" });
+    expect(recomputeMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses a problem slug change but allows other coding edits", async () => {
+    seedTask("c1", { type: "coding", coding, maxAttempts: 5 });
+    submitTo("c1");
+    const moved = await callPatch("mentor", "c1", { coding: { ...coding, problemSlug: "three-sum" } });
+    expect(moved.status).toBe(409);
+    expect(moved.body.error).toBe("This task already has submissions, so its problem can't change.");
+    const tweaked = await callPatch("mentor", "c1", { coding: { ...coding, timeLimitMs: 3000 } });
+    expect(tweaked.status).toBe(200);
+    expect(fakeAdmin.collection("tasks").get("c1")).toMatchObject({ coding: { problemSlug: "two-sum", timeLimitMs: 3000 } });
+  });
+
+  it("still allows title, due date and publish changes, and the same type re-sent", async () => {
+    submitTo("t1");
+    expect((await callPatch("mentor", "t1", { title: "Renamed", dueAt: "2026-10-20T23:59:00+05:30" })).status).toBe(200);
+    expect((await callPatch("mentor", "t1", { status: "published", type: "resume" })).status).toBe(200);
+  });
+
+  it("does not lock a task nobody has submitted to (submissions on other tasks don't count)", async () => {
+    submitTo("other-task");
+    expect((await callPatch("mentor", "t1", { type: "intro_written" })).status).toBe(200);
+  });
+
+  it("GET tells the edit form whether the task has submissions", async () => {
+    expect((await callGet("mentor", "t1")).body).toMatchObject({ hasSubmissions: false });
+    submitTo("t1");
+    expect((await callGet("viewer", "t1")).body).toMatchObject({ hasSubmissions: true });
+  });
+});

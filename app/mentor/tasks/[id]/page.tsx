@@ -10,19 +10,25 @@ import { useApiQuery } from "@/components/useApiQuery";
 import { taskToForm } from "@/lib/tasks/taskForm";
 import { taskDtoSchema } from "@/lib/validation/task";
 
-const taskResponseSchema = z.object({ task: taskDtoSchema });
+const taskResponseSchema = z.object({ task: taskDtoSchema, hasSubmissions: z.boolean().default(false) });
 
 function EditTask({ id }: { id: string }) {
   const { state, reload } = useApiQuery(`/api/tasks/${encodeURIComponent(id)}`, taskResponseSchema);
   if (state.status !== "ready") return <QueryStatus state={state} onRetry={reload} />;
-  const { task } = state.data;
+  const { task, hasSubmissions } = state.data;
   return (
     <>
       <div className="flex items-start justify-between gap-3">
         <h1 className="min-w-0 text-2xl font-bold tracking-tight break-words">Edit task</h1>
         <StatusBadge status={task.status} />
       </div>
-      <TaskForm key={task.updatedAt} mode="edit" taskId={task.id} initial={taskToForm(task)} />
+      <TaskForm
+        key={task.updatedAt}
+        mode="edit"
+        taskId={task.id}
+        initial={taskToForm(task)}
+        hasSubmissions={hasSubmissions}
+      />
     </>
   );
 }

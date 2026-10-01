@@ -31,7 +31,23 @@ function JudgeStatus({ submission, now }: { submission: SubmissionView; now: Dat
   );
 }
 
-function AttemptBody({ submission, now }: { submission: SubmissionView; now: Date }) {
+/** Who is reading: the student on their task page, or a mentor/viewer on the student's profile. */
+export type AttemptAudience = "student" | "mentor";
+
+const WORDING: Record<AttemptAudience, { notCounted: string; pending: string; sent: string }> = {
+  student: {
+    notCounted: "This attempt was not counted, so you can try again.",
+    pending: "Your feedback is being prepared. This page updates by itself.",
+    sent: "What you sent",
+  },
+  mentor: {
+    notCounted: "Not counted (the student can try again).",
+    pending: "Still being checked.",
+    sent: "What they sent",
+  },
+};
+
+function AttemptBody({ submission, now, audience }: { submission: SubmissionView; now: Date; audience: AttemptAudience }) {
   const effective = effectiveStatus(submission, now);
   if (submission.type === "coding" && !(effective.status === "done" && submission.result)) {
     return <JudgeStatus submission={submission} now={now} />;
@@ -40,29 +56,29 @@ function AttemptBody({ submission, now }: { submission: SubmissionView; now: Dat
   if (effective.status === "error") {
     return (
       <p className="text-sm">
-        {effective.error ?? "Something went wrong."} This attempt was not counted, so you can try again.
+        {effective.error ?? "Something went wrong."} {WORDING[audience].notCounted}
       </p>
     );
   }
   return (
     <p role="status" className="text-sm opacity-80">
-      Your feedback is being prepared. This page updates by itself.
+      {WORDING[audience].pending}
     </p>
   );
 }
 
 /**
  * Attempts on one task, newest first; the newest is expanded. Shared by the student's task page and the
- * mentor's student profile (`sentLabel` "What you sent" / "What they sent").
+ * mentor's student profile (`audience` picks the wording).
  */
 export function AttemptList({
   submissions,
   now,
-  sentLabel = "What you sent",
+  audience = "student",
 }: {
   submissions: readonly SubmissionView[];
   now: Date;
-  sentLabel?: string;
+  audience?: AttemptAudience;
 }) {
   return (
     <ul className="flex flex-col gap-3">
@@ -77,9 +93,9 @@ export function AttemptList({
               <span className="text-sm font-semibold">{statusLabel(submission, now)}</span>
             </summary>
             <div className="flex flex-col gap-4 border-t border-black/10 px-4 py-3 dark:border-white/15">
-              <AttemptBody submission={submission} now={now} />
+              <AttemptBody submission={submission} now={now} audience={audience} />
               <details>
-                <summary className="cursor-pointer text-sm font-medium">{sentLabel}</summary>
+                <summary className="cursor-pointer text-sm font-medium">{WORDING[audience].sent}</summary>
                 <pre className="mt-2 max-h-80 overflow-auto rounded-lg bg-black/[0.05] p-3 font-mono text-xs whitespace-pre-wrap break-words dark:bg-white/[0.08]">
                   {submission.content}
                 </pre>

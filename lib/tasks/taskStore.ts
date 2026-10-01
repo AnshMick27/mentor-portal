@@ -36,6 +36,18 @@ export async function listTasks(): Promise<TaskDto[]> {
   return snapshot.docs.flatMap((doc) => taskDocToDto(doc.id, doc.data()) ?? []);
 }
 
+export const TYPE_LOCKED = "This task already has submissions, so its type can't change.";
+export const PROBLEM_LOCKED = "This task already has submissions, so its problem can't change.";
+
+function submissionsFor(taskId: string) {
+  return getAdminDb().collection("submissions").where("taskId", "==", taskId);
+}
+
+/** True once any student has submitted to the task (any status); the edit form then locks type and problem. */
+export async function taskHasSubmissions(taskId: string): Promise<boolean> {
+  return !(await submissionsFor(taskId).limit(1).get()).empty;
+}
+
 export async function getTask(id: string): Promise<TaskResult> {
   const snapshot = await tasks().doc(id).get();
   const task = snapshot.exists ? taskDocToDto(id, snapshot.data()) : undefined;
@@ -72,6 +84,14 @@ export async function updateTask(id: string, patch: TaskPatch): Promise<TaskUpda
     const merged = taskInputSchema.safeParse(mergeTaskPatch(existing, patch));
     if (!merged.success) {
       return { ok: false, status: 400, message: merged.error.issues[0]?.message ?? "Invalid task." };
+    }
+
+    // Once students have submitted, the type and the judge problem are fixed: changing them would mix results
+    // that were marked against something else.
+    const typeChanged = existing.type !== merged.data.type;
+    const problemChanged = existing.coding?.problemSlug !== merged.data.coding?.problemSlug;
+    if ((typeChanged || problemChanged) && !(await tx.get(submissionsFor(id).limit(1))).empty) {
+      return { ok: false, status: 409, message: typeChanged ? TYPE_LOCKED : PROBLEM_LOCKED };
     }
 
     const dueAt = new Date(merged.data.dueAt).toISOString();

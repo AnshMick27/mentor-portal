@@ -44,7 +44,7 @@ function TaskRow({ row, now }: { row: ProfileTaskRow; now: Date }) {
           {row.attempts.length === 0 ? (
             <p className="text-sm opacity-70">No attempts.</p>
           ) : (
-            <AttemptList submissions={row.attempts} now={now} sentLabel="What they sent" />
+            <AttemptList submissions={row.attempts} now={now} audience="mentor" />
           )}
         </div>
       </details>
