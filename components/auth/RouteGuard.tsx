@@ -23,13 +23,26 @@ export function RouteGuard({ area, children }: { area: GuardArea; children: Reac
   return children;
 }
 
-/** Guarded page frame: header with sign-out, then the page in a mobile-first column. */
+/** Guarded page frame: skip link, header with navigation and sign-out, then the page in a mobile-first column. */
 export function ProtectedShell({ area, children }: { area: GuardArea; children: ReactNode }) {
   return (
     <RouteGuard area={area}>
+      <SkipLink />
       <SignedInHeader />
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-6">{children}</main>
+      <main id="main" className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-6">{children}</main>
     </RouteGuard>
+  );
+}
+
+/** First tab stop: lets keyboard users jump past the header links (hidden until focused). */
+export function SkipLink() {
+  return (
+    <a
+      href="#main"
+      className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-10 focus:rounded-lg focus:bg-background focus:px-4 focus:py-2"
+    >
+      Skip to content
+    </a>
   );
 }
 

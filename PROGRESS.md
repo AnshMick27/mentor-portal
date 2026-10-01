@@ -49,7 +49,7 @@ Goal: make the portal safe and understandable for real students, let the mentor 
   - Acceptance for T35 itself: the agent file exists and is committed; `docs/UX_REVIEW.md` exists with ranked findings; the follow-up sub-tasks are written into this list.
 - [x] **T35a — Theme tokens, global focus ring, dark-mode controls** (UX-02, UX-03 global part, UX-29 CSS part; see docs/UX_REVIEW.md §2–4)
   - Acceptance: `globals.css` sets `color-scheme`, has the tokens from review §3.1 and one `:focus-visible` rule; all tests green.
-- [ ] **T35b — Header navigation, brand link, skip link** (UX-01, UX-30)
+- [x] **T35b — Header navigation, brand link, skip link** (UX-01, UX-30)
   - Acceptance: render test for `AppHeader`: student sees Home and My tasks, mentor/viewer sees Dashboard, Tasks and Students; current page has `aria-current="page"`; brand links to the role's home; skip link targets `#main`.
 - [ ] **T35c — `Button`, `TextLink`/`BackLink`, `Note` components, replacing the copies** (UX-16, UX-15 links part, UX-09, UX-17)
   - Acceptance: render tests for the three components; no raw button class strings left outside `components/ui` (grep); a successful feedback submit is never shown as an error.
@@ -397,6 +397,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-10-01 — T34b — /mentor/students (mentor + viewer): every student account incl. not-onboarded sign-ups, search by name/email/roll no, Active and Removed groups (name → profile, email, roll no, branch, joined date IST, "Onboarding not finished"); mentor-only "Remove from portal" with an inline confirm step naming the student, and "Restore access"; same controls + a "Removed from the portal" note on the student profile; "Students" button in the mentor dashboard header; runbook section "Removing a student"; 17 unit/render tests + 3 rules tests for the list query.
 - 2026-10-01 — T35 — Project subagent `.claude/agents/ui-ux-designer.md` (UI-only edit scope) and its review `docs/UX_REVIEW.md`: 32 ranked findings, shared components to extract, follow-up batches T35a–T35k written into the list.
 - 2026-10-01 — T35a — globals.css: `color-scheme: light dark`, design tokens (muted, line, line-strong, surface, link, focus) for both themes exposed as Tailwind colours, one global `:focus-visible` ring (light blue in dark mode), themed `<select>` options, Markdown links use `--link` and images fit the screen; CSS guard test.
+- 2026-10-01 — T35b — Header nav row (student: Home, My tasks; mentor/viewer: Dashboard, Tasks, Students; none before onboarding) with `aria-current="page"` incl. sub-pages, brand links to the role's home (`homeFor`), "Skip to content" link and `id="main"` in ProtectedShell; 7 render tests. Redirecting signed-in visitors away from `/` still waits for Ansh (T35 question 3).
 
 ## Blockers
 (none)
