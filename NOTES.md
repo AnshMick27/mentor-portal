@@ -226,3 +226,8 @@
 - Server: `lib/leaderboard/store.ts` (`getAppConfig`, `setLeaderboardEnabled`, `setShowOnLeaderboard`, `loadLeaderboard`), pure `rankEntries` in `lib/leaderboard/rank.ts`; schemas + reply schemas for the client in `lib/validation/config.ts` (`leaderboardEntrySchema` is strict, so a leaked field fails parsing).
 - Client calls for T26b: `GET /api/leaderboard` → `{entries}` or 404 "Leaderboard is off." (hide the card on 404); `POST /api/me/leaderboard {showOnLeaderboard}` then `refreshProfile()` so `profile.showOnLeaderboard` updates; `GET/PATCH /api/config {leaderboardEnabled}` for the mentor switch.
 - Fake Admin queries now chain `orderBy` and, like Firestore, drop docs missing an ordered field.
+
+## Mentor dashboard (T27)
+- `loadMentorDashboard(db)` → `{tasks, taskStats: Map, students: MentorStudent[]}` (MentorStudent = stored studentStats + uid). Pure filters/aggregates in `lib/dashboard/mentor.ts` take a `BranchFilter` ("all" | Branch); T29's export can reuse `classSkillAverages`/`inBranch`.
+- Firestore indexes now: submissions (uid, taskId, createdAt↓), submissions (uid, status, createdAt↓), studentStats (showOnLeaderboard, overallAvg↓, name), tasks (status, dueAt↓). The emulator ignores indexes, so only H8's deploy proves them.
+- The rules fixture's `taskStats` doc has no `avgScoreByBranch`; the schema defaults it to `{}`.

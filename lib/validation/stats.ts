@@ -38,7 +38,8 @@ export const storedTaskStatsSchema = z.object({
   submittedCount: count,
   notSubmittedUids: z.array(z.string()),
   avgScore: scoreSchema.optional(),
-  avgScoreByBranch: partialScores(BRANCHES),
+  // Older docs may lack it; recompute always writes it.
+  avgScoreByBranch: partialScores(BRANCHES).default({}),
   updatedAt: timestampLike,
 });
 export type StoredTaskStats = z.infer<typeof storedTaskStatsSchema>;

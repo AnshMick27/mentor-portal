@@ -1,21 +1,36 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback } from "react";
 import { useSignedInProfile } from "@/components/auth/AuthProvider";
 import { LeaderboardSetting } from "@/components/mentor/LeaderboardSetting";
-import { ProfileCard } from "@/components/ProfileCard";
+import { MentorDashboard } from "@/components/mentor/MentorDashboard";
+import { QueryStatus } from "@/components/QueryStatus";
+import { useAsyncData } from "@/components/useAsyncData";
+import { loadMentorDashboard } from "@/lib/dashboard/mentorQueries";
+import { getClientDb } from "@/lib/firebase/client";
 
 export default function MentorHomePage() {
   const profile = useSignedInProfile();
+  const load = useCallback(() => loadMentorDashboard(getClientDb()), []);
+  const { state, reload } = useAsyncData(load, "Could not load the dashboard. Please try again.");
   return (
     <>
-      <ProfileCard profile={profile} title="Mentor dashboard" />
-      <Link
-        href="/mentor/tasks"
-        className="inline-flex min-h-11 items-center justify-center self-start rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-      >
-        {profile.role === "mentor" ? "Manage tasks" : "View tasks"}
-      </Link>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold tracking-tight">Mentor dashboard</h1>
+          <p className="text-sm opacity-75">
+            {profile.role === "viewer" ? "Read-only view" : `Welcome, ${profile.name}`}
+          </p>
+        </div>
+        <Link
+          href="/mentor/tasks"
+          className="inline-flex min-h-11 items-center justify-center self-start rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+        >
+          {profile.role === "mentor" ? "Manage tasks" : "View tasks"}
+        </Link>
+      </div>
+      {state.status === "ready" ? <MentorDashboard data={state.data} /> : <QueryStatus state={state} onRetry={reload} />}
       {profile.role === "mentor" && <LeaderboardSetting />}
     </>
   );

@@ -26,6 +26,14 @@
         { "fieldPath": "overallAvg", "order": "DESCENDING" },
         { "fieldPath": "name", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "dueAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
