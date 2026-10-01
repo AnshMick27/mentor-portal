@@ -2,7 +2,58 @@
 
 Legend: `- [ ]` to do · `- [x]` done · 🔒 HUMAN = Ansh does this step, the loop stops and explains it.
 
-## Current loop: Loop 3 — Dashboards (Week 3)
+## Current loop: Loop 4 — Pilot and launch (Week 4)
+
+Goal: make the portal safe and understandable for real students, run a one-week pilot with 5 students, fix what they find, then launch to the whole batch. No new features beyond what the pilot shows is needed; every fix keeps `npm run check` green.
+
+- [ ] **T30 — Pre-pilot fixes from open questions**
+  - Lock a task's `type` and coding `problemSlug` once it has any submission: `PATCH /api/tasks/[id]` answers 409 "This task already has submissions, so its type (or problem) can't change." (other edits and publish/unpublish still work). The form shows the fields read-only for such tasks.
+  - Mentor wording: in the mentor profile (T28), a failed attempt reads "Not counted (the student can try again)" instead of the student-facing "…so you can try again"; the student page is unchanged.
+  - Delete the unused `components/ProfileCard.tsx` and its test (replaced by the dashboards in T24/T27).
+  - Acceptance: API tests for the lock (type change 409, slug change 409, title/due date/publish still OK, no lock without submissions); render test for the mentor wording.
+
+- [ ] **T31 — Security hardening and route audit**
+  - Security headers for every page via `next.config.ts` `headers()`: Content-Security-Policy (self + the Firebase/Google sign-in origins the app really uses; no `unsafe-eval` in production), `X-Frame-Options: DENY` / `frame-ancestors 'none'`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Content-Type-Options: nosniff`, `Permissions-Policy` (camera, microphone, geolocation off). Read the Next 16 docs in `node_modules/next/dist/docs/` first.
+  - A test that walks `app/api/**/route.ts` and fails unless each handler uses `requireUser` (or `verifyIdentity` for `/api/me`), except the allow-listed machine routes (`judge/callback` = HMAC, `cron/recompute` = CRON_SECRET), and that every route with a body uses a strict zod schema.
+  - Re-run the SPEC §7 checklist by hand and write the result in NOTES.md (rules deny all writes, secrets server-only, hidden tests never in this repo, limits enforced).
+  - Acceptance: header test (reads the config), route-audit test, production build passes; Google sign-in still works locally against the emulator (or note what could not be checked).
+
+- [ ] **T32 — "How your data is used" page and help link**
+  - Static `/privacy` page in plain English: what is stored (profile, submissions, scores), who sees it (you, mentors, CDC leadership), that resume/intro text is sent to the AI provider for feedback and PDFs never leave the phone, that code runs in an isolated judge, the opt-in leaderboard, and who to contact. Linked from the header/footer, the login page and next to the resume and intro forms.
+  - "Need help?" line in the footer telling students to message their mentor (no new env var, no email address in the code).
+  - Acceptance: works at 360 px; render tests for the page and the links.
+
+- [ ] **T33 — Operations runbook**
+  - `docs/RUNBOOK.md` for Ansh: deploy steps, every env var and where it lives (Vercel / `.env.local` / judge repo secrets), rotating `JUDGE_WEBHOOK_SECRET` / `CRON_SECRET` / the GitHub token (it expires: set a calendar reminder), adding a coding problem and hidden tests, deploying rules and indexes, running the cron by hand, what to do when the judge or AI fails, checking Firestore/Actions/AI usage against free-tier limits, and that the Spark plan has no automatic backups (manual export option).
+  - Link it from README.md.
+  - Acceptance: every env var in `.env.example` appears in the runbook (a test checks this), and every command in it exists in package.json or is a documented CLI.
+
+- [ ] **H10 🔒 HUMAN — Pilot setup (about 30 minutes)**
+  1. Pick 5 students (mixed branches if possible) and tell them the pilot runs for one week.
+  2. As mentor, create and publish real tasks for the week: 1 coding task (add its hidden tests to the judge repo first), 1 resume review, 1 written intro. Due dates within the week.
+  3. Check spend limits: AI provider dashboard (or free-tier limits), GitHub → Settings → Billing → Actions minutes, Firebase console → Usage.
+  4. Put a calendar reminder 1 week before the GitHub judge token expires.
+  5. Share the site link with the 5 students. Tick H10 and say `Follow LOOP.md`.
+
+- [ ] **H11 🔒 HUMAN — Run the pilot (one week)**
+  1. Let the 5 students use the portal for the week. Check `/mentor` every day or two.
+  2. Write every problem or wish they report (and anything you notice) under "Pilot feedback" below: one line each, with who/where/what happened. Screenshots can stay on your phone; describe them in words.
+  3. At the end, tick H11 and say `Follow LOOP.md`. Claude turns the feedback into fix tasks.
+
+- [ ] **T34 — Pilot fixes**
+  - Turn each "Pilot feedback" line into a small task (T34a, T34b, …) in this list, most serious first, then do them one per iteration. Anything that would need a new feature or a SPEC change goes to "Questions for Ansh" instead.
+  - Acceptance: per sub-task, as written when it is split.
+
+- [ ] **H12 🔒 HUMAN — Launch**
+  1. Run through H9's checks once more on the deployed site.
+  2. Announce the portal to the whole batch (WhatsApp: link + "sign in with your college email").
+  3. Watch the first day's sign-ins and submissions on `/mentor`; note any problems under "Pilot feedback".
+  4. Push to GitHub. Loop 4 and v1 are complete.
+
+## Pilot feedback
+(Ansh: one line per problem or wish during H11/H12 — who, where, what happened.)
+
+## Finished: Loop 3 — Dashboards (Week 3)
 
 Goal: stats are recomputed after every finished submission and once a day, so dashboards read a few precomputed docs instead of raw submissions (SPEC.md §8.5–8.7). Students get a home screen with their tasks, latest feedback, next steps and progress chart; mentors and viewers get task status, needs-attention, class overview, student profiles and an Excel export; an opt-in leaderboard exists but stays off by default.
 
@@ -343,3 +394,4 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - T27: "10 most recent" = the 10 published tasks with the latest due dates (upcoming ones included). The per-skill class average is the mean of each student's own skill average (every student counts once, however many tasks they did). The branch filter also narrows task status counts and the needs-attention list. `components/ProfileCard.tsx` (and its test) is no longer used by any page; it can be deleted in a clean-up. The new tasks index must be deployed (H8 step 2). OK?
 - T28: The profile loads a student's newest 50 attempts first; older ones appear with "Load older attempts", so on a very long history a task's row may show fewer attempts until more pages are loaded (the stats numbers are always complete). Attempts on draft/unpublished tasks are only counted, not shown. Inside the mentor view, a failed attempt still reads "…not counted, so you can try again" (shared wording with the student page). OK?
 - T29: The export includes only onboarded students (role student) and only published tasks; "All results" lists finished (`done`) attempts only, not errors. Dates are written as IST text (e.g. "20 Sept 2026, 1:30 am IST") rather than Excel date cells, so they never shift with the viewer's time zone. The file never contains what students sent (code, resume or intro text). exceljs brings its own `uuid@8`, which falls under the same moderate `uuid` advisory as before (it only affects v3/v5/v6 with a buffer; exceljs uses v4). The export reads every finished submission, so each download costs about one read per submission. OK?
+- Loop 4 (planning): Left OUT on purpose, tell me if you want any of them as tasks: (a) demoting staff removed from MENTOR_EMAILS/VIEWER_EMAILS at login (T6 question; today you edit the users doc in the console); (b) refreshing name/email on every login (T6); (c) forcing `uuid` ≥ 11.1.1 with an npm override to close Dependabot alert #1 (low risk as explained; dismissing the alert is the alternative); (d) allowing late submissions (still refused after the due date). Also: SPEC.md §10 and §13 still say `AI_PROVIDER=anthropic | gemini`; please add `groq` and `GROQ_API_KEY` when you next edit the spec (I may not edit SPEC.md).
