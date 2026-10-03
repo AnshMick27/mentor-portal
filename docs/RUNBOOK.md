@@ -142,6 +142,21 @@ Anyone with a college email can sign in and becomes a student. To take someone o
 Only mentors can remove or restore; viewers see the list read-only. Mentor and viewer accounts cannot be removed
 this way (see §6).
 
+### Deleting a graduated batch (once a year)
+
+The privacy page promises: "Your data is kept for one year after your batch graduates, then deleted." Put a
+calendar reminder one year after each batch's graduation, then:
+
+1. Download the **Excel export** and keep it somewhere private (it is the only copy left afterwards).
+2. Firebase console → Firestore: for every student of that batch, delete their `users/{uid}` and
+   `studentStats/{uid}` docs and every `submissions` doc with their `uid`. The portal has no bulk-delete button:
+   for a whole batch, ask Claude for a one-off script that runs against the real project after you check its
+   list of students.
+3. Firebase console → Authentication → Users: delete the same accounts.
+4. Run the nightly stats job by hand (above) so task numbers stop counting them.
+
+Removed students are deleted on the same schedule as the rest of their batch.
+
 ---
 
 ## 6. When something goes wrong

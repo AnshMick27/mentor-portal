@@ -118,7 +118,7 @@ Goal: make the portal safe and understandable for real students, let the mentor 
   - Student task page: submit form stays open after the due date (while attempts are left) with the note "This task is past its due date. You will get feedback, but it will not be scored."; late attempts show a "Late · not scored" chip in history and results; the home page's latest feedback labels late results. Mentor: "Late" chip on attempts in the profile; "Sent late" chip for late-only students on the submissions page.
   - Acceptance: availability unit tests (past due + attempts left → open and late), render tests for the note and chips.
 
-- [ ] **T45 — Privacy page: how long data is kept** (Ansh, 2026-10-03, Q12)
+- [x] **T45 — Privacy page: how long data is kept** (Ansh, 2026-10-03, Q12)
   - `/privacy`: "Your data is kept for one year after your batch graduates, then deleted." Contact stays "your mentor" (Q13). RUNBOOK gets a yearly step: delete the graduated batch's users, submissions and stats one year after graduation (export first).
   - Acceptance: privacy render test checks the sentence; runbook test still green.
 
@@ -472,6 +472,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-10-03 — T43 — `planProvision` makes the stored role follow the env lists on every `/api/me`: delisted mentor/viewer → student (onboarded only if they already have roll number + branch), mentor only on VIEWER_EMAILS → viewer; name/email never change; removed users untouched (403). 4 unit + 4 API tests (the old "never demote" test replaced); RUNBOOK rows updated. Stats are not recomputed on a role change (same as promotions); the nightly cron catches up.
 - 2026-10-03 — T44a — Late submissions on the server: `startSubmission` accepts after `dueAt` and stores `late: true` (attempt limit unchanged), replies carry `late`; one rule `countsForScore` (done + scored + not late) used by `bestScore`, stats (`outcomeFor`), the roster (`lateOnly` flag) and the board (`lateOnly` progress keeps past-due late-only tasks in Missed); the export skips late attempts. 2 refusal tests replaced by "accepted as late" tests; 11 new tests. Screens still say "closed" after the due date until T44b.
 - 2026-10-03 — T44b — Late submissions on screen: `submitAvailability` stays open past the due date with `late: true` (closes only when attempts are used up); submit sections show "Past the due date… will not be scored" above the form and drop "Your best score counts"; "Feedback ready (late, not scored: x / 10)"; "Late · not scored" chip + one-line note on late attempts (student task page, mentor profile, home latest feedback); task chip "Missed · sent late"; "Sent late" chip on the submissions page. 2 tests rewritten for the new rule, 5 new.
+- 2026-10-03 — T45 — Privacy page: new "How long it is kept" section ("kept for one year after your batch graduates, then deleted", also for removed accounts); contact line unchanged. RUNBOOK §5 "Deleting a graduated batch (once a year)" (export first, delete users/studentStats/submissions and Auth accounts, rerun stats; no bulk-delete tool yet). 1 new render test.
 
 ## Blockers
 (none)

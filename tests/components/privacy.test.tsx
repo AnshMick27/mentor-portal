@@ -29,6 +29,11 @@ describe("privacy page", () => {
     expect(html).toContain("only if you choose to");
   });
 
+  it("says how long data is kept (T45)", () => {
+    expect(html).toContain("How long it is kept");
+    expect(html).toContain("Your data is kept for one year after your batch graduates, then deleted.");
+  });
+
   it("names no email address or AI vendor, so it never goes out of date", () => {
     expect(html).not.toMatch(/@[a-z0-9-]+\.[a-z]/i);
     expect(html).not.toMatch(/groq|gemini|anthropic|claude|openai/i);

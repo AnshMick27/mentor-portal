@@ -66,6 +66,13 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
+      <Section title="How long it is kept">
+        <p>
+          Your data is kept for one year after your batch graduates, then deleted. This also applies if your access to
+          the portal is removed.
+        </p>
+      </Section>
+
       <Section title="Questions or changes">
         <p>
           To correct something, or if you have a question about your data, message your mentor or contact the CDC
