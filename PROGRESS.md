@@ -85,6 +85,9 @@ Goal: make the portal safe and understandable for real students, let the mentor 
   - Optional `AI_FALLBACK_PROVIDER`/`AI_FALLBACK_MODEL`: each AI call tries the main model first; a provider error (429, outage, auth) sends that call to the backup. No backup set = unchanged behaviour.
   - Acceptance: provider tests (429 → backup answers and the next call goes to the main model again; main OK → backup unused; invalid reply retried on main; both fail → provider error; missing backup model only fails when needed); env test.
   - 🔒 Ansh: in Vercel add `AI_FALLBACK_PROVIDER=groq` and `AI_FALLBACK_MODEL=openai/gpt-oss-20b`, then Redeploy.
+- [x] **T39 — Who has submitted each task** (asked for by Ansh on 2026-10-03: "I cannot see who has submitted and who has not")
+  - `/mentor/tasks/[id]/submissions` (mentor + viewer): "x of y submitted", Not submitted list (with "Being checked"), Submitted list (best score, attempts, last attempt in IST), branch filter; read live from the task's submissions, so it works for every task and never shows "No numbers yet".
+  - Linked from the dashboard task cards, the mentor task list ("See who submitted"), the edit page ("Submissions") and viewers' published task cards.
 
 - [ ] **H12 🔒 HUMAN — Launch** (H10 pilot setup and H11 pilot week dropped by Ansh on 2026-10-01: launch directly)
   1. Before announcing: as mentor, create and publish the first real tasks (for a coding task, add its hidden tests to the judge repo first). Check spend limits (AI provider, GitHub Actions minutes, Firebase usage) and set a calendar reminder a week before the GitHub judge token expires.
@@ -428,6 +431,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-10-01 — T35k — Login names the portal and its purpose above "Sign in"; mentor markdown links tell screen readers "(opens in a new tab)" and images become a note "[Image not shown: alt. Ask your mentor for the file.]" (the CSP blocks outside images anyway); mentor copy: "No numbers yet. They appear after the first submission, or after tonight's update.", leaderboard switch label fixed as "Show the leaderboard to students" (on/off via the switch); 3 new tests, the leaderboard-setting test now checks `aria-checked`. All T35 batches done.
 - 2026-10-01 — T37 — Delete a task: `DELETE /api/tasks/[id]` (mentor only) removes the task and its `taskStats` doc in one transaction, keeps submissions (they stop counting) and recomputes stats; "Delete task" section with a named inline confirm at the bottom of the edit page; list shows "Task deleted."; `apiFetch` accepts DELETE; 3 API + 3 render tests.
 - 2026-10-01 — T38 — Backup AI model: optional `AI_FALLBACK_PROVIDER`/`AI_FALLBACK_MODEL`; `createModelWithFallback` (default in `generateFeedback`) sends a call to the backup only on a provider error such as Groq 429, and tries the main model first on every call; 6 provider tests + env test; RUNBOOK, .env.example, NOTES updated.
+- 2026-10-03 — T39 — Per-task submissions page: `lib/tasks/submissionRoster.ts` (submitted = a finished scored attempt, same rule as taskStats; failed attempts not counted; queued < 10 min = "Being checked"; only onboarded, not-removed students), `lib/tasks/rosterQuery.ts` (task + students + `submissions where taskId ==`, single-field index, no deploy needed), `TaskSubmissionsView`; links from dashboard, task list and edit page; 6 new tests, 2 task-list tests updated for the new links. Not yet looked at in a real browser.
 
 ## Blockers
 (none)

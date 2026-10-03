@@ -61,6 +61,9 @@ function TaskStatus({ row }: { row: TaskStatusRow }) {
       ) : (
         <EmptyState>No numbers yet. They appear after the first submission, or after tonight&apos;s update.</EmptyState>
       )}
+      <TextLink href={`/mentor/tasks/${row.task.id}/submissions`} className="inline-flex min-h-11 items-center self-start text-sm">
+        See who submitted
+      </TextLink>
     </li>
   );
 }

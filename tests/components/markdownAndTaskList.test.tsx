@@ -84,7 +84,10 @@ describe("TaskList", () => {
     const html = page(false);
     expect(html).toContain("Two sum");
     expect(html).not.toContain("/mentor/tasks/new");
-    expect(html).not.toContain('href="/mentor/tasks/t');
+    // No edit links; published cards only open the read-only submissions page.
+    expect(html).not.toMatch(/href="\/mentor\/tasks\/t\d+"/);
+    expect(html).not.toContain('href="/mentor/tasks/t1/submissions"'); // t1 is a draft
+    expect(html).toContain('href="/mentor/tasks/t2/submissions"');
     expect(html).not.toContain("<button");
   });
 

@@ -63,10 +63,18 @@ describe("mentor task cards are one big link (UX-13)", () => {
     updatedAt: "2026-09-20T00:00:00.000Z",
   } as TaskDto;
 
-  it("wraps title, badge and due date in one link for mentors, none for viewers", () => {
+  it("wraps title, badge and due date in one edit link for mentors, plus a separate submissions link", () => {
     const mentor = renderToStaticMarkup(<TaskList tasks={[task]} canEdit />);
-    expect(mentor.match(/<a /g)).toHaveLength(1);
+    expect(mentor.match(/<a /g)).toHaveLength(2);
     expect(mentor).toMatch(/<a [^>]*href="\/mentor\/tasks\/t9"[^>]*>.*Resume review.*Published.*Due 5 Oct/);
-    expect(renderToStaticMarkup(<TaskList tasks={[task]} canEdit={false} />)).not.toContain("<a ");
+    expect(mentor).toContain('href="/mentor/tasks/t9/submissions"');
+  });
+
+  it("gives viewers one link per published card, to its submissions, and none on drafts", () => {
+    const viewer = renderToStaticMarkup(<TaskList tasks={[task]} canEdit={false} />);
+    expect(viewer.match(/<a /g)).toHaveLength(1);
+    expect(viewer).toMatch(/<a [^>]*href="\/mentor\/tasks\/t9\/submissions"[^>]*>.*Resume review/);
+    const draft = renderToStaticMarkup(<TaskList tasks={[{ ...task, status: "draft" }]} canEdit={false} />);
+    expect(draft).not.toContain("<a ");
   });
 });

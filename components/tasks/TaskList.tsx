@@ -1,5 +1,6 @@
 import { ButtonLink } from "@/components/ui/Button";
 import { cardClasses, CardLink } from "@/components/ui/Card";
+import { TextLink } from "@/components/ui/TextLink";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
@@ -39,13 +40,21 @@ export function TaskList({ tasks, canEdit }: { tasks: TaskDto[]; canEdit: boolea
                 </span>
               </>
             );
-            // Mentors tap anywhere on the card to edit (UX-13); viewers get the same card without a link.
+            // Mentors tap anywhere on the card to edit (UX-13); viewers tap it to see who submitted.
+            const submissionsHref = `/mentor/tasks/${task.id}/submissions`;
             return (
-              <li key={task.id}>
+              <li key={task.id} className="flex flex-col">
                 {canEdit ? (
                   <CardLink href={`/mentor/tasks/${task.id}`}>{body}</CardLink>
+                ) : task.status === "published" ? (
+                  <CardLink href={submissionsHref}>{body}</CardLink>
                 ) : (
                   <div className={cardClasses({ className: "flex flex-col gap-1" })}>{body}</div>
+                )}
+                {canEdit && task.status === "published" && (
+                  <TextLink href={submissionsHref} className="inline-flex min-h-11 items-center self-start text-sm">
+                    See who submitted
+                  </TextLink>
                 )}
               </li>
             );

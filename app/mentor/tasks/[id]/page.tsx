@@ -7,6 +7,7 @@ import { DeleteTask } from "@/components/tasks/DeleteTask";
 import { MentorOnly } from "@/components/tasks/MentorOnly";
 import { TaskForm } from "@/components/tasks/TaskForm";
 import { StatusBadge } from "@/components/tasks/TaskList";
+import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useApiQuery } from "@/components/useApiQuery";
 import { taskToForm } from "@/lib/tasks/taskForm";
@@ -28,7 +29,16 @@ function EditTask({ id }: { id: string }) {
   const { task, hasSubmissions } = state.data;
   return (
     <>
-      <PageHeader title="Edit task" back={back} badge={<StatusBadge status={task.status} />} />
+      <PageHeader
+        title="Edit task"
+        back={back}
+        badge={<StatusBadge status={task.status} />}
+        actions={
+          <ButtonLink href={`/mentor/tasks/${task.id}/submissions`} variant="secondary">
+            Submissions
+          </ButtonLink>
+        }
+      />
       <TaskForm
         key={task.updatedAt}
         mode="edit"
