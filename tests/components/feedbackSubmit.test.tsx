@@ -70,10 +70,22 @@ describe("intro submit area", () => {
 });
 
 describe("closed submit area", () => {
-  it("explains a passed due date instead of showing the form", () => {
+  it("keeps the form open after the due date, saying first that late work is not scored (T44)", () => {
     const html = render(introTask, 0, new Date("2026-11-01T00:00:00Z"));
-    expect(html).toContain("due date has passed");
-    expect(html).not.toContain("<textarea");
+    expect(html).toContain("This task is past its due date. You will get feedback, but it will not be scored.");
+    expect(html).toContain("<textarea");
+    expect(html).not.toContain("Your best score counts");
+    expect(html.indexOf("past its due date")).toBeLessThan(html.indexOf("<textarea"));
+  });
+
+  it("shows no late note before the due date", () => {
+    expect(render(introTask, 0)).not.toContain("past its due date");
+  });
+
+  it("labels the feedback of a late attempt as not scored (T44)", () => {
+    const result = { score: 8, summary: "Good.", strengths: [], improvements: [], nextSteps: [] };
+    expect(renderToStaticMarkup(<FeedbackReady result={result} late />)).toContain("Feedback ready (late, not scored: 8.0 / 10)");
+    expect(renderToStaticMarkup(<FeedbackReady result={result} />)).toContain("Feedback ready: 8.0 / 10");
   });
 
   it("explains used-up attempts instead of showing the form", () => {

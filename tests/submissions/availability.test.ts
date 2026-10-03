@@ -18,14 +18,17 @@ const before = new Date("2026-10-01T00:00:00Z");
 
 describe("submitAvailability", () => {
   it("is open with the attempts left before the deadline", () => {
-    expect(submitAvailability(task, 0, before)).toEqual({ open: true, attemptsLeft: 3 });
-    expect(submitAvailability(task, 2, before)).toEqual({ open: true, attemptsLeft: 1 });
+    expect(submitAvailability(task, 0, before)).toEqual({ open: true, attemptsLeft: 3, late: false });
+    expect(submitAvailability(task, 2, before)).toEqual({ open: true, attemptsLeft: 1, late: false });
   });
 
-  it("is still open exactly at dueAt (the server allows now <= dueAt) and closed one ms later", () => {
-    expect(submitAvailability(task, 0, new Date(task.dueAt)).open).toBe(true);
-    const late = submitAvailability(task, 0, new Date(Date.parse(task.dueAt) + 1));
-    expect(late).toEqual({ open: false, reason: expect.stringContaining("due date has passed") });
+  it("is on time exactly at dueAt (the server allows now <= dueAt) and late, still open, one ms later (T44)", () => {
+    expect(submitAvailability(task, 0, new Date(task.dueAt))).toEqual({ open: true, attemptsLeft: 3, late: false });
+    expect(submitAvailability(task, 1, new Date(Date.parse(task.dueAt) + 1))).toEqual({ open: true, attemptsLeft: 2, late: true });
+  });
+
+  it("closes a past-due task once every attempt is used, late ones included", () => {
+    expect(submitAvailability(task, 3, new Date(Date.parse(task.dueAt) + 1)).open).toBe(false);
   });
 
   it("is closed once every attempt is used", () => {

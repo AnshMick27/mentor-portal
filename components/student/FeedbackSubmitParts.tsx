@@ -57,9 +57,13 @@ export function SubmitFooter({ state, disabledReason }: { state: FeedbackSubmitS
 }
 
 /** Short note after a successful submit; the full feedback is in the attempt history below. */
-export function FeedbackReady({ result }: { result: SubmissionResult }) {
+export function FeedbackReady({ result, late = false }: { result: SubmissionResult; late?: boolean }) {
+  // Late work is feedback only (T44): its mark is shown as "not scored", never as a score that counts.
+  const title = late
+    ? `Feedback ready (late, not scored: ${result.score.toFixed(1)} / 10)`
+    : `Feedback ready: ${result.score.toFixed(1)} / 10`;
   return (
-    <Note tone="success" live title={`Feedback ready: ${result.score.toFixed(1)} / 10`}>
+    <Note tone="success" live title={title}>
       <p>{result.summary}</p>
       <p>Full feedback is under “Your attempts” below.</p>
     </Note>

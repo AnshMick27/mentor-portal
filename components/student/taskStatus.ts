@@ -13,6 +13,8 @@ const FULL_SCORE = 10;
 export function taskChip(task: StudentTask, now: Date): TaskChip {
   const pastDue = Date.parse(task.dueAt) < now.getTime();
   const attemptsLeft = task.maxAttempts - task.attemptsUsed;
+  // Only late work (T44): it gets feedback but the task still counts as missed.
+  if (task.lateOnly) return { tone: "danger", label: "Missed · sent late" };
   if (task.attemptsUsed > 0 && task.bestScore === undefined) return { tone: "info", label: "Being checked" };
   if (task.bestScore === FULL_SCORE || (task.attemptsUsed > 0 && attemptsLeft <= 0)) return { tone: "success", label: "Done" };
   if (pastDue) return task.attemptsUsed === 0 ? { tone: "danger", label: "Missed" } : { tone: "neutral", label: "Closed" };

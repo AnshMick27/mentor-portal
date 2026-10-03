@@ -107,14 +107,14 @@ Goal: make the portal safe and understandable for real students, let the mentor 
   - `POST /api/me`: a mentor/viewer whose email is on neither `MENTOR_EMAILS` nor `VIEWER_EMAILS` becomes a student at sign-in (moving between the two lists also updates the role). Name/email are still never refreshed. Removed users stay blocked. Note it in the runbook ("to remove a mentor, delete their email from the list and redeploy").
   - Acceptance: API tests (mentor delisted → student, viewer → student, viewer moved to mentor list → mentor, student unchanged, removed stays 403); route audit green.
 
-- [ ] **T44 — Late submissions: feedback only, not scored** (Ansh, 2026-10-03, Q11/Q11b; SPEC §6, §8.2) — split into T44a and T44b below
+- [x] **T44 — Late submissions: feedback only, not scored** (Ansh, 2026-10-03, Q11/Q11b; SPEC §6, §8.2) — split into T44a and T44b below
   - Submit routes accept attempts after `dueAt` (same attempt limit, same size limits) and store `late: true`. Late attempts get normal AI/judge feedback but are left out of best score, averages, leaderboard and export, and the task still counts as missed (needs-attention unchanged).
   - Student: before submitting late, a clear note "This task is past its due date. You will get feedback, but it will not be scored."; late attempts show a "Late · not scored" chip. Mentor: "Late" chip on the attempt in the profile and the submissions page.
   - Acceptance: API tests (late accepted and flagged, attempt limit still enforced), stats tests (late never counts, still missed), render tests for the note and chips; rules tests unchanged.
 
 - [x] **T44a — Late submissions: server, stats, export**
   - Acceptance: API tests (late accepted and flagged for AI and judge, attempt limit still enforced, on-time not flagged); stats/roster/board/export tests (late never counts, still missed).
-- [ ] **T44b — Late submissions: screens**
+- [x] **T44b — Late submissions: screens**
   - Student task page: submit form stays open after the due date (while attempts are left) with the note "This task is past its due date. You will get feedback, but it will not be scored."; late attempts show a "Late · not scored" chip in history and results; the home page's latest feedback labels late results. Mentor: "Late" chip on attempts in the profile; "Sent late" chip for late-only students on the submissions page.
   - Acceptance: availability unit tests (past due + attempts left → open and late), render tests for the note and chips.
 
@@ -471,6 +471,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-10-03 — T42 — Student board: a task still open with attempts left stays in "Due soon" even after a submission (card shows "Can improve"); "Submitted" = closed or out of attempts (`groupStudentTasks`). Submitted empty text now "Nothing here yet. A task moves here once it closes or you have used all your attempts."; 2 unit tests + 1 render test, 1 fixture updated.
 - 2026-10-03 — T43 — `planProvision` makes the stored role follow the env lists on every `/api/me`: delisted mentor/viewer → student (onboarded only if they already have roll number + branch), mentor only on VIEWER_EMAILS → viewer; name/email never change; removed users untouched (403). 4 unit + 4 API tests (the old "never demote" test replaced); RUNBOOK rows updated. Stats are not recomputed on a role change (same as promotions); the nightly cron catches up.
 - 2026-10-03 — T44a — Late submissions on the server: `startSubmission` accepts after `dueAt` and stores `late: true` (attempt limit unchanged), replies carry `late`; one rule `countsForScore` (done + scored + not late) used by `bestScore`, stats (`outcomeFor`), the roster (`lateOnly` flag) and the board (`lateOnly` progress keeps past-due late-only tasks in Missed); the export skips late attempts. 2 refusal tests replaced by "accepted as late" tests; 11 new tests. Screens still say "closed" after the due date until T44b.
+- 2026-10-03 — T44b — Late submissions on screen: `submitAvailability` stays open past the due date with `late: true` (closes only when attempts are used up); submit sections show "Past the due date… will not be scored" above the form and drop "Your best score counts"; "Feedback ready (late, not scored: x / 10)"; "Late · not scored" chip + one-line note on late attempts (student task page, mentor profile, home latest feedback); task chip "Missed · sent late"; "Sent late" chip on the submissions page. 2 tests rewritten for the new rule, 5 new.
 
 ## Blockers
 (none)

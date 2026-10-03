@@ -8,7 +8,7 @@ import { feedbackRequestSchema, submissionResultSchema, type AiTaskType, type Su
 
 /** `POST /api/feedback` success reply. */
 const feedbackReplySchema = z.object({
-  submission: z.object({ id: z.string(), attempt: z.number(), result: submissionResultSchema }),
+  submission: z.object({ id: z.string(), attempt: z.number(), result: submissionResultSchema, late: z.boolean().default(false) }),
 });
 
 export type FeedbackSubmitState =
@@ -17,7 +17,7 @@ export type FeedbackSubmitState =
   | { status: "error"; message: string }
   /** Saved, but the reply could not be read here: the feedback is in the attempt history. */
   | { status: "saved" }
-  | { status: "done"; result: SubmissionResult };
+  | { status: "done"; result: SubmissionResult; late: boolean };
 
 /** Sends resume/intro text to `POST /api/feedback`; validates locally first with the same schema as the server. */
 export function useFeedbackSubmit(taskId: string, type: AiTaskType) {
@@ -40,7 +40,7 @@ export function useFeedbackSubmit(taskId: string, type: AiTaskType) {
     if (!data.success) {
       setState({ status: "saved" });
     } else {
-      setState({ status: "done", result: data.data.submission.result });
+      setState({ status: "done", result: data.data.submission.result, late: data.data.submission.late });
     }
   }
 

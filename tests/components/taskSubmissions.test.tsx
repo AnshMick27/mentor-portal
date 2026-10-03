@@ -60,4 +60,14 @@ describe("TaskSubmissionsView", () => {
     expect(html).toContain("Nobody has submitted yet.");
     expect(html).not.toContain("Diya Patel");
   });
+
+  it("tags a student who only sent late work, and keeps them under Not submitted (T44)", () => {
+    const lateData = { ...data, submissions: [...data.submissions, { ...data.submissions[0], id: "x2", uid: "s1", late: true }] };
+    const html = renderToStaticMarkup(
+      <TaskSubmissionsView data={lateData} branch="all" onBranch={() => undefined} now={new Date("2026-10-03T00:00:00Z")} />,
+    );
+    expect(html).toContain("1</span> of 2 submitted");
+    expect(html).toContain(">Sent late</span>");
+    expect(html.indexOf("Sent late")).toBeLessThan(html.indexOf(">Submitted"));
+  });
 });

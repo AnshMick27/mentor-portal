@@ -80,7 +80,19 @@ describe("StudentTaskDetail", () => {
     );
     expect(late).toContain("Was due 5 Oct 2026, 11:59 pm IST");
     expect(late).toContain(">Missed</span>");
-    expect(late).not.toContain("Go to submit");
+    // Late work is still accepted (feedback only, T44), so the shortcut to the form stays.
+    expect(late).toContain("Go to submit");
+  });
+
+  it("marks late attempts and a late-only task (T44)", () => {
+    const lateAttempt = { ...attempt, late: true };
+    const html = renderToStaticMarkup(
+      <StudentTaskDetail task={codingTask} submissions={[lateAttempt]} now={new Date("2026-11-01T00:00:00Z")} />,
+    );
+    expect(html).toContain(">Missed · sent late</span>");
+    expect(html).toContain(">Late · not scored</span>");
+    expect(html).toContain("Sent after the due date: this feedback does not count towards any score.");
+    expect(html).not.toContain("Best 7.5");
   });
 });
 

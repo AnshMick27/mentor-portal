@@ -1,6 +1,7 @@
 import { cardClasses } from "@/components/ui/Card";
 import { Disclosure } from "@/components/ui/Disclosure";
 import { formatScore } from "@/components/ui/Score";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { formatIst } from "@/lib/dates/ist";
 import { judgeStatusView } from "@/lib/submissions/judgeDisplay";
 import { effectiveStatus } from "@/lib/submissions/scoring";
@@ -50,7 +51,23 @@ const WORDING: Record<AttemptAudience, { notCounted: string; pending: string; se
   },
 };
 
+/** Marks an attempt sent after the due date (SPEC.md §8.2, T44): feedback only, never scored. */
+export function LateChip() {
+  return <StatusChip tone="warning">Late · not scored</StatusChip>;
+}
+
 function AttemptBody({ submission, now, audience }: { submission: SubmissionView; now: Date; audience: AttemptAudience }) {
+  const body = <AttemptResult submission={submission} now={now} audience={audience} />;
+  if (submission.late !== true) return body;
+  return (
+    <>
+      <p className="text-sm text-muted">Sent after the due date: this feedback does not count towards any score.</p>
+      {body}
+    </>
+  );
+}
+
+function AttemptResult({ submission, now, audience }: { submission: SubmissionView; now: Date; audience: AttemptAudience }) {
   const effective = effectiveStatus(submission, now);
   if (submission.type === "coding" && !(effective.status === "done" && submission.result)) {
     return <JudgeStatus submission={submission} now={now} />;
@@ -93,9 +110,10 @@ export function AttemptList({
             summaryClassName="px-4 py-2"
             summary={
               <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                <span className="font-medium">
+                <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1 font-medium">
                   Attempt {submission.attempt}
-                  <span className="ml-2 text-sm font-normal text-muted">{formatIst(submission.createdAt.toISOString())}</span>
+                  <span className="text-sm font-normal text-muted">{formatIst(submission.createdAt.toISOString())}</span>
+                  {submission.late === true && <LateChip />}
                 </span>
                 <span className="text-sm font-semibold">{statusLabel(submission, now)}</span>
               </span>

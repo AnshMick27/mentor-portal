@@ -12,6 +12,7 @@ import type { StudentTask } from "@/lib/tasks/studentBoard";
 import { TASK_TYPE_LABEL, type TaskDto } from "@/lib/validation/task";
 import { ProgressChart } from "./ProgressChart";
 import { TaskCardBody } from "./StudentTaskBoard";
+import { LateChip } from "./SubmissionHistory";
 import { SubmissionResultView } from "./SubmissionResultView";
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -65,7 +66,8 @@ function LatestResult({ submission, task }: { submission: SubmissionView; task?:
         summary={
           <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <span className="font-semibold break-words">{task?.title ?? TASK_TYPE_LABEL[submission.type]}</span>
-            <span className="text-sm text-muted">
+            <span className="flex flex-wrap items-baseline gap-2 text-sm text-muted">
+              {submission.late === true && <LateChip />}
               {formatScore(submission.result.score)} · {formatIst(submission.createdAt.toISOString())}
             </span>
           </span>

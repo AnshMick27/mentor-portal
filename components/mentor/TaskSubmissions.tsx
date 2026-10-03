@@ -82,13 +82,19 @@ export function TaskSubmissionsView({
           <EmptyState>{roster.total === 0 ? "No students yet." : "Everyone has submitted."}</EmptyState>
         ) : (
           <ul className="flex flex-col gap-2">
-            {roster.notSubmitted.map(({ student, checking }) => (
+            {roster.notSubmitted.map(({ student, checking, lateOnly }) => (
               <li
                 key={student.uid}
                 className={cardClasses({ className: "flex flex-wrap items-center justify-between gap-2 text-sm" })}
               >
                 <Who student={student} />
-                {checking && <StatusChip tone="info">Being checked</StatusChip>}
+                {(checking || lateOnly) && (
+                  <span className="flex flex-wrap gap-2">
+                    {checking && <StatusChip tone="info">Being checked</StatusChip>}
+                    {/* Late work gets feedback but does not count (T44), so they stay under "Not submitted". */}
+                    {lateOnly && <StatusChip tone="warning">Sent late</StatusChip>}
+                  </span>
+                )}
               </li>
             ))}
           </ul>
