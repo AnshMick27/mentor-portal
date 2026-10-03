@@ -95,7 +95,7 @@ Goal: make the portal safe and understandable for real students, let the mentor 
   - T40c mentor details: profile stat grid with score bars; evaluation view (summary box, criteria score pills, "What went well" / "What to improve" side by side, dark code block); task form grouped into cards.
   - Left out on purpose (the design shows them, but the data or feature does not exist; see "Questions for Ansh"): version badge, Export Cohort CSV (the Excel export stays), "Avg. turnout"/"Pending review" tiles, percentile/"Ready for interview" status, Send feedback / Export report / Assign extra challenge / Mark ready for mock, memory limit field, runtime percentile, mentor notes, tabs on the submissions page (both lists stay visible).
 
-- [ ] **T41 — Signed-in users skip the landing page** (Ansh, 2026-10-03, Q5 / UX-01)
+- [x] **T41 — Signed-in users skip the landing page** (Ansh, 2026-10-03, Q5 / UX-01)
   - `/` sends a signed-in user to their home (`homeFor`: student → `/student` or `/onboarding`, mentor/viewer → `/mentor`); signed-out visitors still see the landing page. A removed user is not redirected (they get the login message).
   - Acceptance: render/guard tests for each role and for signed-out; works at 360 px.
 
@@ -461,6 +461,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-10-03 — T39 — Per-task submissions page: `lib/tasks/submissionRoster.ts` (submitted = a finished scored attempt, same rule as taskStats; failed attempts not counted; queued < 10 min = "Being checked"; only onboarded, not-removed students), `lib/tasks/rosterQuery.ts` (task + students + `submissions where taskId ==`, single-field index, no deploy needed), `TaskSubmissionsView`; links from dashboard, task list and edit page; 6 new tests, 2 task-list tests updated for the new links. Not yet looked at in a real browser.
 
 - 2026-10-03 — T40 — Stitch design applied: theme tokens + Inter (`app/globals.css`, `app/layout.tsx`), new `ProgressBar`, `Stat`, `TaskTypeTag` in `components/ui/`, header/footer/shell, mentor dashboard, task list (search + filter, `filterTasks`), students, submissions, profile, result view, task form. Design-pinning tests updated to the new tokens (Button, Card, chip tone, task-card order, viewer buttons = view toggles only); 1 new test for the task filter. Also fixed every `<select>` looking faded (`read-only:opacity-60` matched selects; now inputs only, with a test). `npm run check` (632 unit + 96 rules tests) and `npm run build` pass. Checked visually by rendering the real components with demo data (sign-in popup could not be used): matches the Stitch screens at desktop width, no horizontal scroll at 360 px. Not yet looked at signed in on the deployed site.
+- 2026-10-03 — T41 — `/` redirects signed-in users to their home: new `"home"` guard area in `lib/auth/guards.ts` (signed out/loading stay; signed in → `homeFor`), `components/auth/HomeRedirect.tsx` on the landing page; guard test for every role, home test mocks auth.
 
 ## Blockers
 (none)

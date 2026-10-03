@@ -16,7 +16,7 @@ const newStudent = signedIn({ onboarded: false });
 const student = signedIn({ rollNo: "0827CS1", branch: "CSE" });
 const mentor = signedIn({ role: "mentor" });
 const viewer = signedIn({ role: "viewer" });
-const AREAS: GuardArea[] = ["student", "mentor", "onboarding", "login"];
+const AREAS: GuardArea[] = ["student", "mentor", "onboarding", "login", "home"];
 
 describe("homeFor", () => {
   it("sends staff to /mentor and students to /student or /onboarding", () => {
@@ -63,5 +63,14 @@ describe("guardRedirect", () => {
     expect(guardRedirect("login", student)).toBe("/student");
     expect(guardRedirect("login", newStudent)).toBe("/onboarding");
     expect(guardRedirect("login", viewer)).toBe("/mentor");
+  });
+
+  it("keeps the landing page public but sends signed-in users to their home (T41)", () => {
+    expect(guardRedirect("home", { status: "loading" })).toBeNull();
+    expect(guardRedirect("home", { status: "signedOut" })).toBeNull();
+    expect(guardRedirect("home", student)).toBe("/student");
+    expect(guardRedirect("home", newStudent)).toBe("/onboarding");
+    expect(guardRedirect("home", mentor)).toBe("/mentor");
+    expect(guardRedirect("home", viewer)).toBe("/mentor");
   });
 });
