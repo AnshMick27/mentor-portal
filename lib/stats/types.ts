@@ -56,4 +56,6 @@ export type StatsSubmission = {
   status: SubmissionStatus;
   createdAt: Date;
   result?: { score: number; nextSteps: string[] };
+  /** Late attempts (T44) never count. */
+  late?: boolean;
 };

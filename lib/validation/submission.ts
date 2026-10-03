@@ -62,6 +62,8 @@ export const storedSubmissionSchema = z.object({
   language: z.enum(LANGUAGES).optional(),
   result: submissionResultSchema.optional(),
   error: z.string().optional(),
+  /** Sent after the task's due date: feedback only, never scored (SPEC.md §6, §8.2; T44). */
+  late: z.boolean().optional(),
 });
 export type StoredSubmission = z.infer<typeof storedSubmissionSchema>;
 

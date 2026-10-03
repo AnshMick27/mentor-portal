@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { JUDGE_TIMEOUT_MS, TIMED_OUT_ERROR } from "@/lib/submissions/limits";
-import { attemptsUsed, bestScore, codingScore, effectiveStatus, type SubmissionLike } from "@/lib/submissions/scoring";
+import { attemptsUsed, bestScore, codingScore, countsForScore, effectiveStatus, type SubmissionLike } from "@/lib/submissions/scoring";
 
 const now = new Date("2026-10-01T12:00:00Z");
 const ago = (ms: number) => new Date(now.getTime() - ms);
@@ -73,5 +73,21 @@ describe("codingScore", () => {
     expect(() => codingScore(4, 3)).toThrow(RangeError);
     expect(() => codingScore(-1, 3)).toThrow(RangeError);
     expect(() => codingScore(1.5, 3)).toThrow(RangeError);
+  });
+});
+
+describe("countsForScore / bestScore with late attempts (T44)", () => {
+  it("counts only finished, scored, on-time attempts", () => {
+    expect(countsForScore(sub("done", 0, 7))).toBe(true);
+    expect(countsForScore({ ...sub("done", 0, 7), late: true })).toBe(false);
+    expect(countsForScore(sub("done"))).toBe(false);
+    expect(countsForScore(sub("running", 0, 7))).toBe(false);
+  });
+
+  it("ignores late scores for the best score, but late attempts still use up attempts", () => {
+    const list = [sub("done", 0, 5), { ...sub("done", 0, 10), late: true }];
+    expect(bestScore(list)).toBe(5);
+    expect(bestScore([{ ...sub("done", 0, 10), late: true }])).toBeUndefined();
+    expect(attemptsUsed(list, now)).toBe(2);
   });
 });

@@ -229,3 +229,28 @@ describe("computeTaskStats", () => {
     });
   });
 });
+
+describe("late submissions (T44): feedback only, never counted", () => {
+  const late = (taskId: string, score: number, uid = "s1"): StatsSubmission => ({ ...done(taskId, score, 0, ["Late tip"], uid), late: true });
+
+  it("a task with only late work stays missed, with no score, average or next steps from it", () => {
+    const stats = computeStudentStats(stu, [task("a", -2), task("b", -3)], [late("a", 9.5), late("b", 9)], now);
+    expect(stats).toMatchObject({ tasksDue: 2, tasksSubmitted: 0, missedCount: 2, avgBySkill: {}, recentScores: [] });
+    expect(stats.overallAvg).toBeUndefined();
+    expect(stats.latestNextSteps).toEqual([]);
+    expect(stats.needsAttention).toBe(true);
+    expect(stats.needsAttentionReason).toContain("Missed 2");
+  });
+
+  it("an on-time score still counts when a later late attempt scores higher", () => {
+    const stats = computeStudentStats(stu, [task("a", -2)], [done("a", 6, 3), late("a", 10)], now);
+    expect(stats).toMatchObject({ tasksSubmitted: 1, missedCount: 0, overallAvg: 6 });
+    expect(stats.recentScores.map((entry) => entry.score)).toEqual([6]);
+  });
+
+  it("task stats list late-only students as not submitted and leave their score out of the averages", () => {
+    const users: StatsUser[] = [stu, { uid: "s2", name: "Bo", role: "student", onboarded: true, rollNo: "0827IT2", branch: "IT" }];
+    const stats = computeTaskStats(task("t", -1), users, [late("t", 10, "s1"), done("t", 4, 2, [], "s2")]);
+    expect(stats).toMatchObject({ submittedCount: 1, notSubmittedUids: ["s1"], avgScore: 4 });
+  });
+});

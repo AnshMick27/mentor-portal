@@ -95,6 +95,19 @@ describe("GET /api/export", () => {
     expect(cells.join("|")).not.toContain(SECRET);
   });
 
+  it("leaves late attempts out of every sheet (T44)", async () => {
+    fakeAdmin.collection("submissions").set("late1", {
+      ...fakeAdmin.collection("submissions").get("sub1"),
+      attempt: 2,
+      late: true,
+      result: { score: 9.9, summary: "Late but great.", strengths: [], improvements: [], nextSteps: [] },
+    });
+    const cells = await allCells(await GET(request("mentor")));
+    expect(cells).toContain("7.5");
+    expect(cells).not.toContain("9.9");
+    expect(cells).not.toContain("Late but great.");
+  });
+
   it("answers 500 with a plain message when Firestore fails", async () => {
     const db = fakeAdmin.module.getAdminDb();
     const original = db.collection;

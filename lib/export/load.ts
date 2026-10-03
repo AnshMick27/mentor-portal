@@ -62,7 +62,8 @@ export async function loadExportInput(): Promise<ExportInput> {
 
   const results: ExportResult[] = submissions.docs.flatMap((doc) => {
     const view = submissionDocToView(doc.id, doc.data());
-    if (!view?.result) return [];
+    // Late attempts (T44) are feedback only: they never reach the export, like every other score view.
+    if (!view?.result || view.late === true) return [];
     const { uid, taskId, type, attempt, createdAt, result } = view;
     return [
       { uid, taskId, type, attempt, createdAt, score: result.score, summary: result.summary, ...(result.judge ? { judge: result.judge } : {}) },

@@ -32,7 +32,7 @@ export async function POST(request: Request): Promise<Response> {
     return jsonError(500, "Could not save your submission. Please try again.");
   }
   if (!started.ok) return jsonError(started.status, started.message);
-  const { submissionId, attempt } = started;
+  const { submissionId, attempt, late } = started;
 
   let result: SubmissionResult | undefined;
   try {
@@ -61,5 +61,5 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   if (!result) return jsonError(502, AI_FAILED_MESSAGE);
-  return Response.json({ submission: { id: submissionId, attempt, status: "done", result } });
+  return Response.json({ submission: { id: submissionId, attempt, late, status: "done", result } });
 }

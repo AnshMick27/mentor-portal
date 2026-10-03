@@ -84,3 +84,18 @@ describe("buildTaskRoster", () => {
     expect(roster.notSubmitted.map((r) => r.student.uid)).toEqual(["b"]);
   });
 });
+
+describe("buildTaskRoster with late work (T44)", () => {
+  it("keeps late-only students under Not submitted, flagged, and ignores late scores", () => {
+    const students = rosterStudents([row("s1", "Asha"), row("s2", "Bo")]);
+    const roster = buildTaskRoster(
+      students,
+      [sub("s1", { late: true, result: { score: 10, summary: "", strengths: [], improvements: [], nextSteps: [] } }), sub("s2"), sub("s2", { late: true })],
+      "all",
+      now,
+    );
+    expect(roster.submitted.map((r) => [r.student.uid, r.best])).toEqual([["s2", 6]]);
+    expect(roster.notSubmitted).toEqual([expect.objectContaining({ lateOnly: true, checking: false })]);
+    expect(roster.notSubmitted[0]?.student.uid).toBe("s1");
+  });
+});

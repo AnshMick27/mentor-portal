@@ -8,7 +8,8 @@ import type { Language, TaskDto, TaskType } from "@/lib/validation/task";
 
 export type Refusal = { ok: false; status: number; message: string };
 
-export type StartResult<T = object> = ({ ok: true; submissionId: string; attempt: number } & T) | Refusal;
+/** `late`: sent after the due date (T44); the attempt is stored and gets feedback, but never counts for score. */
+export type StartResult<T = object> = ({ ok: true; submissionId: string; attempt: number; late: boolean } & T) | Refusal;
 
 export type NewSubmission = {
   uid: string;
@@ -36,8 +37,8 @@ function toSubmissionLike(id: string, data: unknown): SubmissionLike[] {
 }
 
 /**
- * Checks the task (published, right type, not past due, plus `check` for type-specific rules) and the attempt
- * limit, then creates `submissions/{id}`, all in ONE transaction so two parallel submits cannot both take the
+ * Checks the task (published, right type, plus `check` for type-specific rules) and the attempt limit, marks the
+ * attempt `late` when it is past the due date (SPEC.md §8.2: accepted, feedback only, never scored), then creates `submissions/{id}`, all in ONE transaction so two parallel submits cannot both take the
  * last attempt (SPEC.md §7.8). `check` returns a refusal, or `{ ok: true, ...extra }` with fields to pass back.
  */
 export async function startSubmission<T extends object>(
@@ -56,9 +57,7 @@ export async function startSubmission<T extends object>(
     // A draft looks the same as a missing task, so students learn nothing about unpublished work.
     if (!task || task.status !== "published") return refuse(404, "Task not found.");
     if (task.type !== sub.type) return refuse(400, "This task does not take this kind of submission.");
-    if (now.getTime() > new Date(task.dueAt).getTime()) {
-      return refuse(403, "The due date for this task has passed, so it no longer accepts submissions.");
-    }
+    const late = now.getTime() > new Date(task.dueAt).getTime();
     const extra = check(task);
     if (!extra.ok) return extra;
 
@@ -80,7 +79,8 @@ export async function startSubmission<T extends object>(
       status: sub.status,
       content: sub.content,
       ...(sub.language ? { language: sub.language } : {}),
+      ...(late ? { late: true } : {}),
     });
-    return { ...extra, ok: true, submissionId: submissionRef.id, attempt };
+    return { ...extra, ok: true, submissionId: submissionRef.id, attempt, late };
   });
 }

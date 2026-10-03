@@ -39,8 +39,15 @@ function toTask(doc: Snapshot): StatsTask | undefined {
 function toSubmission(doc: Snapshot): StatsSubmission | undefined {
   const view = submissionDocToView(doc.id, doc.data());
   if (!view) return undefined;
-  const { taskId, uid, status, createdAt, result } = view;
-  return { taskId, uid, status, createdAt, ...(result ? { result: { score: result.score, nextSteps: result.nextSteps } } : {}) };
+  const { taskId, uid, status, createdAt, result, late } = view;
+  return {
+    taskId,
+    uid,
+    status,
+    createdAt,
+    ...(result ? { result: { score: result.score, nextSteps: result.nextSteps } } : {}),
+    ...(late ? { late } : {}),
+  };
 }
 
 function parseAll<T>(docs: readonly Snapshot[], parse: (doc: Snapshot) => T | undefined): T[] {

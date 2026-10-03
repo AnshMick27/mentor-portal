@@ -27,7 +27,7 @@ export async function POST(request: Request): Promise<Response> {
     return jsonError(500, "Could not save your submission. Please try again.");
   }
   if (!started.ok) return jsonError(started.status, started.message);
-  const { submissionId, attempt, problemSlug } = started;
+  const { submissionId, attempt, late, problemSlug } = started;
 
   try {
     await dispatchJudge({ submissionId, problemSlug, language: body.data.language, code: body.data.code });
@@ -47,5 +47,5 @@ export async function POST(request: Request): Promise<Response> {
     return jsonError(502, DISPATCH_FAILED_MESSAGE);
   }
 
-  return Response.json({ submission: { id: submissionId, attempt, status: "queued" } }, { status: 202 });
+  return Response.json({ submission: { id: submissionId, attempt, late, status: "queued" } }, { status: 202 });
 }

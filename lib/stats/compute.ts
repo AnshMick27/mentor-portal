@@ -1,6 +1,6 @@
 // Pure stats maths (SPEC.md §6, §8.7; definitions at the top of Loop 3 in PROGRESS.md). No Firestore here.
 // Value imports are relative with `.ts` so the seed script (plain Node, T23) can load this file too.
-import { bestScore } from "../submissions/scoring.ts";
+import { bestScore, countsForScore } from "../submissions/scoring.ts";
 import type { TaskType } from "@/lib/validation/task";
 import type { Branch } from "@/lib/validation/user";
 import type {
@@ -41,9 +41,12 @@ export function isPastDue(task: StatsTask, now: Date): boolean {
 
 type TaskOutcome = { task: StatsTask; best: number; at: Date; nextSteps?: string[]; latestDoneAt: Date };
 
-/** Best finished attempt for one task, or undefined if the student has no `done` submission for it. */
+/**
+ * Best counted attempt for one task, or undefined if none counts. Late attempts (T44) are ignored, so a task with
+ * only late work stays "not submitted" and counts as missed once past due.
+ */
 function outcomeFor(task: StatsTask, submissions: readonly StatsSubmission[]): TaskOutcome | undefined {
-  const done = submissions.filter((submission) => submission.status === "done" && submission.result !== undefined);
+  const done = submissions.filter(countsForScore);
   const best = bestScore(done);
   if (best === undefined) return undefined;
   const byTime = [...done].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());

@@ -162,9 +162,13 @@ describe("POST /api/judge/submit — refusals", () => {
     await expectRefused({ ...codeBody, taskId: "resume1" }, 400);
   });
 
-  it("refuses after the due date", async () => {
+  it("accepts code after the due date as late and still sends it to the judge (T44)", async () => {
     fakeAdmin.collection("tasks").set("code1", task({ dueAt: Timestamp.fromMillis(Date.now() - MINUTE) }));
-    await expectRefused(codeBody, 403, /due date/i);
+    const { status, body } = await post("stu", codeBody);
+    expect(status).toBe(202);
+    expect(body.submission).toMatchObject({ attempt: 1, late: true, status: "queued" });
+    expect(storedSubmissionSchema.parse(submissions().get(body.submission!.id)).late).toBe(true);
+    expect(dispatchMock).toHaveBeenCalledOnce();
   });
 
   it("refuses a language the task does not allow", async () => {

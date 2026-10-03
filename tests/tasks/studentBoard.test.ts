@@ -118,3 +118,23 @@ describe("groupStudentTasks", () => {
     expect(ids(board.dueSoon)).toEqual(["edge"]);
   });
 });
+
+describe("late attempts on the board (T44)", () => {
+  const late = (score?: number): SubmissionLike => ({
+    status: "done",
+    createdAt: now,
+    late: true,
+    ...(score === undefined ? {} : { result: { score } }),
+  });
+
+  it("marks progress lateOnly when every counted attempt was late, with no best score", () => {
+    expect(taskProgress([late(9)], now)).toEqual({ attemptsUsed: 1, lateOnly: true });
+    expect(taskProgress([late(9), { status: "done", createdAt: now, result: { score: 4 } }], now)).toEqual({ attemptsUsed: 2, bestScore: 4 });
+  });
+
+  it("keeps a past-due task with only late work under Missed", () => {
+    const board = groupStudentTasks(tasks, new Map([["missed-recent", { attemptsUsed: 1, lateOnly: true as const }]]), now);
+    expect(ids(board.missed)).toEqual(["missed-recent", "missed-old"]);
+    expect(ids(board.submitted)).toEqual([]);
+  });
+});

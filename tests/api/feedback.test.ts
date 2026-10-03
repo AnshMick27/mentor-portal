@@ -165,13 +165,24 @@ describe("POST /api/feedback — task checks", () => {
     expect(submissions().size).toBe(0);
   });
 
-  it("403s after the due date with a clear message", async () => {
+  it("accepts work after the due date as late: feedback, flagged, same attempt limit (T44)", async () => {
     fakeAdmin.collection("tasks").set("resume1", task({ dueAt: Timestamp.fromMillis(Date.now() - 1000) }));
-    const { status, body } = await post("stu", resumeBody);
-    expect(status).toBe(403);
-    expect(body.error).toContain("due date");
-    expect(submissions().size).toBe(0);
-    expect(aiMock).not.toHaveBeenCalled();
+    const first = await post("stu", resumeBody);
+    expect(first.status).toBe(200);
+    expect(first.body.submission).toMatchObject({ attempt: 1, late: true, status: "done" });
+    expect(submissions().get(first.body.submission!.id)).toMatchObject({ late: true, status: "done" });
+    expect(aiMock).toHaveBeenCalledOnce();
+
+    expect((await post("stu", resumeBody)).status).toBe(200);
+    const third = await post("stu", resumeBody); // maxAttempts is 2 in this file
+    expect(third.status).toBe(409);
+    expect(submissions().size).toBe(2);
+  });
+
+  it("does not mark on-time work late", async () => {
+    const { body } = await post("stu", resumeBody);
+    expect(body.submission).toMatchObject({ late: false });
+    expect(submissions().get(body.submission!.id)).not.toHaveProperty("late");
   });
 });
 

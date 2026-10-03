@@ -1,8 +1,11 @@
 import { attemptsUsed, bestScore, type SubmissionLike } from "@/lib/submissions/scoring";
 import type { TaskDto } from "@/lib/validation/task";
 
-/** Per-task progress shown on the board and the task page (SPEC.md §8.2). */
-export type TaskProgress = { attemptsUsed: number; bestScore?: number };
+/**
+ * Per-task progress shown on the board and the task page (SPEC.md §8.2). `lateOnly`: every attempt that counts was
+ * sent after the due date (T44), so the task is still missed.
+ */
+export type TaskProgress = { attemptsUsed: number; bestScore?: number; lateOnly?: true };
 
 export type StudentTask = TaskDto & TaskProgress;
 
@@ -19,7 +22,12 @@ export function publishedOnly(tasks: TaskDto[]): TaskDto[] {
 export function taskProgress(submissions: readonly SubmissionLike[], now: Date): TaskProgress {
   const best = bestScore(submissions);
   const used = attemptsUsed(submissions, now);
-  return best === undefined ? { attemptsUsed: used } : { attemptsUsed: used, bestScore: best };
+  const lateOnly = used > 0 && attemptsUsed(submissions.filter((submission) => submission.late !== true), now) === 0;
+  return {
+    attemptsUsed: used,
+    ...(best === undefined ? {} : { bestScore: best }),
+    ...(lateOnly ? { lateOnly: true as const } : {}),
+  };
 }
 
 /** Progress per task id from all of a student's submissions. */
@@ -40,7 +48,7 @@ const byDue = (a: TaskDto, b: TaskDto) => Date.parse(a.dueAt) - Date.parse(b.due
  * SPEC.md §8.2 groups, soonest due first in Due soon, most recent first elsewhere. Drafts are dropped.
  * - Due soon: not yet due, and either not submitted or submitted with attempts left (the student can improve, T42).
  * - Submitted: at least one attempt that counts, and closed or out of attempts.
- * - Missed: past due with no attempt that counts.
+ * - Missed: past due with no attempt that counts, or with only late attempts (T44: late work is feedback only).
  */
 export function groupStudentTasks(
   tasks: TaskDto[],
@@ -52,7 +60,7 @@ export function groupStudentTasks(
     const view: StudentTask = { ...task, ...(progress.get(task.id) ?? NO_PROGRESS) };
     const open = Date.parse(task.dueAt) >= now.getTime();
     if (open && view.attemptsUsed < task.maxAttempts) board.dueSoon.push(view);
-    else if (view.attemptsUsed > 0) board.submitted.push(view);
+    else if (view.attemptsUsed > 0 && !view.lateOnly) board.submitted.push(view);
     else board.missed.push(view);
   }
   board.dueSoon.sort(byDue);

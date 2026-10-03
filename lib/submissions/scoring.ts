@@ -8,6 +8,8 @@ export type SubmissionLike = {
   createdAt: Date;
   result?: { score: number };
   error?: string;
+  /** Sent after the due date (T44): still an attempt, but never a score. */
+  late?: boolean;
 };
 
 export type EffectiveStatus = { status: SubmissionStatus; error?: string };
@@ -31,11 +33,19 @@ export function attemptsUsed(submissions: readonly SubmissionLike[], now: Date):
   return submissions.filter((submission) => effectiveStatus(submission, now).status !== "error").length;
 }
 
-/** SPEC.md §6: the best score across a student's finished attempts, or undefined if none is finished. */
+/**
+ * SPEC.md §6: the one rule for "this attempt's score counts": finished, scored and sent on time. Late attempts
+ * (T44) get feedback but never count for best score, stats, leaderboard, rosters or the export.
+ */
+export function countsForScore<T extends SubmissionLike>(submission: T): submission is T & { result: { score: number } } {
+  return submission.status === "done" && submission.result !== undefined && submission.late !== true;
+}
+
+/** SPEC.md §6: the best score across a student's counted attempts, or undefined if none counts. */
 export function bestScore(submissions: readonly SubmissionLike[]): number | undefined {
   let best: number | undefined;
   for (const submission of submissions) {
-    if (submission.status !== "done" || submission.result === undefined) continue;
+    if (!countsForScore(submission)) continue;
     if (best === undefined || submission.result.score > best) best = submission.result.score;
   }
   return best;
