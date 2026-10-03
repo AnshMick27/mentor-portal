@@ -55,7 +55,7 @@ export function StudentTaskBoard({ board, now = new Date() }: { board: StudentBo
   return (
     <div className="flex flex-col gap-8">
       <Group title="Due soon" tasks={board.dueSoon} empty="Nothing due right now." now={now} />
-      <Group title="Submitted" tasks={board.submitted} empty="You have not submitted anything yet." now={now} />
+      <Group title="Submitted" tasks={board.submitted} empty="Nothing here yet. A task moves here once it closes or you have used all your attempts." now={now} />
       <Group title="Missed" tasks={board.missed} empty="No missed tasks. Keep it up!" now={now} />
     </div>
   );

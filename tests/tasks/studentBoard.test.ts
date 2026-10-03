@@ -81,18 +81,36 @@ describe("groupStudentTasks", () => {
     expect(ids(board.missed)).toEqual(["missed-recent", "missed-old"]);
   });
 
-  it("puts tasks with at least one counted attempt under Submitted, with attempts used and best score", () => {
+  it("puts closed or used-up tasks with a counted attempt under Submitted, with attempts used and best score", () => {
     const progress = new Map([
-      ["soon", { attemptsUsed: 2, bestScore: 7.5 }],
+      ["soon", { attemptsUsed: 3, bestScore: 7.5 }],
       ["missed-old", { attemptsUsed: 1 }],
       ["missed-recent", { attemptsUsed: 0 }],
     ]);
     const board = groupStudentTasks(tasks, progress, now);
     expect(ids(board.submitted)).toEqual(["soon", "missed-old"]);
-    expect(board.submitted[0]).toMatchObject({ attemptsUsed: 2, bestScore: 7.5 });
+    expect(board.submitted[0]).toMatchObject({ attemptsUsed: 3, bestScore: 7.5 });
     expect(ids(board.dueSoon)).toEqual(["later"]);
     expect(board.dueSoon[0]?.attemptsUsed).toBe(0);
     expect(ids(board.missed)).toEqual(["missed-recent"]);
+  });
+
+  it("keeps submitted tasks that are still open with attempts left in Due soon (T42)", () => {
+    const progress = new Map([
+      ["soon", { attemptsUsed: 1, bestScore: 6 }], // open, 2 tries left → can improve
+      ["later", { attemptsUsed: 3, bestScore: 9 }], // open, no tries left
+      ["missed-old", { attemptsUsed: 1, bestScore: 5 }], // closed
+    ]);
+    const board = groupStudentTasks(tasks, progress, now);
+    expect(ids(board.dueSoon)).toEqual(["soon"]);
+    expect(board.dueSoon[0]).toMatchObject({ attemptsUsed: 1, bestScore: 6 });
+    expect(ids(board.submitted)).toEqual(["later", "missed-old"]);
+    expect(ids(board.missed)).toEqual(["missed-recent"]);
+  });
+
+  it("orders Due soon by due date whether or not a task was submitted (T42)", () => {
+    const board = groupStudentTasks(tasks, new Map([["later", { attemptsUsed: 1 }]]), now);
+    expect(ids(board.dueSoon)).toEqual(["soon", "later"]);
   });
 
   it("treats a task due exactly now as still due", () => {

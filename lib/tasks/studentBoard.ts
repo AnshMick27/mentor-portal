@@ -37,8 +37,10 @@ export function summarizeByTask(
 const byDue = (a: TaskDto, b: TaskDto) => Date.parse(a.dueAt) - Date.parse(b.dueAt);
 
 /**
- * SPEC.md §8.2 groups: Submitted (at least one attempt that counts), else Due soon (not yet due, soonest first)
- * or Missed (past due, most recent first). Drafts are dropped.
+ * SPEC.md §8.2 groups, soonest due first in Due soon, most recent first elsewhere. Drafts are dropped.
+ * - Due soon: not yet due, and either not submitted or submitted with attempts left (the student can improve, T42).
+ * - Submitted: at least one attempt that counts, and closed or out of attempts.
+ * - Missed: past due with no attempt that counts.
  */
 export function groupStudentTasks(
   tasks: TaskDto[],
@@ -48,8 +50,9 @@ export function groupStudentTasks(
   const board: StudentBoard = { dueSoon: [], submitted: [], missed: [] };
   for (const task of publishedOnly(tasks)) {
     const view: StudentTask = { ...task, ...(progress.get(task.id) ?? NO_PROGRESS) };
-    if (view.attemptsUsed > 0) board.submitted.push(view);
-    else if (Date.parse(task.dueAt) >= now.getTime()) board.dueSoon.push(view);
+    const open = Date.parse(task.dueAt) >= now.getTime();
+    if (open && view.attemptsUsed < task.maxAttempts) board.dueSoon.push(view);
+    else if (view.attemptsUsed > 0) board.submitted.push(view);
     else board.missed.push(view);
   }
   board.dueSoon.sort(byDue);

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { StudentTaskBoard } from "@/components/student/StudentTaskBoard";
 import { StudentTaskDetail } from "@/components/student/StudentTaskDetail";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
+import { groupStudentTasks } from "@/lib/tasks/studentBoard";
 import type { TaskDto } from "@/lib/validation/task";
 
 vi.mock("@/components/auth/AuthProvider", () => ({ useAuth: () => ({ getIdToken: async () => "token" }) }));
@@ -98,5 +99,15 @@ describe("StudentTaskBoard", () => {
     expect(html).toContain("0 of 5 attempts used");
     expect(html).toContain(">Not started</span>");
     expect(html).toContain("No missed tasks");
+  });
+
+  it("shows an improvable submitted task under Due soon with its 'Can improve' chip (T42)", () => {
+    const now = new Date("2026-10-01T00:00:00Z");
+    const board = groupStudentTasks([codingTask], new Map([["t1", { attemptsUsed: 1, bestScore: 7.5 }]]), now);
+    const html = renderToStaticMarkup(<StudentTaskBoard board={board} now={now} />);
+    const dueSoon = html.slice(html.indexOf("Due soon"), html.indexOf(">Submitted"));
+    expect(dueSoon).toContain('href="/student/tasks/t1"');
+    expect(dueSoon).toContain("Can improve");
+    expect(html).toContain("A task moves here once it closes or you have used all your attempts.");
   });
 });

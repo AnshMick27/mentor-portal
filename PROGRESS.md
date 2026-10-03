@@ -99,7 +99,7 @@ Goal: make the portal safe and understandable for real students, let the mentor 
   - `/` sends a signed-in user to their home (`homeFor`: student → `/student` or `/onboarding`, mentor/viewer → `/mentor`); signed-out visitors still see the landing page. A removed user is not redirected (they get the login message).
   - Acceptance: render/guard tests for each role and for signed-out; works at 360 px.
 
-- [ ] **T42 — Improvable tasks stay in "Due soon"** (Ansh, 2026-10-03, Q6 / UX-07; SPEC §8.2)
+- [x] **T42 — Improvable tasks stay in "Due soon"** (Ansh, 2026-10-03, Q6 / UX-07; SPEC §8.2)
   - `lib/tasks/studentBoard.ts`: a submitted task that is still open with attempts left goes in "Due soon" (card keeps "Can improve · N tries left"); it moves to "Submitted" once closed or out of attempts.
   - Acceptance: unit tests for open+attempts left, open+no attempts left, closed; board render test.
 
@@ -462,6 +462,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 
 - 2026-10-03 — T40 — Stitch design applied: theme tokens + Inter (`app/globals.css`, `app/layout.tsx`), new `ProgressBar`, `Stat`, `TaskTypeTag` in `components/ui/`, header/footer/shell, mentor dashboard, task list (search + filter, `filterTasks`), students, submissions, profile, result view, task form. Design-pinning tests updated to the new tokens (Button, Card, chip tone, task-card order, viewer buttons = view toggles only); 1 new test for the task filter. Also fixed every `<select>` looking faded (`read-only:opacity-60` matched selects; now inputs only, with a test). `npm run check` (632 unit + 96 rules tests) and `npm run build` pass. Checked visually by rendering the real components with demo data (sign-in popup could not be used): matches the Stitch screens at desktop width, no horizontal scroll at 360 px. Not yet looked at signed in on the deployed site.
 - 2026-10-03 — T41 — `/` redirects signed-in users to their home: new `"home"` guard area in `lib/auth/guards.ts` (signed out/loading stay; signed in → `homeFor`), `components/auth/HomeRedirect.tsx` on the landing page; guard test for every role, home test mocks auth.
+- 2026-10-03 — T42 — Student board: a task still open with attempts left stays in "Due soon" even after a submission (card shows "Can improve"); "Submitted" = closed or out of attempts (`groupStudentTasks`). Submitted empty text now "Nothing here yet. A task moves here once it closes or you have used all your attempts."; 2 unit tests + 1 render test, 1 fixture updated.
 
 ## Blockers
 (none)
