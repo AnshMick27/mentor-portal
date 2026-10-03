@@ -17,7 +17,7 @@ Later versions: spoken introduction (audio, analysed in the browser, never store
 | Role | Who | Can do |
 |---|---|---|
 | `student` | Mentees (~50 per batch) | See published tasks, submit work, see ONLY their own results and dashboard |
-| `mentor` | Ansh and co-mentors | Everything: create/edit/publish tasks, see all students, mentor dashboard, export |
+| `mentor` | Ansh and co-mentors | Everything: create/edit/publish/delete tasks, see all students, remove/restore students, mentor dashboard, export |
 | `viewer` | Boss / CDC leadership | Read-only mentor dashboard and export. Cannot create or edit anything |
 
 - Login is Google sign-in, restricted to the college email domain (`ALLOWED_EMAIL_DOMAIN`).
@@ -76,7 +76,8 @@ All timestamps are Firestore Timestamps. Display in IST (Asia/Kolkata).
 ```
 name, email, role: "student"|"mentor"|"viewer",
 rollNo?: string, branch?: Branch, onboarded: boolean,
-showOnLeaderboard: boolean (default false), createdAt
+showOnLeaderboard: boolean (default false), createdAt,
+removed?: boolean, removedAt?, removedBy? (uid)   // set by a mentor; see §8.8
 ```
 Branch = `CSE | IT | CSIT | CSE-AIML | CY | CSE-DS | EC | ME | OTHER`
 
@@ -95,6 +96,7 @@ Hidden test cases are NEVER stored in Firestore. They live only in the judge rep
 ```
 taskId, uid, type, attempt (1..maxAttempts), createdAt,
 status: "queued"|"running"|"done"|"error",
+late?: boolean  (true when sent after the task's dueAt; see §8.2),
 content: string  (code, resume text, or intro text),
 language?: "cpp"|"java"|"python",
 result?: {
@@ -122,7 +124,7 @@ updatedAt
 
 `config/app`: `leaderboardEnabled: boolean (default false)`
 
-Scoring rule (same scale everywhere): best score across a student's attempts counts for the task.
+Scoring rule (same scale everywhere): best score across a student's on-time attempts counts for the task. Late attempts get feedback but never count: no score in stats, averages, leaderboard or export, and the task still counts as missed.
 - Coding: `score = round(10 * passed / total, 1)`
 - AI tasks: the `score` returned by the AI (0–10), validated.
 
@@ -137,7 +139,7 @@ Needs-attention rule: missed ≥ 2 of the last 4 tasks that are past due, OR ave
    - `submissions`: only the owning student, or mentor/viewer.
    - `studentStats/{uid}`: that student, or mentor/viewer.
    - `taskStats`, `config`: mentor/viewer only (students read `config/app` only if needed for leaderboard flag — expose via API instead).
-   - "Provisioned user" = a `users/{uid}` doc exists (created by the server only after the domain check).
+   - "Provisioned user" = a `users/{uid}` doc exists (created by the server only after the domain check) and is not `removed`. A removed user reads nothing, and `requireUser` refuses them (403).
    - Everything else: denied.
 3. Every API route: verify ID token with Admin SDK → check `email_verified` and domain → load role from `users/{uid}` → authorise. Use one shared helper (`requireUser(roles)`).
 4. Secrets (service account, AI keys, GitHub token, webhook secret) exist only in server env vars. Nothing secret uses the `NEXT_PUBLIC_` prefix. `.env*` files are git-ignored (except `.env.example`).
@@ -152,13 +154,15 @@ Needs-attention rule: missed ≥ 2 of the last 4 tasks that are past due, OR ave
 
 ### 8.1 Auth and onboarding
 - `/login`: "Sign in with Google" button (use `hd` hint for the domain, but enforce on the server).
-- After sign-in the client calls `POST /api/me`. The server rejects non-domain emails (and signs them out client-side with a clear message), creates `users/{uid}` on first login with the server-decided role, and returns the profile.
+- After sign-in the client calls `POST /api/me`. The server rejects non-domain emails (and signs them out client-side with a clear message), creates `users/{uid}` on first login with the server-decided role, and returns the profile. On every login the role follows the env lists: an email added to `MENTOR_EMAILS`/`VIEWER_EMAILS` is upgraded, and a mentor/viewer whose email is no longer on either list becomes a student. Name and email are set at first login only. A removed user gets 403 with a plain message and is signed out; `/api/me` never un-removes anyone.
 - Students with `onboarded == false` are sent to `/onboarding` to enter roll number and branch (`POST /api/onboarding`, validated).
 - Route guards: `/student/*` for students, `/mentor/*` for mentor and viewer. Viewer sees no create/edit controls and the API rejects their writes.
 
 ### 8.2 Task board
-- Mentor: create, edit, publish/unpublish tasks (`/mentor/tasks`, `/mentor/tasks/new`, `/mentor/tasks/[id]`). Description in markdown. For coding: problem slug (must match a folder in the judge repo), allowed languages, sample tests, time limit.
-- Student: list of published tasks grouped as "Due soon", "Submitted", "Missed"; each shows type, due date (IST), attempts used / max, best score.
+- Mentor: create, edit, publish/unpublish and delete tasks (`/mentor/tasks`, `/mentor/tasks/new`, `/mentor/tasks/[id]`). Description in markdown. For coding: problem slug (must match a folder in the judge repo), allowed languages, sample tests, time limit. A task's type and problem slug are locked once it has any submission. Deleting a task (`DELETE /api/tasks/[id]`, mentor only) removes the task and its `taskStats`; students' submissions are kept but stop counting.
+- Per-task submissions page (`/mentor/tasks/[id]/submissions`, mentor and viewer): who has and has not submitted, with a branch filter.
+- Student: list of published tasks grouped as "Due soon", "Submitted", "Missed"; each shows type, due date (IST), attempts used / max, best score. "Due soon" also holds submitted tasks that are still open with attempts left (the student can improve); a task moves to "Submitted" once it is closed or out of attempts.
+- Late submissions: after `dueAt` a student may still submit (same attempt limit), clearly marked "Late: feedback only, not scored". The submission has `late: true`, gets normal feedback, and never counts (see the scoring rule in §6). Mentors see a "Late" tag on it.
 
 ### 8.3 Coding task (student view)
 - Problem description + sample tests, language selector, code editor (a plain monospace textarea is fine for v1; a lightweight editor can come later), Submit button.
@@ -188,6 +192,10 @@ Needs-attention rule: missed ≥ 2 of the last 4 tasks that are past due, OR ave
 - `lib/stats/recompute.ts` recomputes `studentStats` for one student and `taskStats` for one task. Idempotent.
 - Called after every finished submission, and by a daily Vercel cron (`/api/cron/recompute`, protected by `CRON_SECRET`) so missed deadlines are counted.
 
+### 8.8 Removing students
+- Anyone with a college email can sign in, so a mentor can remove accounts that are not mentees (`/mentor/students`: every student account, searchable, active and removed groups; viewers read only).
+- `POST /api/students/[uid]/remove` and `/restore` (mentor only; staff accounts cannot be removed). Removal is a blocked state, not a deletion: the user doc and submissions stay, but the user cannot sign in or read anything and is left out of every dashboard, stat, leaderboard and export. Restore gives access back and recomputes their stats.
+
 ## 9. Code judge (GitHub Actions)
 
 Separate private repo, e.g. `<org>/mentor-portal-judge`. Template files live in this repo under `judge-repo/` and are copied over by Ansh.
@@ -214,7 +222,8 @@ Budget: GitHub Free gives private repos a monthly Actions minutes quota; attempt
 ## 10. AI feedback
 
 - `lib/ai/provider.ts` defines `generateFeedback(input: {type, rubric, content}): Promise<Feedback>`.
-- Implementations: `anthropic.ts`, `gemini.ts`. Selected by `AI_PROVIDER`; model by `AI_MODEL`. Switching provider = changing env vars only.
+- Implementations: `anthropic.ts`, `gemini.ts`, `groq.ts`. Selected by `AI_PROVIDER`; model by `AI_MODEL`. Switching provider = changing env vars only.
+- Optional backup model (`AI_FALLBACK_PROVIDER`, `AI_FALLBACK_MODEL`): a provider error on the main model (rate limit, outage, auth) sends that one call to the backup; every call tries the main model first. Unusable replies are retried on the main model, not the backup.
 - Rubrics are data files in `lib/ai/rubrics/` (criteria, weights, guidance), so Ansh can edit them without touching code.
   - Resume: format & one-page length; contact details & working links; education; skills relevance; projects (tech + impact); action verbs & quantified results; grammar & consistency.
   - Written intro: structure (greeting → background → skills → projects/achievements → goals); clarity; grammar; confident, professional tone; conciseness (80–250 words); relevance to placements.
@@ -271,10 +280,13 @@ FIREBASE_ADMIN_PRIVATE_KEY=
 ALLOWED_EMAIL_DOMAIN=            # e.g. yourcollege.ac.in
 MENTOR_EMAILS=                   # comma-separated
 VIEWER_EMAILS=                   # comma-separated
-AI_PROVIDER=anthropic            # anthropic | gemini
+AI_PROVIDER=anthropic            # anthropic | gemini | groq
 AI_MODEL=
+AI_FALLBACK_PROVIDER=            # optional backup: anthropic | gemini | groq
+AI_FALLBACK_MODEL=
 ANTHROPIC_API_KEY=
 GEMINI_API_KEY=
+GROQ_API_KEY=
 GITHUB_JUDGE_REPO=               # org/repo
 GITHUB_JUDGE_TOKEN=              # fine-grained, judge repo only
 JUDGE_WEBHOOK_SECRET=
