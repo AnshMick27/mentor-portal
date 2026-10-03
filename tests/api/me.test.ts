@@ -65,6 +65,43 @@ describe("POST /api/me", () => {
     expect(fakeAdmin.users.get("m1")).toMatchObject({ role: "mentor", onboarded: true });
   });
 
+  it("demotes a mentor or viewer whose email is on neither list any more (T43)", async () => {
+    for (const role of ["mentor", "viewer"]) {
+      // stu@college.ac.in is on neither list in fakeEnv.
+      fakeAdmin.users.set("s1", { name: "Stu", email: "stu@college.ac.in", role, onboarded: true, showOnLeaderboard: false });
+      const { status, body } = await callMe("stu");
+      expect(status).toBe(200);
+      expect(body.profile).toMatchObject({ role: "student", onboarded: false }); // no roll number yet → onboarding
+      expect(fakeAdmin.users.get("s1")).toMatchObject({ role: "student", onboarded: false, name: "Stu" });
+    }
+  });
+
+  it("keeps a demoted former student's roll number and onboarding (T43)", async () => {
+    fakeAdmin.users.set("s1", {
+      name: "Stu",
+      email: "stu@college.ac.in",
+      role: "mentor",
+      rollNo: "0827CS1",
+      branch: "CSE",
+      onboarded: true,
+      showOnLeaderboard: false,
+    });
+    const { body } = await callMe("stu");
+    expect(body.profile).toMatchObject({ role: "student", rollNo: "0827CS1", branch: "CSE", onboarded: true });
+  });
+
+  it("makes a viewer a mentor once their email is on MENTOR_EMAILS (T43)", async () => {
+    fakeAdmin.users.set("m1", { name: "Ansh", email: "ansh@college.ac.in", role: "viewer", onboarded: true, showOnLeaderboard: false });
+    expect((await callMe("ansh")).body.profile).toMatchObject({ role: "mentor" });
+  });
+
+  it("leaves a removed staff account removed and unchanged (T43)", async () => {
+    const removed = { name: "Stu", email: "stu@college.ac.in", role: "mentor", onboarded: true, showOnLeaderboard: false, removed: true };
+    fakeAdmin.users.set("s1", removed);
+    expect((await callMe("stu")).status).toBe(403);
+    expect(fakeAdmin.users.get("s1")).toEqual(removed);
+  });
+
   it("403s a wrong-domain email with the college-email message and creates nothing", async () => {
     const { status, body } = await callMe("gmail");
     expect(status).toBe(403);

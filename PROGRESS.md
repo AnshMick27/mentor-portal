@@ -103,7 +103,7 @@ Goal: make the portal safe and understandable for real students, let the mentor 
   - `lib/tasks/studentBoard.ts`: a submitted task that is still open with attempts left goes in "Due soon" (card keeps "Can improve · N tries left"); it moves to "Submitted" once closed or out of attempts.
   - Acceptance: unit tests for open+attempts left, open+no attempts left, closed; board render test.
 
-- [ ] **T43 — Demote staff who are no longer listed** (Ansh, 2026-10-03, Q8; SPEC §8.1)
+- [x] **T43 — Demote staff who are no longer listed** (Ansh, 2026-10-03, Q8; SPEC §8.1)
   - `POST /api/me`: a mentor/viewer whose email is on neither `MENTOR_EMAILS` nor `VIEWER_EMAILS` becomes a student at sign-in (moving between the two lists also updates the role). Name/email are still never refreshed. Removed users stay blocked. Note it in the runbook ("to remove a mentor, delete their email from the list and redeploy").
   - Acceptance: API tests (mentor delisted → student, viewer → student, viewer moved to mentor list → mentor, student unchanged, removed stays 403); route audit green.
 
@@ -463,6 +463,7 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-10-03 — T40 — Stitch design applied: theme tokens + Inter (`app/globals.css`, `app/layout.tsx`), new `ProgressBar`, `Stat`, `TaskTypeTag` in `components/ui/`, header/footer/shell, mentor dashboard, task list (search + filter, `filterTasks`), students, submissions, profile, result view, task form. Design-pinning tests updated to the new tokens (Button, Card, chip tone, task-card order, viewer buttons = view toggles only); 1 new test for the task filter. Also fixed every `<select>` looking faded (`read-only:opacity-60` matched selects; now inputs only, with a test). `npm run check` (632 unit + 96 rules tests) and `npm run build` pass. Checked visually by rendering the real components with demo data (sign-in popup could not be used): matches the Stitch screens at desktop width, no horizontal scroll at 360 px. Not yet looked at signed in on the deployed site.
 - 2026-10-03 — T41 — `/` redirects signed-in users to their home: new `"home"` guard area in `lib/auth/guards.ts` (signed out/loading stay; signed in → `homeFor`), `components/auth/HomeRedirect.tsx` on the landing page; guard test for every role, home test mocks auth.
 - 2026-10-03 — T42 — Student board: a task still open with attempts left stays in "Due soon" even after a submission (card shows "Can improve"); "Submitted" = closed or out of attempts (`groupStudentTasks`). Submitted empty text now "Nothing here yet. A task moves here once it closes or you have used all your attempts."; 2 unit tests + 1 render test, 1 fixture updated.
+- 2026-10-03 — T43 — `planProvision` makes the stored role follow the env lists on every `/api/me`: delisted mentor/viewer → student (onboarded only if they already have roll number + branch), mentor only on VIEWER_EMAILS → viewer; name/email never change; removed users untouched (403). 4 unit + 4 API tests (the old "never demote" test replaced); RUNBOOK rows updated. Stats are not recomputed on a role change (same as promotions); the nightly cron catches up.
 
 ## Blockers
 (none)

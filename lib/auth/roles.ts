@@ -35,8 +35,10 @@ export type ProvisionPlan =
   | { action: "none"; user: StoredUser };
 
 /**
- * Decides what login does to `users/{uid}`: create it on first login, or switch to the staff role when the
- * email has since been added to MENTOR_EMAILS / VIEWER_EMAILS. Nobody is moved back to student here.
+ * Decides what login does to `users/{uid}`: create it on first login, or make the stored role follow the env
+ * lists (SPEC.md §8.1, T43): added to MENTOR_EMAILS / VIEWER_EMAILS → that staff role; a mentor/viewer on neither
+ * list any more → student. A demoted account counts as onboarded only if it already has a roll number and branch
+ * (it was a student before); otherwise it goes through onboarding like any new student. Name and email never change.
  */
 export function planProvision(existing: StoredUser | undefined, identity: Identity, listRole: Role): ProvisionPlan {
   if (!existing) {
@@ -51,9 +53,8 @@ export function planProvision(existing: StoredUser | undefined, identity: Identi
       },
     };
   }
-  if (isStaffRole(listRole) && existing.role !== listRole) {
-    const changes = { role: listRole, onboarded: true };
-    return { action: "update", changes, user: { ...existing, ...changes } };
-  }
-  return { action: "none", user: existing };
+  if (existing.role === listRole) return { action: "none", user: existing };
+  const onboarded = isStaffRole(listRole) || Boolean(existing.rollNo && existing.branch);
+  const changes = { role: listRole, onboarded };
+  return { action: "update", changes, user: { ...existing, ...changes } };
 }

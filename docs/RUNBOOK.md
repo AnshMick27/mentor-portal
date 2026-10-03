@@ -51,7 +51,7 @@ or start with `NEXT_PUBLIC_`.
 | `FIREBASE_ADMIN_CLIENT_EMAIL` | yes | Vercel, `.env.local` | From the service-account JSON |
 | `FIREBASE_ADMIN_PRIVATE_KEY` | yes | Vercel, `.env.local` | From the service-account JSON (keep the `\n` sequences) |
 | `ALLOWED_EMAIL_DOMAIN` | no | Vercel, `.env.local` | Only this email domain may sign in, e.g. `acropolis.in` |
-| `MENTOR_EMAILS` | no | Vercel, `.env.local` | Comma-separated; these accounts become mentors at their next sign-in |
+| `MENTOR_EMAILS` | no | Vercel, `.env.local` | Comma-separated; these accounts become mentors at their next sign-in, and lose it at the next sign-in after removal |
 | `VIEWER_EMAILS` | no | Vercel, `.env.local` | Comma-separated; read-only viewers (CDC leadership) |
 | `AI_PROVIDER` | no | Vercel, `.env.local` | `groq`, `gemini` or `anthropic` |
 | `AI_MODEL` | no | Vercel, `.env.local` | Model id for that provider |
@@ -157,7 +157,7 @@ Look at Vercel → the project → **Logs** first: every API error is logged the
 | "Please sign in with your college email." | Signed in with a personal Gmail | Use the college account |
 | Sign-in popup fails on a new domain | Domain not authorised in Firebase | Firebase console → Authentication → Settings → Authorized domains → add it |
 | Someone should be a mentor/viewer | Not in the email lists | Add to `MENTOR_EMAILS`/`VIEWER_EMAILS`, Redeploy, they sign in again |
-| A mentor/viewer should lose access | Sign-in only ever upgrades roles | Remove them from `MENTOR_EMAILS`/`VIEWER_EMAILS` and Redeploy, then in Firestore set their `users/{uid}` `role` to `student` |
+| A mentor/viewer should lose staff access | Still in the email lists | Remove the email from `MENTOR_EMAILS`/`VIEWER_EMAILS`, Redeploy. The next time they open the portal they become a student. To block them completely, remove them on `/mentor/students` once they show there (staff accounts cannot be removed). |
 | Student typed the wrong roll number or branch | Onboarding is one-time | Firestore → `users/{uid}`: fix `rollNo`/`branch`, then run the cron by hand (§5) so stats follow |
 | Stats look out of date | A recompute failed, or a manual data fix | Run the cron by hand (§5) |
 | Browser console says "Refused to load … Content Security Policy" | A new outside script/host is not in the CSP | Add it in `lib/security/headers.ts`, run `npm run check`, deploy |
