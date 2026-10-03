@@ -37,6 +37,11 @@ describe("Field", () => {
     expect(inputClasses).toContain("border-line-strong");
     expect(inputClasses).toContain("min-h-11");
   });
+
+  it("does not fade selects: browsers treat every <select> as :read-only (T40)", () => {
+    expect(inputClasses).not.toMatch(/(^|\s)read-only:opacity/);
+    expect(inputClasses).toContain("[&:is(input):read-only]:opacity-60");
+  });
 });
 
 describe("onboarding errors sit under their field (UX-28)", () => {

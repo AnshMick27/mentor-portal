@@ -3,9 +3,11 @@
 import { cardClasses } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { inputClasses } from "@/components/ui/Field";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatScore } from "@/components/ui/Score";
 import { Section } from "@/components/ui/Section";
 import { StatusChip } from "@/components/ui/StatusChip";
+import { TaskTypeTag } from "@/components/ui/TaskTypeTag";
 import { TextLink } from "@/components/ui/TextLink";
 import { branchesOf, type BranchFilter } from "@/lib/dashboard/mentor";
 import { formatIst } from "@/lib/dates/ist";
@@ -16,7 +18,9 @@ import { TASK_TYPE_LABEL } from "@/lib/validation/task";
 function Who({ student }: { student: RosterStudent }) {
   return (
     <span className="flex flex-col gap-0.5">
-      <TextLink href={`/mentor/students/${student.uid}`}>{student.name}</TextLink>
+      <TextLink href={`/mentor/students/${student.uid}`} strong className="tracking-wide uppercase">
+        {student.name}
+      </TextLink>
       <span className="text-muted">
         {student.rollNo} · {student.branch}
       </span>
@@ -40,10 +44,14 @@ export function TaskSubmissionsView({
   const branches = branchesOf(data.students);
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-3">
-        <p className="text-sm text-muted">
-          {TASK_TYPE_LABEL[data.task.type]} · Due {formatIst(data.task.dueAt)}
+      <div className="flex flex-col gap-4">
+        <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
+          <TaskTypeTag type={data.task.type} />
+          <span>
+            {TASK_TYPE_LABEL[data.task.type]} · Due {formatIst(data.task.dueAt)}
+          </span>
         </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <label className="flex flex-col gap-1 text-sm font-medium sm:flex-row sm:items-center sm:gap-3">
           Branch
           <select
@@ -59,9 +67,14 @@ export function TaskSubmissionsView({
             ))}
           </select>
         </label>
-        <p>
-          <span className="font-semibold">{roster.submitted.length}</span> of {roster.total} submitted
-        </p>
+        <div className={cardClasses({ className: "flex flex-col gap-2 sm:min-w-64" })}>
+          <span className="text-[11px] font-semibold tracking-wider text-muted uppercase">Submissions</span>
+          <p className="text-lg">
+            <span className="font-semibold">{roster.submitted.length}</span> of {roster.total} submitted
+          </p>
+          <ProgressBar value={roster.submitted.length} max={roster.total} />
+        </div>
+        </div>
       </div>
 
       <Section title="Not submitted" count={roster.notSubmitted.length}>

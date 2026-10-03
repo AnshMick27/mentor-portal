@@ -103,8 +103,12 @@ export function AttemptList({
           >
             <div className="flex flex-col gap-4 border-t border-line px-4 py-3">
               <AttemptBody submission={submission} now={now} audience={audience} />
-              <Disclosure summary={WORDING[audience].sent} summaryClassName="text-sm font-medium">
-                <pre className="mt-2 max-h-80 overflow-auto rounded-lg bg-black/[0.05] p-3 font-mono text-xs whitespace-pre-wrap break-words dark:bg-white/[0.08]">
+              <Disclosure
+                summary={WORDING[audience].sent}
+                className="rounded-lg bg-surface"
+                summaryClassName="px-4 text-sm font-medium"
+              >
+                <pre className="max-h-80 overflow-auto rounded-b-lg bg-slate-900 p-4 font-mono text-xs leading-5 whitespace-pre-wrap break-words text-slate-100">
                   {submission.content}
                 </pre>
               </Disclosure>

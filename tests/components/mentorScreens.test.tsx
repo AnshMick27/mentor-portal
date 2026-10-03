@@ -66,7 +66,7 @@ describe("mentor task cards are one big link (UX-13)", () => {
   it("wraps title, badge and due date in one edit link for mentors, plus a separate submissions link", () => {
     const mentor = renderToStaticMarkup(<TaskList tasks={[task]} canEdit />);
     expect(mentor.match(/<a /g)).toHaveLength(2);
-    expect(mentor).toMatch(/<a [^>]*href="\/mentor\/tasks\/t9"[^>]*>.*Resume review.*Published.*Due 5 Oct/);
+    expect(mentor).toMatch(/<a [^>]*href="\/mentor\/tasks\/t9"[^>]*>.*Resume review.*Due 5 Oct.*Published/);
     expect(mentor).toContain('href="/mentor/tasks/t9/submissions"');
   });
 

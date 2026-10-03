@@ -5,8 +5,11 @@ import { cardClasses } from "@/components/ui/Card";
 import { Disclosure } from "@/components/ui/Disclosure";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { inputClasses } from "@/components/ui/Field";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatScore } from "@/components/ui/Score";
 import { Section } from "@/components/ui/Section";
+import { Stat } from "@/components/ui/Stat";
+import { TaskTypeTag } from "@/components/ui/TaskTypeTag";
 import { TextLink } from "@/components/ui/TextLink";
 import {
   branchesOf,
@@ -32,18 +35,22 @@ function StudentLink({ student }: { student: StudentRef }) {
 
 function TaskStatus({ row }: { row: TaskStatusRow }) {
   return (
-    <li className={cardClasses({ className: "flex flex-col gap-2" })}>
-      <div className="flex flex-col gap-0.5">
-        <span className="font-semibold break-words">{row.task.title}</span>
-        <span className="text-sm text-muted">
-          {TASK_TYPE_LABEL[row.task.type]} · Due {formatIst(row.task.dueAt)}
-        </span>
+    <li className={cardClasses({ padding: "none", className: "flex flex-col gap-3 p-4 sm:p-6" })}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="font-semibold break-words">{row.task.title}</span>
+          <span className="text-sm text-muted">
+            {TASK_TYPE_LABEL[row.task.type]} · Due {formatIst(row.task.dueAt)}
+          </span>
+        </div>
+        <TaskTypeTag type={row.task.type} />
       </div>
       {row.hasStats ? (
         <>
           <p className="text-sm">
             <span className="font-semibold">{row.submitted}</span> of {row.total} submitted · Average {formatScore(row.average)}
           </p>
+          <ProgressBar value={row.submitted} max={row.total} />
           {row.notSubmitted.length > 0 ? (
             <Disclosure summary={`${row.notSubmitted.length} not submitted`} summaryClassName="text-sm font-medium">
               <ul className="flex flex-col pl-1 text-sm">
@@ -61,8 +68,8 @@ function TaskStatus({ row }: { row: TaskStatusRow }) {
       ) : (
         <EmptyState>No numbers yet. They appear after the first submission, or after tonight&apos;s update.</EmptyState>
       )}
-      <TextLink href={`/mentor/tasks/${row.task.id}/submissions`} className="inline-flex min-h-11 items-center self-start text-sm">
-        See who submitted
+      <TextLink href={`/mentor/tasks/${row.task.id}/submissions`} className="inline-flex min-h-11 items-center gap-1 self-start text-sm">
+        See who submitted <span aria-hidden="true">→</span>
       </TextLink>
     </li>
   );
@@ -133,39 +140,48 @@ export function MentorDashboardView({
       </Section>
 
       <Section title="Class overview">
-        <dl className={cardClasses({ className: "grid grid-cols-1 gap-3 sm:grid-cols-3" })}>
+        <dl
+          className={cardClasses({
+            padding: "none",
+            className: "grid grid-cols-1 divide-y divide-line p-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:p-6",
+          })}
+        >
           {skills.map((skill) => (
-            <div key={skill.type} className="flex flex-col">
-              <dt className="text-xs uppercase tracking-wide text-muted">{skill.label}</dt>
-              <dd className="text-xl font-bold">{formatScore(skill.average)}</dd>
-              <dd className="text-xs text-muted">
-                {skill.students} student{skill.students === 1 ? "" : "s"} with a score
-              </dd>
+            <div key={skill.type} className="py-3 first:pt-0 last:pb-0 sm:px-6 sm:py-0 sm:first:pl-0 sm:last:pr-0">
+              <Stat
+                label={skill.label}
+                value={formatScore(skill.average)}
+                hint={`${skill.students} student${skill.students === 1 ? "" : "s"} with a score`}
+              />
             </div>
           ))}
         </dl>
         {rows.length > 0 && (
+          <div className={cardClasses({ padding: "none", className: "p-4 sm:p-6" })}>
           <table className="w-full border-collapse text-left text-sm">
-            <caption className="mb-1 text-left font-semibold">Average per task</caption>
+            <caption className="mb-3 text-left font-semibold">Average per task</caption>
             <thead>
-              <tr className="border-b border-black/15 dark:border-white/20">
-                <th scope="col" className="py-2 pr-2 font-medium">
+              <tr className="bg-surface">
+                <th scope="col" className="rounded-l-md px-3 py-2 font-medium">
                   Task
                 </th>
-                <th scope="col" className="w-20 py-2 text-right font-medium">
+                <th scope="col" className="w-20 rounded-r-md px-3 py-2 text-right font-medium">
                   Average
                 </th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.task.id} className="border-b border-black/10 dark:border-white/10">
-                  <td className="py-2 pr-2 break-words">{row.task.title}</td>
-                  <td className="py-2 text-right tabular-nums">{score(row.average)}</td>
+                <tr key={row.task.id} className="border-b border-line last:border-b-0">
+                  <td className="px-3 py-3 break-words">
+                    <TextLink href={`/mentor/tasks/${row.task.id}/submissions`}>{row.task.title}</TextLink>
+                  </td>
+                  <td className="px-3 py-3 text-right tabular-nums">{score(row.average)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </Section>
     </div>

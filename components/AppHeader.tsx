@@ -32,26 +32,42 @@ export function isCurrent(href: string, pathname: string, items: NavItem[]): boo
   return !isHome && pathname.startsWith(`${href}/`);
 }
 
+/** Initials of the first and last name for the round badge beside the name (decorative: the name is shown too). */
+export function initialsOf(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  const picked = words.length > 1 ? [words[0], words[words.length - 1]] : words;
+  return picked.map((word) => word[0].toUpperCase()).join("") || "?";
+}
+
+/** White bar with a soft shadow (Stitch design, T40a): blue brand, initials badge and name, sign out, then the tabs. */
 export function AppHeader({ profile }: { profile: UserProfile }) {
   const { signOut } = useAuth();
   const pathname = usePathname() ?? "";
   const items = navItemsFor(profile);
   return (
-    <header className="border-b border-line">
-      <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-3">
-        <Link href={homeFor(profile)} className="truncate font-semibold">
+    <header className="bg-card shadow-card">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <Link href={homeFor(profile)} className="truncate text-lg font-bold tracking-tight text-primary dark:text-link">
           CDC Mentor Portal
         </Link>
         <div className="flex min-w-0 items-center gap-3">
-          <span className="hidden truncate text-sm text-muted sm:inline">{profile.name}</span>
+          <span className="hidden min-w-0 items-center gap-2 sm:flex">
+            <span
+              aria-hidden="true"
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white"
+            >
+              {initialsOf(profile.name)}
+            </span>
+            <span className="truncate text-sm font-medium">{profile.name}</span>
+          </span>
           <Button variant="secondary" size="sm" onClick={() => void signOut()}>
             Sign out
           </Button>
         </div>
       </div>
       {items.length > 0 && (
-        <nav aria-label="Main" className="border-t border-line">
-          <ul className="mx-auto flex w-full max-w-3xl gap-1 px-2">
+        <nav aria-label="Main">
+          <ul className="mx-auto flex w-full max-w-5xl gap-4 px-4 sm:gap-6 sm:px-6">
             {items.map((item) => {
               const current = isCurrent(item.href, pathname, items);
               return (
@@ -59,10 +75,10 @@ export function AppHeader({ profile }: { profile: UserProfile }) {
                   <Link
                     href={item.href}
                     aria-current={current ? "page" : undefined}
-                    className={`inline-flex min-h-11 items-center rounded-lg px-3 text-sm hover:bg-surface ${
+                    className={`inline-flex min-h-11 items-center border-b-2 text-sm transition-colors ${
                       current
-                        ? "font-semibold text-foreground underline decoration-2 underline-offset-8"
-                        : "text-muted"
+                        ? "border-primary font-semibold text-foreground dark:border-link"
+                        : "border-transparent text-muted hover:text-foreground"
                     }`}
                   >
                     {item.label}

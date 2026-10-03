@@ -6,8 +6,10 @@ import { Disclosure } from "@/components/ui/Disclosure";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Note } from "@/components/ui/Note";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatScore } from "@/components/ui/Score";
 import { Section } from "@/components/ui/Section";
+import { Stat } from "@/components/ui/Stat";
 import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
 import { skillAverages } from "@/lib/dashboard/student";
 import { attemptsOnOtherTasks, PROFILE_STATE_LABEL, profileTaskRows, type ProfileTaskRow } from "@/lib/dashboard/profile";
@@ -23,12 +25,16 @@ const STATE_TONE: Record<ProfileTaskRow["state"], ChipTone> = {
   open: "neutral",
 };
 
-function Stat({ label, value }: { label: string; value: string }) {
+/** A score out of 10 with its bar underneath (Stitch design, T40c); just "—" before the first score. */
+function ScoreStat({ label, value }: { label: string; value: number | undefined }) {
   return (
-    <div className="flex flex-col">
-      <dt className="text-xs uppercase tracking-wide text-muted">{label}</dt>
-      <dd className="text-xl font-bold">{value}</dd>
-    </div>
+    <Stat label={label} value={formatScore(value)}>
+      {value !== undefined && (
+        <dd className="mt-1">
+          <ProgressBar value={value} max={10} tone={value >= 7 ? "success" : value >= 5 ? "primary" : "warning"} />
+        </dd>
+      )}
+    </Stat>
   );
 }
 
@@ -115,12 +121,12 @@ export function StudentProfile({
         <Note tone="warning">Needs attention: {stats.needsAttentionReason ?? "flagged"}</Note>
       )}
 
-      <dl className={cardClasses({ className: "grid grid-cols-2 gap-4 sm:grid-cols-4" })}>
+      <dl className={cardClasses({ padding: "none", className: "grid grid-cols-2 gap-x-6 gap-y-6 p-4 sm:grid-cols-4 sm:p-6" })}>
         <Stat label="Submitted" value={String(stats?.tasksSubmitted ?? 0)} />
         <Stat label="Missed" value={String(stats?.missedCount ?? 0)} />
-        <Stat label="Average" value={formatScore(stats?.overallAvg)} />
+        <ScoreStat label="Average" value={stats?.overallAvg} />
         {skillAverages(stats).map((skill) => (
-          <Stat key={skill.type} label={skill.label} value={formatScore(skill.average)} />
+          <ScoreStat key={skill.type} label={skill.label} value={skill.average} />
         ))}
       </dl>
 

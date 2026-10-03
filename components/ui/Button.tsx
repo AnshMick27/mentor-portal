@@ -5,7 +5,7 @@ export type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
 export type ButtonSize = "md" | "sm";
 
 const BASE =
-  "inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-60";
 
 const SIZE: Record<ButtonSize, string> = {
   md: "px-5 text-base font-semibold",
@@ -14,8 +14,8 @@ const SIZE: Record<ButtonSize, string> = {
 
 /** Blue always means "do it"; red only for destructive actions; secondary is outlined; ghost has no border. */
 const VARIANT: Record<ButtonVariant, string> = {
-  primary: "bg-blue-700 text-white hover:bg-blue-800",
-  secondary: "border border-line-strong hover:bg-surface",
+  primary: "bg-primary text-white shadow-card hover:bg-primary-hover",
+  secondary: "border border-line-strong bg-card shadow-card hover:bg-surface",
   danger: "bg-red-700 text-white hover:bg-red-800",
   ghost: "hover:bg-surface",
 };

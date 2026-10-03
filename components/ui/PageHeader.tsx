@@ -30,7 +30,7 @@ export function PageHeader({
       {back && <BackLink href={back.href}>{back.label}</BackLink>}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start justify-between gap-3">
-          <h1 className="min-w-0 text-2xl font-bold tracking-tight break-words">{title}</h1>
+          <h1 className="min-w-0 text-2xl font-bold tracking-tight break-words sm:text-[28px] sm:leading-9">{title}</h1>
           {badge}
         </div>
         {actions && <div className="flex flex-wrap items-start gap-3">{actions}</div>}

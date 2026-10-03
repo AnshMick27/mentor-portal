@@ -8,7 +8,7 @@ describe("buttonClasses", () => {
   it("defaults to a 44 px primary button", () => {
     const classes = buttonClasses();
     expect(classes).toContain("min-h-11");
-    expect(classes).toContain("bg-blue-700 text-white");
+    expect(classes).toContain("bg-primary text-white");
     expect(classes).toContain("px-5 text-base");
     expect(classes).toContain("disabled:opacity-60");
   });
@@ -20,7 +20,7 @@ describe("buttonClasses", () => {
   ] as const)("%s variant", (variant, expected) => {
     const classes = buttonClasses({ variant });
     expect(classes).toContain(expected);
-    expect(classes).not.toContain("bg-blue-700");
+    expect(classes).not.toContain("bg-primary");
   });
 
   it("small size keeps the 44 px height and appends extra classes", () => {

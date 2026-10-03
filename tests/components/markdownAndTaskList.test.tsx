@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { Markdown } from "@/components/Markdown";
-import { TaskList, TaskListHeader } from "@/components/tasks/TaskList";
+import { filterTasks, TaskList, TaskListHeader } from "@/components/tasks/TaskList";
 import type { TaskDto } from "@/lib/validation/task";
 
 describe("Markdown", () => {
@@ -88,7 +88,22 @@ describe("TaskList", () => {
     expect(html).not.toMatch(/href="\/mentor\/tasks\/t\d+"/);
     expect(html).not.toContain('href="/mentor/tasks/t1/submissions"'); // t1 is a draft
     expect(html).toContain('href="/mentor/tasks/t2/submissions"');
-    expect(html).not.toContain("<button");
+    // The only buttons are the All/Published/Drafts view toggles (T40b); nothing that edits.
+    expect(html.match(/<button/g)?.length).toBe(html.match(/<button[^>]*aria-pressed/g)?.length);
+  });
+
+  it("filters by status and title (T40b)", () => {
+    const html = page(true);
+    expect(html).toMatch(/aria-pressed="true"[^>]*>All \(\d+\)/);
+    expect(html).toContain("Published (");
+    expect(html).toContain("Drafts (");
+    const tasks = [
+      { id: "a", title: "Two sum", status: "published" },
+      { id: "b", title: "Resume review", status: "draft" },
+    ] as TaskDto[];
+    expect(filterTasks(tasks, "draft", "").map((t) => t.id)).toEqual(["b"]);
+    expect(filterTasks(tasks, "all", "  TWO ").map((t) => t.id)).toEqual(["a"]);
+    expect(filterTasks(tasks, "published", "resume")).toEqual([]);
   });
 
   it("says so when there are no tasks", () => {

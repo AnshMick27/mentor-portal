@@ -30,7 +30,7 @@ describe("Disclosure", () => {
 
 describe("StatusChip", () => {
   it.each([
-    ["success", "bg-green-100"],
+    ["success", "bg-emerald-100"],
     ["warning", "bg-amber-100"],
     ["danger", "bg-red-100"],
     ["info", "bg-blue-100"],

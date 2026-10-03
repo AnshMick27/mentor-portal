@@ -254,3 +254,9 @@
 - Theme tokens live in `app/globals.css` (`text-muted`, `border-line`, `border-line-strong`, `bg-surface`, `text-link`); prefer them over `opacity-*` or raw black/white alpha colours. The global `:focus-visible` rule is unlayered, so it overrides any `focus-visible:outline-*` utility: per-element focus classes are now redundant and can be dropped as components move to `components/ui/`.
 - Page titles: client pages set the browser-tab title by rendering React `<title>` inside `PageHeader` (Next docs, error.md, recommend this for client components). Server pages (login, privacy) keep `export const metadata`. A new page should use `PageHeader` rather than its own h1.
 - Mentor markdown never shows images (Markdown.tsx maps `img` to a note): the CSP only allows self/data/googleusercontent images, so pasted links would show broken. To allow task images later, host them on an allowed origin and change both.
+
+## Stitch design (T40)
+- Source: Stitch project "CDC Mentor Portal Web Application" (id 15312957182452190568), fetched with the Stitch MCP tools (`list_screens`, then each screen's `htmlCode`/`screenshot` download URL). Only the 7 mentor screens are real designs; the `frame_*.png` entries are captures of the old app.
+- New tokens: `bg-card`, `bg-surface-strong`, `bg-primary`/`hover:bg-primary-hover`, `shadow-card`, fonts `--font-sans` (Inter) and `--font-mono` (JetBrains Mono) via `next/font/google` in `app/layout.tsx` (self-hosted, so `font-src 'self'` still holds; `next build` downloads them, so it needs network).
+- Every `<select>` matches `:read-only`, so never put `read-only:` styles in `inputClasses`; use `[&:is(input):read-only]:`.
+- Without a working sign-in popup (e.g. remote session), preview pages by rendering components with `renderToStaticMarkup` + demo data and the dev server's compiled CSS; never fake an auth session.

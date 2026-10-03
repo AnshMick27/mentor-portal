@@ -1,46 +1,62 @@
 @import "tailwindcss";
 
-/* Design tokens (docs/UX_REVIEW.md §3.1). color-scheme makes native controls (select, date picker, file input,
-   checkbox, scrollbar) follow the theme. */
+/* Design tokens (docs/UX_REVIEW.md §3.1), colours from the Stitch design "CDC Mentor Portal Web Application" (T40a):
+   a lavender-tinted page, white cards with a soft shadow, Inter, primary blue #004ac6. color-scheme makes native
+   controls (select, date picker, file input, checkbox, scrollbar) follow the theme. */
 :root {
   color-scheme: light dark;
-  --background: #ffffff;
-  --foreground: #171717;
-  --muted: #525252; /* secondary text, about 7.8:1 */
-  --line: rgb(0 0 0 / 0.1); /* card borders (decorative) */
-  --line-strong: rgb(0 0 0 / 0.45); /* field borders, about 3.4:1 */
-  --surface: rgb(0 0 0 / 0.04); /* code/sample backgrounds, hover */
-  --link: #1d4ed8;
-  --focus: #1d4ed8;
+  --background: #f9f9ff; /* page */
+  --card: #ffffff; /* cards, header, inputs */
+  --foreground: #141b2b;
+  --muted: #434655; /* secondary text, about 9:1 on the page */
+  --line: rgb(20 27 43 / 0.08); /* card edges and dividers (decorative) */
+  --line-strong: #737686; /* field borders, about 4.5:1 */
+  --surface: #f1f3ff; /* code/sample backgrounds, table heads, hover */
+  --surface-strong: #e1e8fd; /* neutral chips, progress tracks */
+  --primary: #004ac6; /* primary buttons, brand, current tab */
+  --primary-hover: #003ea8;
+  --link: #004ac6;
+  --focus: #2563eb;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-link: var(--link);
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Consolas, monospace;
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.03);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --muted: #a3a3a3;
-    --line: rgb(255 255 255 / 0.15);
+    --background: #0e1322;
+    --card: #171d2e;
+    --foreground: #e6e9f5;
+    --muted: #b0b5c8;
+    --line: rgb(255 255 255 / 0.1);
     --line-strong: rgb(255 255 255 / 0.4);
-    --surface: rgb(255 255 255 / 0.07);
-    --link: #93c5fd;
-    --focus: #93c5fd; /* about 11:1 on the dark background; #1d4ed8 was only 2.9:1 */
+    --surface: rgb(255 255 255 / 0.05);
+    --surface-strong: rgb(255 255 255 / 0.12);
+    --primary: #2563eb; /* white text on it is about 5.2:1 */
+    --primary-hover: #1d4ed8;
+    --link: #b4c5ff;
+    --focus: #93c5fd; /* about 10:1 on the dark page; the light-mode blue would be too dark */
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* One focus ring for every control. Unlayered, so it wins over Tailwind's per-element focus-visible:outline-*
@@ -72,17 +88,17 @@ select option {
 .markdown a { color: var(--link); text-decoration: underline; }
 .markdown img { max-width: 100%; height: auto; }
 .markdown code {
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.9em;
-  background: rgb(127 127 127 / 0.15);
+  background: var(--surface-strong);
   padding: 0.1rem 0.3rem;
   border-radius: 0.25rem;
 }
 .markdown pre {
   overflow-x: auto;
-  background: rgb(127 127 127 / 0.12);
+  background: var(--surface);
   padding: 0.75rem;
   border-radius: 0.5rem;
 }
 .markdown pre code { background: none; padding: 0; }
-.markdown blockquote { border-left: 3px solid rgb(127 127 127 / 0.4); padding-left: 0.75rem; opacity: 0.85; }
+.markdown blockquote { border-left: 3px solid var(--line-strong); padding-left: 0.75rem; color: var(--muted); }

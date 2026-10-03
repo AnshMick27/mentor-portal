@@ -5,9 +5,9 @@ import { useId, type ReactNode } from "react";
  * a sunlit phone (WCAG 1.4.11, docs/UX_REVIEW.md UX-06). Card borders stay `border-line`: they are decorative.
  */
 export const inputClasses =
-  "min-h-11 w-full rounded-lg border border-line-strong bg-transparent px-3 text-base disabled:opacity-60 read-only:opacity-60";
+  "min-h-11 w-full rounded-md border border-line-strong bg-card px-3 text-base disabled:opacity-60 [&:is(input):read-only]:opacity-60";
 export const textareaClasses =
-  "w-full rounded-lg border border-line-strong bg-transparent p-3 text-base leading-relaxed disabled:opacity-60 read-only:opacity-60";
+  "w-full rounded-md border border-line-strong bg-card p-3 text-base leading-relaxed disabled:opacity-60 read-only:opacity-60";
 
 /** What `Field` hands to its control: spread it onto the input, select or textarea. */
 export type FieldControlProps = {

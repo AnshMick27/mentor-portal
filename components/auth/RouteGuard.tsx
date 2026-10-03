@@ -29,7 +29,7 @@ export function ProtectedShell({ area, children }: { area: GuardArea; children: 
     <RouteGuard area={area}>
       <SkipLink />
       <SignedInHeader />
-      <main id="main" className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-6">{children}</main>
+      <main id="main" className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">{children}</main>
     </RouteGuard>
   );
 }
@@ -39,7 +39,7 @@ export function SkipLink() {
   return (
     <a
       href="#main"
-      className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-10 focus:rounded-lg focus:bg-background focus:px-4 focus:py-2"
+      className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-10 focus:rounded-lg focus:bg-card focus:px-4 focus:py-2"
     >
       Skip to content
     </a>

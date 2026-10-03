@@ -14,9 +14,9 @@ import { RemoveStudentButton } from "./RemoveStudentButton";
 
 function Row({ row, canEdit, onChanged }: { row: StudentRow; canEdit: boolean; onChanged: () => void }) {
   return (
-    <li className={cardClasses({ className: "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between" })}>
+    <li className={cardClasses({ className: "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" })}>
       <div className="flex min-w-0 flex-col gap-0.5 text-sm">
-        <TextLink href={`/mentor/students/${row.uid}`} strong className="text-base break-words">
+        <TextLink href={`/mentor/students/${row.uid}`} strong className="text-base tracking-wide uppercase break-words">
           {row.name}
         </TextLink>
         <span className="break-all text-muted">{row.email}</span>
@@ -32,7 +32,7 @@ function Row({ row, canEdit, onChanged }: { row: StudentRow; canEdit: boolean; o
         )}
       </div>
       {canEdit && (
-        <div className="shrink-0 self-start sm:max-w-xs">
+        <div className="shrink-0 self-start sm:max-w-xs sm:self-center">
           <RemoveStudentButton uid={row.uid} name={row.name} removed={row.removed} onChanged={onChanged} />
         </div>
       )}
@@ -90,6 +90,7 @@ export function StudentList({ rows, canEdit, onChanged }: { rows: StudentRow[]; 
         <input
           type="search"
           value={search}
+          placeholder="e.g. 0827CS, Asha, @college email"
           onChange={(event) => setSearch(event.target.value)}
           className={`${inputClasses} font-normal`}
         />

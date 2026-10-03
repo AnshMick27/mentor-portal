@@ -8,13 +8,13 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 
 describe("Card", () => {
-  it("uses the theme border token, with md padding by default", () => {
-    expect(cardClasses()).toBe("rounded-lg border border-line p-4");
-    expect(cardClasses({ padding: "sm", className: "grid" })).toBe("rounded-lg border border-line p-3 grid");
+  it("uses the theme card tokens, with md padding by default", () => {
+    expect(cardClasses()).toBe("rounded-lg shadow-card ring-1 bg-card ring-line p-4");
+    expect(cardClasses({ padding: "sm", className: "grid" })).toBe("rounded-lg shadow-card ring-1 bg-card ring-line p-3 grid");
   });
 
   it("renders as the requested element", () => {
-    expect(renderToStaticMarkup(<Card as="li">x</Card>)).toBe('<li class="rounded-lg border border-line p-4">x</li>');
+    expect(renderToStaticMarkup(<Card as="li">x</Card>)).toBe('<li class="rounded-lg shadow-card ring-1 bg-card ring-line p-4">x</li>');
   });
 
   it("CardLink makes the whole card one link with a hover tint", () => {

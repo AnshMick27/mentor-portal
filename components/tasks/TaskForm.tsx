@@ -5,6 +5,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Markdown } from "@/components/Markdown";
 import { Button } from "@/components/ui/Button";
+import { cardClasses } from "@/components/ui/Card";
 import { Field, inputClasses } from "@/components/ui/Field";
 import { Note } from "@/components/ui/Note";
 import { apiFetch } from "@/lib/api/client";
@@ -144,7 +145,8 @@ export function TaskForm(props: Props) {
   const isCoding = form.type === "coding";
   const locked = props.mode === "edit" && props.hasSubmissions === true;
   return (
-    <form ref={formRef} onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5" noValidate>
+    <form ref={formRef} onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-6" noValidate>
+      <div className={cardClasses({ padding: "none", className: "flex flex-col gap-5 p-4 sm:p-6" })}>
       <Field label="Title (required)" error={fieldErrors.title}>
         {(control) => (
           <input {...control} value={form.title} onChange={(e) => update("title", e.target.value)} maxLength={120} className={inputClass} />
@@ -203,10 +205,11 @@ export function TaskForm(props: Props) {
           />
         )}
       </Field>
+      </div>
 
       {isCoding && (
-        <fieldset className="flex flex-col gap-5 rounded-lg border border-line p-4">
-          <legend className="px-1 font-semibold">Coding settings</legend>
+        <fieldset className={cardClasses({ padding: "none", className: "flex flex-col gap-5 p-4 sm:p-6" })}>
+          <legend className="float-left mb-1 w-full text-lg font-semibold">Coding settings</legend>
           <Field
             label="Problem slug (required)"
             hint={locked ? LOCKED_HINT : "Must match a folder in the judge repo, e.g. two-sum."}
@@ -264,7 +267,7 @@ export function TaskForm(props: Props) {
             <span className="font-medium">Sample tests (shown to students, 1–5)</span>
             <FieldError message={fieldErrors.sampleTests} />
             {form.sampleTests.map((test, index) => (
-              <div key={index} className="flex flex-col gap-2 rounded-lg bg-surface p-3">
+              <div key={index} className="flex flex-col gap-2 rounded-lg bg-surface p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Sample {index + 1}</span>
                   {form.sampleTests.length > 1 && (
@@ -317,8 +320,8 @@ export function TaskForm(props: Props) {
         </fieldset>
       )}
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="font-medium">Visibility</legend>
+      <fieldset className={cardClasses({ padding: "none", className: "flex flex-col gap-2 p-4 sm:p-6" })}>
+        <legend className="float-left mb-1 w-full text-lg font-semibold">Visibility</legend>
         {(["draft", "published"] as const).map((status) => (
           <label key={status} className="flex min-h-11 items-center gap-2">
             <input

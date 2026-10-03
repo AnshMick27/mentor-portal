@@ -10,10 +10,12 @@ type CardStyle = {
 
 const PADDING = { md: "p-4", sm: "p-3", none: "" } as const;
 
-/** The one card look (docs/UX_REVIEW.md §3.2). Use the class string on `<details>`, `<dl>`, `<fieldset>` and the like. */
+/** The one card look (docs/UX_REVIEW.md §3.2; Stitch design T40a: white on the tinted page, soft shadow, faint ring for dark mode). Use the class string on `<details>`, `<dl>`, `<fieldset>` and the like. */
 export function cardClasses({ padding = "md", primary = false, className }: CardStyle = {}): string {
-  const tone = primary ? "border-blue-700/40 bg-blue-50 dark:border-blue-300/40 dark:bg-blue-950/40" : "border-line";
-  return ["rounded-lg border", tone, PADDING[padding], className].filter(Boolean).join(" ");
+  const tone = primary
+    ? "bg-blue-50 ring-blue-700/40 dark:bg-blue-950/60 dark:ring-blue-300/40"
+    : "bg-card ring-line";
+  return ["rounded-lg shadow-card ring-1", tone, PADDING[padding], className].filter(Boolean).join(" ");
 }
 
 export function Card({
@@ -37,7 +39,7 @@ export function CardLink({
   className?: string;
   children: ReactNode;
 }) {
-  const hover = primary ? "hover:bg-blue-100 dark:hover:bg-blue-950/70" : "hover:bg-surface";
+  const hover = ["transition-shadow hover:shadow-md", primary ? "hover:bg-blue-100 dark:hover:bg-blue-950/70" : "hover:bg-surface"].join(" ");
   return (
     <Link href={href} className={cardClasses({ primary, className: ["flex flex-col gap-1", hover, className].filter(Boolean).join(" ") })}>
       {children}
