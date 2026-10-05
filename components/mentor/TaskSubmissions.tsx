@@ -7,6 +7,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatScore } from "@/components/ui/Score";
 import { Section } from "@/components/ui/Section";
 import { StatusChip } from "@/components/ui/StatusChip";
+import { IntegrityCheck } from "./IntegrityCheck";
 import { TaskTypeTag } from "@/components/ui/TaskTypeTag";
 import { TextLink } from "@/components/ui/TextLink";
 import { branchesOf, type BranchFilter } from "@/lib/dashboard/mentor";
@@ -82,7 +83,7 @@ export function TaskSubmissionsView({
           <EmptyState>{roster.total === 0 ? "No students yet." : "Everyone has submitted."}</EmptyState>
         ) : (
           <ul className="flex flex-col gap-2">
-            {roster.notSubmitted.map(({ student, checking, lateOnly }) => (
+            {roster.notSubmitted.map(({ student, checking, lateOnly, flags }) => (
               <li
                 key={student.uid}
                 className={cardClasses({ className: "flex flex-wrap items-center justify-between gap-2 text-sm" })}
@@ -95,6 +96,7 @@ export function TaskSubmissionsView({
                     {lateOnly && <StatusChip tone="warning">Sent late</StatusChip>}
                   </span>
                 )}
+                <IntegrityCheck flags={flags} />
               </li>
             ))}
           </ul>
@@ -106,12 +108,15 @@ export function TaskSubmissionsView({
           <EmptyState>Nobody has submitted yet.</EmptyState>
         ) : (
           <ul className="flex flex-col gap-2">
-            {roster.submitted.map(({ student, best, attempts, lastAt }) => (
+            {roster.submitted.map(({ student, best, attempts, lastAt, flags }) => (
               <li
                 key={student.uid}
                 className={cardClasses({ className: "flex flex-wrap items-start justify-between gap-2 text-sm" })}
               >
-                <Who student={student} />
+                <span className="flex flex-col gap-1">
+                  <Who student={student} />
+                  <IntegrityCheck flags={flags} />
+                </span>
                 <span className="flex flex-col gap-0.5 sm:items-end">
                   <span className="font-semibold">Best {formatScore(best)}</span>
                   <span className="text-muted">

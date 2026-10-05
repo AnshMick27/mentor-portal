@@ -1,7 +1,9 @@
 import type { BranchFilter } from "@/lib/dashboard/mentor";
+import { flagsAcross } from "@/lib/submissions/integrityDisplay";
 import { countsForScore, effectiveStatus } from "@/lib/submissions/scoring";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import type { StudentRow } from "@/lib/students/list";
+import type { IntegrityFlag } from "@/lib/validation/submission";
 import type { Branch } from "@/lib/validation/user";
 
 /** An onboarded, not-removed student: the only ones a task's roster counts (same as the stats). */
@@ -14,6 +16,8 @@ export type SubmittedRow = {
   /** Attempts that count (failed "not counted" ones left out). */
   attempts: number;
   lastAt: Date;
+  /** Integrity flags over the student's attempts on this task (SPEC.md §8.9), each once. */
+  flags: IntegrityFlag[];
 };
 
 export type NotSubmittedRow = {
@@ -22,6 +26,7 @@ export type NotSubmittedRow = {
   checking: boolean;
   /** Sent only late work (T44): feedback, but it does not count as submitted. */
   lateOnly: boolean;
+  flags: IntegrityFlag[];
 };
 
 export type TaskRoster = { total: number; submitted: SubmittedRow[]; notSubmitted: NotSubmittedRow[] };
@@ -61,18 +66,21 @@ export function buildTaskRoster(
       return countsForScore(effective) ? [effective.result.score] : [];
     });
     const counting = own.filter(({ status }) => status !== "error");
+    const flags = flagsAcross(counting.map(({ submission }) => submission));
     if (scores.length > 0) {
       submitted.push({
         student,
         best: Math.max(...scores),
         attempts: counting.length,
         lastAt: new Date(Math.max(...counting.map(({ submission }) => submission.createdAt.getTime()))),
+        flags,
       });
     } else {
       notSubmitted.push({
         student,
         checking: own.some(({ status }) => status === "queued" || status === "running"),
         lateOnly: own.some(({ submission, status }) => submission.late === true && status !== "error"),
+        flags,
       });
     }
   }

@@ -1,8 +1,10 @@
+import { IntegrityCheck } from "@/components/mentor/IntegrityCheck";
 import { cardClasses } from "@/components/ui/Card";
 import { Disclosure } from "@/components/ui/Disclosure";
 import { formatScore } from "@/components/ui/Score";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { formatIst } from "@/lib/dates/ist";
+import { integrityDetails } from "@/lib/submissions/integrityDisplay";
 import { judgeStatusView } from "@/lib/submissions/judgeDisplay";
 import { effectiveStatus } from "@/lib/submissions/scoring";
 import { newestFirst, type SubmissionView } from "@/lib/submissions/submissionDoc";
@@ -114,12 +116,20 @@ export function AttemptList({
                   Attempt {submission.attempt}
                   <span className="text-sm font-normal text-muted">{formatIst(submission.createdAt.toISOString())}</span>
                   {submission.late === true && <LateChip />}
+                  {audience === "mentor" && (submission.integrity?.flags.length ?? 0) > 0 && <StatusChip tone="warning">Check</StatusChip>}
                 </span>
                 <span className="text-sm font-semibold">{statusLabel(submission, now)}</span>
               </span>
             }
           >
             <div className="flex flex-col gap-4 border-t border-line px-4 py-3">
+              {/* Integrity flags are for mentors and viewers only (SPEC.md §8.9). */}
+              {audience === "mentor" && submission.integrity && submission.integrity.flags.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <IntegrityCheck flags={submission.integrity.flags} />
+                  <p className="text-sm text-muted">{integrityDetails(submission.integrity)}. The score is not changed.</p>
+                </div>
+              )}
               <AttemptBody submission={submission} now={now} audience={audience} />
               <Disclosure
                 summary={WORDING[audience].sent}

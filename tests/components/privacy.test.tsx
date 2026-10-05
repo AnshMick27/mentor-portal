@@ -29,6 +29,13 @@ describe("privacy page", () => {
     expect(html).toContain("only if you choose to");
   });
 
+  it("says which integrity counts are kept for code and intros, and that they never change a score (T46c)", () => {
+    const html = renderToStaticMarkup(<PrivacyPage />);
+    expect(html).toContain("how many pastes were refused");
+    expect(html).toContain("never your keystrokes or drafts");
+    expect(html).toContain("they never change your score");
+  });
+
   it("says how long data is kept (T45)", () => {
     expect(html).toContain("How long it is kept");
     expect(html).toContain("Your data is kept for one year after your batch graduates, then deleted.");

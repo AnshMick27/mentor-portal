@@ -29,6 +29,12 @@ export default function PrivacyPage() {
             feedback and score you got for each attempt.
           </li>
           <li>Numbers worked out from your attempts: tasks submitted and missed, and your average scores.</li>
+          <li>
+            For code and introductions, a few counts about how the answer was written: how many characters you typed,
+            how many pastes were refused, how fast you typed, how long you were away from the page, and how long the
+            answer took. Only these counts are kept, never your keystrokes or drafts. Your mentors use them to spot
+            copied work; they never change your score.
+          </li>
         </ul>
         <p>It does not store your password (Google handles sign-in), your resume PDF file, or any photos or audio.</p>
       </Section>
