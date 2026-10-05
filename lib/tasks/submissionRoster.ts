@@ -1,4 +1,5 @@
 import type { BranchFilter } from "@/lib/dashboard/mentor";
+import type { SimilarPair } from "@/lib/integrity/similarity";
 import { flagsAcross } from "@/lib/submissions/integrityDisplay";
 import { countsForScore, effectiveStatus } from "@/lib/submissions/scoring";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
@@ -85,4 +86,18 @@ export function buildTaskRoster(
     }
   }
   return { total: counted.length, submitted: submitted.sort(byName), notSubmitted: notSubmitted.sort(byName) };
+}
+
+export type SimilarRow = { a: RosterStudent; b: RosterStudent; percent: number };
+
+/** Stored similar pairs → rows with both students; a pair shows when either student is in the branch filter. */
+export function similarRows(pairs: readonly SimilarPair[], students: readonly RosterStudent[], branch: BranchFilter): SimilarRow[] {
+  const byUid = new Map(students.map((student) => [student.uid, student]));
+  return pairs.flatMap(({ uidA, uidB, percent }) => {
+    const a = byUid.get(uidA);
+    const b = byUid.get(uidB);
+    if (!a || !b) return []; // removed since the last recompute
+    if (branch !== "all" && a.branch !== branch && b.branch !== branch) return [];
+    return [{ a, b, percent }];
+  });
 }

@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { TaskSubmissionsView } from "@/components/mentor/TaskSubmissions";
 import type { TaskRosterData } from "@/lib/tasks/rosterQuery";
-import { rosterStudents } from "@/lib/tasks/submissionRoster";
+import { rosterStudents, similarRows } from "@/lib/tasks/submissionRoster";
 
 const data: TaskRosterData = {
   task: {
@@ -69,5 +69,37 @@ describe("TaskSubmissionsView", () => {
     expect(html).toContain("1</span> of 2 submitted");
     expect(html).toContain(">Sent late</span>");
     expect(html.indexOf("Sent late")).toBeLessThan(html.indexOf(">Submitted"));
+  });
+});
+
+describe("Similar submissions (T47)", () => {
+  const pair = { uidA: "s1", uidB: "s2", submissionIdA: "x0", submissionIdB: "x1", percent: 92 };
+  const view = (extra: Partial<TaskRosterData>, branch: "all" | "CSIT" = "all") =>
+    renderToStaticMarkup(
+      <TaskSubmissionsView data={{ ...data, ...extra }} branch={branch} onBranch={() => undefined} now={new Date("2026-10-03T00:00:00Z")} />,
+    );
+
+  it("lists both students with links and how alike their answers are", () => {
+    const html = view({ similarPairs: [pair] });
+    const section = html.slice(html.indexOf("Similar submissions"));
+    expect(section).toContain('href="/mentor/students/s1"');
+    expect(section).toContain('href="/mentor/students/s2"');
+    expect(section).toContain("92% alike");
+    expect(section).toContain("A hint, not proof");
+  });
+
+  it("says when nothing looks alike, also before the first recompute", () => {
+    expect(view({ similarPairs: [] })).toContain("No answers look alike.");
+    expect(view({})).toContain("No answers look alike.");
+  });
+
+  it("has no section for a resume task", () => {
+    expect(view({ task: { ...data.task, type: "resume" }, similarPairs: [pair] })).not.toContain("Similar submissions");
+  });
+
+  it("keeps a pair when either student is in the branch filter, and drops students no longer on the roster", () => {
+    expect(similarRows([pair], data.students, "CSIT")).toHaveLength(1); // s1 is CSIT, s2 is IT
+    expect(similarRows([pair], data.students, "CSE")).toEqual([]);
+    expect(similarRows([{ ...pair, uidB: "gone" }], data.students, "all")).toEqual([]);
   });
 });

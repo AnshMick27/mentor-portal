@@ -107,6 +107,7 @@ describe("recomputeTask", () => {
       notSubmittedUids: ["s1"],
       avgScore: 9,
       avgScoreByBranch: { IT: 9 },
+      similarPairs: [], // a coding task: compared, nothing alike (T47)
       updatedAt: Timestamp.fromDate(now),
     });
   });
@@ -162,5 +163,57 @@ describe("onFinished", () => {
     expect(taskStats("past")).toMatchObject({ submittedCount: 1, notSubmittedUids: ["s2"] });
     expect(studentStats("s2")).toBeUndefined();
     expect(taskStats("future")).toBeUndefined();
+  });
+});
+
+describe("similar submissions in taskStats (T47)", () => {
+  const solution = (name: string) => `
+def solve(${name}):
+    # count pairs that add up to the target
+    total = 0
+    seen = {}
+    for value in ${name}:
+        need = 100 - value
+        if need in seen:
+            total += seen[need]
+        seen[value] = seen.get(value, 0) + 1
+    return total
+
+${name} = list(map(int, input().split()))
+print(solve(${name}))
+`;
+  function codeSubmission(id: string, uid: string, taskId: string, content: string, status = "done") {
+    fakeAdmin.collection("submissions").set(id, {
+      taskId,
+      uid,
+      type: "coding",
+      attempt: 1,
+      createdAt: ts(-0.5), // newer than the beforeEach attempts, so these are the latest
+      status,
+      content,
+      language: "python",
+      ...(status === "done" ? { result: { score: 10, summary: "s", strengths: [], improvements: [], nextSteps: [] } } : {}),
+    });
+  }
+  const pairsOf = (id: string) => (taskStats(id) as { similarPairs?: unknown[] }).similarPairs;
+
+  it("stores pairs of students whose latest finished code is alike, and keeps them through a later recompute", async () => {
+    codeSubmission("x1", "s1", "future", solution("numbers"));
+    codeSubmission("x2", "s2", "future", solution("arr"));
+    await recomputeAll(now);
+    expect(pairsOf("future")).toEqual([{ uidA: "s1", uidB: "s2", submissionIdA: "x1", submissionIdB: "x2", percent: 100 }]);
+    await recomputeTask("future", now); // what runs after every submission
+    expect(pairsOf("future")).toHaveLength(1);
+  });
+
+  it("ignores failed attempts, not-onboarded students and staff, and stores no pairs for a resume task", async () => {
+    codeSubmission("x1", "s1", "future", solution("numbers"));
+    codeSubmission("x2", "s2", "future", solution("arr"), "error");
+    codeSubmission("x3", "s3", "future", solution("vals"));
+    codeSubmission("x4", "m1", "future", solution("xs"));
+    task("cv", 3, "published", "resume");
+    await recomputeAll(now);
+    expect(pairsOf("future")).toEqual([]);
+    expect(taskStats("cv")).not.toHaveProperty("similarPairs");
   });
 });

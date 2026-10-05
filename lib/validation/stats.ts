@@ -40,6 +40,18 @@ export const storedTaskStatsSchema = z.object({
   avgScore: scoreSchema.optional(),
   // Older docs may lack it; recompute always writes it.
   avgScoreByBranch: partialScores(BRANCHES).default({}),
+  /** Code and intro tasks: students whose latest answers look alike (SPEC.md §8.9), highest first. */
+  similarPairs: z
+    .array(
+      z.object({
+        uidA: z.string(),
+        uidB: z.string(),
+        submissionIdA: z.string(),
+        submissionIdB: z.string(),
+        percent: z.number().int().min(0).max(100),
+      }),
+    )
+    .optional(),
   updatedAt: timestampLike,
 });
 export type StoredTaskStats = z.infer<typeof storedTaskStatsSchema>;

@@ -13,7 +13,7 @@ import { TextLink } from "@/components/ui/TextLink";
 import { branchesOf, type BranchFilter } from "@/lib/dashboard/mentor";
 import { formatIst } from "@/lib/dates/ist";
 import type { TaskRosterData } from "@/lib/tasks/rosterQuery";
-import { buildTaskRoster, type RosterStudent } from "@/lib/tasks/submissionRoster";
+import { buildTaskRoster, similarRows, type RosterStudent } from "@/lib/tasks/submissionRoster";
 import { TASK_TYPE_LABEL } from "@/lib/validation/task";
 
 function Who({ student }: { student: RosterStudent }) {
@@ -128,6 +128,40 @@ export function TaskSubmissionsView({
           </ul>
         )}
       </Section>
+
+      {data.task.type !== "resume" && <SimilarSection data={data} branch={branch} />}
     </div>
+  );
+}
+
+/** Students whose latest answers look alike (SPEC.md §8.9), from `taskStats.similarPairs`. */
+function SimilarSection({ data, branch }: { data: TaskRosterData; branch: BranchFilter }) {
+  const rows = similarRows(data.similarPairs ?? [], data.students, branch);
+  return (
+    <Section title="Similar submissions" count={rows.length}>
+      <p className="text-sm text-muted">
+        Latest finished answers that are 80% or more alike, with names and comments ignored. Updated after each submission
+        and every night. A hint, not proof: open both students and compare before you talk to them.
+      </p>
+      {rows.length === 0 ? (
+        <EmptyState>No answers look alike.</EmptyState>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {rows.map(({ a, b, percent }) => (
+            <li
+              key={`${a.uid}-${b.uid}`}
+              className={cardClasses({ className: "flex flex-wrap items-center justify-between gap-3 text-sm" })}
+            >
+              <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <Who student={a} />
+                <span className="text-muted">and</span>
+                <Who student={b} />
+              </span>
+              <StatusChip tone={percent >= 95 ? "danger" : "warning"}>{percent}% alike</StatusChip>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Section>
   );
 }

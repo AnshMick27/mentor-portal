@@ -1,9 +1,10 @@
 import "server-only";
 import { Timestamp, type Firestore } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { taskSimilarPairs } from "@/lib/integrity/taskSimilarity";
 import { computeStudentStats, computeTaskStats, countedStudents } from "@/lib/stats/compute";
 import type { StatsSubmission, StatsTask, StatsUser } from "@/lib/stats/types";
-import { submissionDocToView } from "@/lib/submissions/submissionDoc";
+import { submissionDocToView, type SubmissionView } from "@/lib/submissions/submissionDoc";
 import { taskDocToDto } from "@/lib/tasks/taskDoc";
 import { storedUserSchema } from "@/lib/validation/user";
 
@@ -36,9 +37,9 @@ function toTask(doc: Snapshot): StatsTask | undefined {
   return task && { id: task.id, type: task.type, status: task.status, dueAt: new Date(task.dueAt) };
 }
 
-function toSubmission(doc: Snapshot): StatsSubmission | undefined {
-  const view = submissionDocToView(doc.id, doc.data());
-  if (!view) return undefined;
+const toView = (doc: Snapshot): SubmissionView | undefined => submissionDocToView(doc.id, doc.data());
+
+function toSubmission(view: SubmissionView): StatsSubmission {
   const { taskId, uid, status, createdAt, result, late } = view;
   return {
     taskId,
@@ -64,13 +65,22 @@ async function writeStudentStats(db: Firestore, user: StatsUser, tasks: StatsTas
   await db.collection("studentStats").doc(user.uid).set({ ...fields, updatedAt: Timestamp.fromDate(now) });
 }
 
-async function writeTaskStats(db: Firestore, task: StatsTask, users: StatsUser[], subs: StatsSubmission[], now: Date) {
+/**
+ * `taskStats/{id}` incl. `similarPairs`. They are worked out here (nightly cron AND after each submission) because
+ * this `set` replaces the whole doc: pairs added only by the cron would be wiped by the next submission.
+ */
+async function writeTaskStats(db: Firestore, task: StatsTask, users: StatsUser[], views: SubmissionView[], now: Date) {
   const ref = db.collection("taskStats").doc(task.id);
   if (task.status !== "published") {
     await ref.delete();
     return;
   }
-  await ref.set({ ...computeTaskStats(task, users, subs), updatedAt: Timestamp.fromDate(now) });
+  const similarPairs = taskSimilarPairs(task, new Set(countedStudents(users).map((user) => user.uid)), views);
+  await ref.set({
+    ...computeTaskStats(task, users, views.map(toSubmission)),
+    ...(similarPairs ? { similarPairs } : {}),
+    updatedAt: Timestamp.fromDate(now),
+  });
 }
 
 /** Recomputes `studentStats/{uid}`. Returns false (and writes nothing) unless the user is an onboarded student. */
@@ -80,7 +90,7 @@ export async function recomputeStudent(uid: string, now = new Date()): Promise<b
   const user = snapshot.exists ? toUser(snapshot) : undefined;
   if (!user || countedStudents([user]).length === 0) return false;
   const [tasks, subs] = await Promise.all([loadTasks(db), db.collection("submissions").where("uid", "==", uid).get()]);
-  await writeStudentStats(db, user, tasks, parseAll(subs.docs, toSubmission), now);
+  await writeStudentStats(db, user, tasks, parseAll(subs.docs, toView).map(toSubmission), now);
   return true;
 }
 
@@ -97,7 +107,7 @@ export async function recomputeTask(taskId: string, now = new Date()): Promise<v
     loadUsers(db),
     db.collection("submissions").where("taskId", "==", taskId).get(),
   ]);
-  await writeTaskStats(db, task, users, parseAll(subs.docs, toSubmission), now);
+  await writeTaskStats(db, task, users, parseAll(subs.docs, toView), now);
 }
 
 export type RecomputeAllResult = { students: number; tasks: number };
@@ -110,13 +120,14 @@ export async function recomputeAll(now = new Date()): Promise<RecomputeAllResult
     loadTasks(db),
     db.collection("submissions").get(),
   ]);
-  const subs = parseAll(subsSnapshot.docs, toSubmission);
+  const views = parseAll(subsSnapshot.docs, toView);
+  const subs = views.map(toSubmission);
   const students = countedStudents(users);
   // A removed student's stats doc goes, so they leave dashboards, the leaderboard and the export.
   const removed = users.filter((user) => user.removed === true);
   await Promise.all([
     ...students.map((user) => writeStudentStats(db, user, tasks, subs, now)),
-    ...tasks.map((task) => writeTaskStats(db, task, users, subs, now)),
+    ...tasks.map((task) => writeTaskStats(db, task, users, views, now)),
     ...removed.map((user) => db.collection("studentStats").doc(user.uid).delete()),
   ]);
   return { students: students.length, tasks: tasks.filter((task) => task.status === "published").length };
