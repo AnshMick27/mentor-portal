@@ -260,3 +260,4 @@
 - New tokens: `bg-card`, `bg-surface-strong`, `bg-primary`/`hover:bg-primary-hover`, `shadow-card`, fonts `--font-sans` (Inter) and `--font-mono` (JetBrains Mono) via `next/font/google` in `app/layout.tsx` (self-hosted, so `font-src 'self'` still holds; `next build` downloads them, so it needs network).
 - Every `<select>` matches `:read-only`, so never put `read-only:` styles in `inputClasses`; use `[&:is(input):read-only]:`.
 - Without a working sign-in popup (e.g. remote session), preview pages by rendering components with `renderToStaticMarkup` + demo data and the dev server's compiled CSS; never fake an auth session.
+- Paste block (T46a): React `onBeforeInput` is a polyfill without `inputType`, so `usePasteGuard` adds a native `beforeinput` listener. To refuse a change in a controlled textarea, just do not call the setter: React puts the old value back. Composition `beforeinput` is not cancellable, so `change` is the backstop there.

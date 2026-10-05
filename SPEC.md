@@ -33,8 +33,9 @@ In scope:
 4. Resume and written-intro tasks with AI feedback
 5. Mentee dashboard (student home screen)
 6. Mentor dashboard (plus read-only viewer access) with Excel export
+7. Answer integrity: pasting is blocked in the code and intro boxes, and mentors see warning signs and similar-submission reports (§8.9)
 
-Out of scope for v1: audio intros, plagiarism reports, notifications/email, file storage of any kind, public leaderboard by default.
+Out of scope for v1: audio intros, notifications/email, file storage of any kind, public leaderboard by default.
 
 ## 4. Tech stack (do not change without Ansh's approval)
 
@@ -106,8 +107,17 @@ result?: {
   criteria?: {name, score, comment}[],        // AI tasks
   judge?: {passed, total, verdict, firstFailedTest?} // coding tasks
 },
-error?: string
+error?: string,
+integrity?: {                       // code and intro only; see §8.9
+  pastesBlocked: number, largestInsert: number,
+  typedChars: number, awayCount: number, awayMs: number,
+  maxCharsPerSec: number,
+  elapsedMs?: number,              // measured on the server from the draft
+  flags: string[]                  // decided on the server; hints for mentors, never change the score
+}
 ```
+
+`drafts/{uid}_{taskId}` — server-only (rules deny all client access): `uid, taskId, openedAt`. Written when a student opens the code or intro form; lets the server measure how long the answer took.
 
 `studentStats/{uid}` — precomputed so dashboards read one doc, not hundreds
 ```
@@ -120,7 +130,7 @@ needsAttention: boolean, needsAttentionReason?: string,
 updatedAt
 ```
 
-`taskStats/{taskId}`: `submittedCount, notSubmittedUids[], avgScore, updatedAt`
+`taskStats/{taskId}`: `submittedCount, notSubmittedUids[], avgScore, updatedAt, similarPairs?: {uidA, uidB, submissionIdA, submissionIdB, percent}[]` (code and intro tasks; see §8.9)
 
 `config/app`: `leaderboardEnabled: boolean (default false)`
 
@@ -165,12 +175,12 @@ Needs-attention rule: missed ≥ 2 of the last 4 tasks that are past due, OR ave
 - Late submissions: after `dueAt` a student may still submit (same attempt limit), clearly marked "Late: feedback only, not scored". The submission has `late: true`, gets normal feedback, and never counts (see the scoring rule in §6). Mentors see a "Late" tag on it.
 
 ### 8.3 Coding task (student view)
-- Problem description + sample tests, language selector, code editor (a plain monospace textarea is fine for v1; a lightweight editor can come later), Submit button.
+- Problem description + sample tests, language selector, code editor (a plain monospace textarea is fine for v1; a lightweight editor can come later), Submit button. Pasting into the code box is blocked (§8.9).
 - After submit: status shows queued → running → done, polling every 5 s or a Firestore listener on the own submission. Show passed/total and verdict (`Accepted`, `Wrong Answer on test N`, `Time Limit Exceeded`, `Runtime Error`, `Compilation Error` with the first 20 lines of compiler output).
 
 ### 8.4 Resume and written-intro tasks
 - Resume: upload a PDF (text extracted in the browser with pdfjs; the file is not sent) OR paste text. Show the extracted text for the student to confirm before submitting.
-- Intro: text box with a live word count (target 80–250 words).
+- Intro: text box with a live word count (target 80–250 words). Pasting into the intro box is blocked (§8.9). Resume paste stays allowed.
 - On submit the server calls the AI and stores the result. Show score, criteria table, strengths, improvements, next steps.
 
 ### 8.5 Mentee dashboard (`/student`) — the student home screen
@@ -195,6 +205,14 @@ Needs-attention rule: missed ≥ 2 of the last 4 tasks that are past due, OR ave
 ### 8.8 Removing students
 - Anyone with a college email can sign in, so a mentor can remove accounts that are not mentees (`/mentor/students`: every student account, searchable, active and removed groups; viewers read only).
 - `POST /api/students/[uid]/remove` and `/restore` (mentor only; staff accounts cannot be removed). Removal is a blocked state, not a deletion: the user doc and submissions stay, but the user cannot sign in or read anything and is left out of every dashboard, stat, leaderboard and export. Restore gives access back and recomputes their stats.
+
+### 8.9 Answer integrity (code and intro)
+A web page cannot stop a student retyping an answer from another device, so the portal blocks what it can, shows mentors warning signs, and compares submissions on the server. Nothing here changes a score automatically; mentors decide.
+- Paste block (browser): the code and intro boxes refuse `paste`, `drop`, `beforeinput` of type `insertFromPaste` / `insertFromDrop` / `insertReplacementText` / `insertFromYank`, untrusted (script) input, and any single change that adds more than 25 characters (catches phone-keyboard clipboard chips, which arrive as typing). The change is undone and a plain note says pasting is turned off. The code box turns off autocomplete, autocorrect, auto-capitalise and spellcheck. The clipboard itself is never read.
+- Warning signs (browser → server): the submit request carries counts only (pastes blocked, largest insert, characters typed, tab/window switches and time away, fastest typing speed). Keystrokes and drafts are never stored. `POST /api/submissions/draft` records `openedAt` on the server when the form opens; on submit the server computes `elapsedMs` itself. The server validates the counts with zod and turns them into `integrity.flags` (for example: sent outside the form when counts are missing, typed faster than a person can, answer longer than the characters typed, long time away).
+- Mentors and viewers see the flags as a "Check" chip on the submissions page and the student profile. Students never see flags.
+- Similar submissions (server): the nightly cron compares the latest scored submissions of each code and intro task. Code is normalised (comments and spacing removed, identifiers and literals replaced) and compared by k-gram fingerprints; intros by five-word shingles. Pairs at 80% or more are stored in `taskStats.similarPairs` and listed on the task's submissions page.
+- The privacy page says what is recorded.
 
 ## 9. Code judge (GitHub Actions)
 

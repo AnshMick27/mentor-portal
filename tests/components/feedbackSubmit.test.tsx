@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { StudentTaskDetail } from "@/components/student/StudentTaskDetail";
-import { FeedbackReady, SubmitFooter } from "@/components/student/FeedbackSubmitParts";
+import { FeedbackReady, PasteOffNote, SubmitFooter } from "@/components/student/FeedbackSubmitParts";
 import { IntroSubmitForm } from "@/components/student/IntroSubmitForm";
-import { resumeDisabledReason } from "@/components/student/ResumeSubmitForm";
+import { ResumeSubmitForm, resumeDisabledReason } from "@/components/student/ResumeSubmitForm";
 import { SubmissionResultView } from "@/components/student/SubmissionResultView";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import type { TaskDto } from "@/lib/validation/task";
@@ -123,6 +123,23 @@ describe("disabled reasons, order and headings (T35h)", () => {
     const field = html.indexOf('id="intro-text"');
     expect(field).toBeLessThan(html.indexOf('id="intro-count"'));
     expect(html.indexOf('id="intro-count"')).toBeLessThan(html.indexOf('href="/privacy"'));
+  });
+
+  it("the intro form says pasting is off, linked to the box (T46a)", () => {
+    const html = renderToStaticMarkup(<IntroSubmitForm state={{ status: "idle" }} onSubmit={() => {}} />);
+    expect(html).toContain('<p id="intro-paste" role="status" class="text-sm text-muted">Pasting is turned off for this task: type your answer.</p>');
+    expect(html).toMatch(/<textarea[^>]*aria-describedby="intro-paste intro-count"/);
+  });
+
+  it("the resume form keeps pasting allowed (T46a)", () => {
+    const html = renderToStaticMarkup(<ResumeSubmitForm state={{ status: "idle" }} onSubmit={() => {}} />);
+    expect(html).not.toContain("Pasting is turned off");
+  });
+
+  it("the paste note turns into a warning after a refused paste", () => {
+    const html = renderToStaticMarkup(<PasteOffNote id="p" blocked />);
+    expect(html).toContain("Not added: pasting is turned off for this task. Please type your answer.");
+    expect(html).toContain("border-amber-300");
   });
 
   it("names each reason the resume Submit button is off", () => {

@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/Button";
 import { inputClasses } from "@/components/ui/Field";
 import { codeSize, insertIndent } from "@/lib/submissions/judgeDisplay";
 import { LANGUAGE_LABEL, type Language } from "@/lib/validation/task";
-import { DisabledReason, ErrorNote, LimitStatus, textareaClass } from "./FeedbackSubmitParts";
+import { DisabledReason, ErrorNote, LimitStatus, PasteOffNote, textareaClass } from "./FeedbackSubmitParts";
 import type { CodeSubmitState } from "./useCodeSubmit";
+import { usePasteGuard } from "./usePasteGuard";
 
 type Props = {
   languages: readonly Language[];
@@ -14,15 +15,16 @@ type Props = {
   onSubmit: (language: Language, code: string) => void;
 };
 
-/** Coding task: language (the task's only), a monospace code box where Tab inserts spaces, a 32 KB counter. */
+/** Coding task: language (the task's only), a monospace code box where Tab inserts spaces and pasting is off, a 32 KB counter. */
 export function CodeSubmitForm({ languages, state, onSubmit }: Props) {
   const [language, setLanguage] = useState<Language>(languages[0] ?? "python");
   const [code, setCode] = useState("");
+  const paste = usePasteGuard(code, setCode);
   // After Escape, the next Tab moves focus as usual, so keyboard users are never trapped in the box.
   const escaped = useRef(false);
   const size = codeSize(code);
   const submitting = state.status === "submitting";
-  const disabledReason = size.tooBig ? "Shorten your code to submit." : code.trim() === "" ? "Paste or type your code to submit." : undefined;
+  const disabledReason = size.tooBig ? "Shorten your code to submit." : code.trim() === "" ? "Type your code to submit." : undefined;
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Escape") {
@@ -74,17 +76,19 @@ export function CodeSubmitForm({ languages, state, onSubmit }: Props) {
         Read the input from standard input and print the answer.
         <span className="hidden sm:inline"> Tab adds spaces; press Esc then Tab to leave the box.</span>
       </p>
+      <PasteOffNote id="code-paste" blocked={paste.blocked} />
       <textarea
         id="code-text"
         value={code}
-        onChange={(event) => setCode(event.target.value)}
+        {...paste.boxProps}
         onKeyDown={handleKeyDown}
         rows={16}
         spellCheck={false}
         autoCapitalize="off"
         autoCorrect="off"
+        autoComplete="off"
         wrap="off"
-        aria-describedby="code-help code-size"
+        aria-describedby="code-help code-paste code-size"
         className={`${textareaClass} font-mono text-sm leading-normal whitespace-pre`}
       />
       <p id="code-size" className={`text-sm ${size.tooBig ? "text-red-700 dark:text-red-300" : "text-muted"}`}>

@@ -73,9 +73,17 @@ describe("CodeSubmitForm", () => {
 
   it("explains why Submit is greyed out, linked to the button", () => {
     expect(html).toContain('aria-describedby="code-submit-reason"');
-    expect(html).toContain('<p id="code-submit-reason" class="text-sm text-muted">Paste or type your code to submit.</p>');
+    expect(html).toContain('<p id="code-submit-reason" class="text-sm text-muted">Type your code to submit.</p>');
     expect(html).not.toContain("aria-live"); // counters don't speak on every key
     expect(html.indexOf('id="code-help"')).toBeLessThan(html.indexOf('id="code-text"')); // hint above the box
+  });
+
+  it("says pasting is off, linked to the box, with autocomplete and autocorrect off (T46a)", () => {
+    expect(html).toContain('<p id="code-paste" role="status" class="text-sm text-muted">Pasting is turned off for this task: type your answer.</p>');
+    expect(html).toMatch(/<textarea[^>]*aria-describedby="code-help code-paste code-size"/);
+    expect(html).toMatch(/<textarea[^>]*autoComplete="off"|<textarea[^>]*autocomplete="off"/);
+    expect(html).toMatch(/<textarea[^>]*autoCorrect="off"|<textarea[^>]*autocorrect="off"/);
+    expect(html.indexOf('id="code-paste"')).toBeLessThan(html.indexOf('id="code-text"'));
   });
 
   it("shows server errors", () => {

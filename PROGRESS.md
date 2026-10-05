@@ -129,6 +129,24 @@ Goal: make the portal safe and understandable for real students, let the mentor 
   4. Watch the first days on `/mentor`. Write every problem or wish (yours or the students') under "Launch feedback" below: one line each — who, which page, what happened.
   5. Push to GitHub, tick H12 and say `Follow LOOP.md`.
 
+- [x] **T46a — Block pasting in the code and intro boxes** (asked by Ansh on 2026-10-05: students copy-paste, also from phones)
+  - Shared `usePasteGuard` hook (SPEC §8.9) used by `CodeSubmitForm` and `IntroSubmitForm` (not resume): refuse paste, drop, `beforeinput` paste/drop/replace/yank types, untrusted input, and any single change adding more than 25 characters; undo it and show a plain note. The hook also counts pastes blocked, largest insert and characters typed (sent to the server in T46b).
+  - Code box: autocomplete/autocorrect/autocapitalize/spellcheck off. Copy: hints no longer say "Paste"; the forms say pasting is turned off.
+  - Acceptance: unit tests for the insert rule; render/event tests for paste, drop, each `beforeinput` type, the 25-character rule (24 allowed, 26 undone), normal typing and Tab indent still working.
+
+- [ ] **T46b — Integrity counts and flags on the server**
+  - `POST /api/submissions/draft` (student; writes `drafts/{uid}_{taskId}.openedAt`, server only). The forms call it when they open, and send the counts (incl. tab/window switches and time away, fastest typing speed) with the submit request.
+  - The submit APIs validate the counts with a strict zod schema (optional, so old clients still work), compute `elapsedMs` from the draft, decide `integrity.flags` in a pure helper and store `integrity` on the submission. Scores never change.
+  - Acceptance: unit tests for every flag; API tests (counts stored, missing counts → "sent outside the form", bad counts → 400, resume untouched); rules tests that clients cannot read or write `drafts`.
+
+- [ ] **T46c — Show integrity flags to mentors**
+  - "Check" chip with a one-line reason on the submissions page and the student profile (mentor and viewer); students never see it. Privacy page: one line on what is recorded (counts only, no keystrokes).
+  - Acceptance: render tests (chip shown to staff, hidden for students, no chip without flags), privacy page test.
+
+- [ ] **T47 — Similar submissions report**
+  - `lib/integrity/similarity.ts`: normalise code (strip comments/spacing, replace identifiers and literals) → k-gram winnowing fingerprints; intros → five-word shingles; Jaccard percent. The nightly cron stores pairs at 80% or more in `taskStats.similarPairs`; the task's submissions page lists them (names, percent, links to both attempts).
+  - Acceptance: unit tests (renamed variables still match, different solutions do not, intro copies match), cron test, render test.
+
 - [ ] **T36 — Launch fixes**
   - Turn each "Launch feedback" line into a small task (T36a, T36b, …) in this list, most serious first, then do them one per iteration. Anything that would need a new feature or a SPEC change goes to "Questions for Ansh" instead.
   - Acceptance: per sub-task, as written when it is split.
@@ -474,12 +492,13 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-10-03 — T44b — Late submissions on screen: `submitAvailability` stays open past the due date with `late: true` (closes only when attempts are used up); submit sections show "Past the due date… will not be scored" above the form and drop "Your best score counts"; "Feedback ready (late, not scored: x / 10)"; "Late · not scored" chip + one-line note on late attempts (student task page, mentor profile, home latest feedback); task chip "Missed · sent late"; "Sent late" chip on the submissions page. 2 tests rewritten for the new rule, 5 new.
 - 2026-10-03 — T45 — Privacy page: new "How long it is kept" section ("kept for one year after your batch graduates, then deleted", also for removed accounts); contact line unchanged. RUNBOOK §5 "Deleting a graduated batch (once a year)" (export first, delete users/studentStats/submissions and Auth accounts, rerun stats; no bulk-delete tool yet). 1 new render test.
 - 2026-10-03 — H12 — Portal live with 3 tasks (reported by Ansh). Next: T36 fixes from "Launch feedback".
+- 2026-10-05 — T46a — Paste block in the code and intro boxes (SPEC §8.9, asked by Ansh): `lib/submissions/pasteGuard.ts` (`createPasteGuard`: refuses paste/drop, `beforeinput` paste/drop/yank types, untrusted input and any change adding more than 25 characters, e.g. phone-keyboard clipboard chips; own text copied, cut or deleted in the box may come back; counts pastes blocked, largest insert, typed characters for T46b), `components/student/usePasteGuard.ts` (native `beforeinput` listener + React handlers), `PasteOffNote` (muted hint, amber after a refused paste); code box autocomplete off, hint "Type your code to submit."; resume unchanged. SPEC §3/§6/§8.3/§8.4/§8.9 and T46b–T47 added with Ansh's OK. 25 unit + 4 render tests, 1 test updated for the new copy. Not yet tried in a real browser or phone (pages need sign-in).
 
 ## Blockers
 (none)
 
 ## Questions for Ansh
-(none open)
+- Later, if wanted (not in the loop yet): a mentor-saved "AI reference answer" per task to compare against, and a per-student paste allowance for students who need dictation software.
 
 ### Answered by Ansh on 2026-10-03
 - T40 Stitch extras (percentile, interview status, mentor actions, turnout tiles, CSV, memory limit…): none for now; the design stays look-only.

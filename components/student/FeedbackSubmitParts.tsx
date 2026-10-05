@@ -21,6 +21,15 @@ export function LimitStatus({ message }: { message: string }) {
   );
 }
 
+/** Says pasting is off (SPEC.md §8.9); after a refused paste it turns amber and is spoken once. */
+export function PasteOffNote({ id, blocked }: { id: string; blocked: boolean }) {
+  return (
+    <p id={id} role="status" className={`text-sm ${blocked ? "rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100" : "text-muted"}`}>
+      {blocked ? "Not added: pasting is turned off for this task. Please type your answer." : "Pasting is turned off for this task: type your answer."}
+    </p>
+  );
+}
+
 /** Why a Submit button is greyed out, linked to it with `aria-describedby` so it never just looks broken (UX-10). */
 export function DisabledReason({ id, reason }: { id: string; reason?: string }) {
   if (!reason) return null;
