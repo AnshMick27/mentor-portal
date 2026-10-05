@@ -25,7 +25,7 @@ beforeEach(() => {
 });
 
 describe("POST /api/me", () => {
-  it("creates a student on first login, not onboarded", async () => {
+  it("creates a student on first login, not onboarded and waiting for approval (T48)", async () => {
     const { status, body } = await callMe("stu");
     expect(status).toBe(200);
     expect(body.profile).toEqual({
@@ -35,14 +35,27 @@ describe("POST /api/me", () => {
       role: "student",
       onboarded: false,
       showOnLeaderboard: false,
+      pendingApproval: true,
     });
-    expect(fakeAdmin.users.get("s1")).toMatchObject({ role: "student", onboarded: false });
+    expect(fakeAdmin.users.get("s1")).toMatchObject({ role: "student", onboarded: false, pendingApproval: true });
     expect(fakeAdmin.users.get("s1")).toHaveProperty("createdAt");
   });
 
   it("creates mentors and viewers from the env lists, already onboarded", async () => {
     expect((await callMe("ansh")).body.profile).toMatchObject({ role: "mentor", onboarded: true });
     expect((await callMe("boss")).body.profile).toMatchObject({ role: "viewer", onboarded: true });
+  });
+
+  it("never makes staff wait for approval (T48)", async () => {
+    expect((await callMe("ansh")).body.profile).not.toHaveProperty("pendingApproval");
+    expect((await callMe("boss")).body.profile).not.toHaveProperty("pendingApproval");
+  });
+
+  it("keeps a pending student pending on later logins, and returns the profile so the app can show the waiting page", async () => {
+    await callMe("stu");
+    const { status, body } = await callMe("stu");
+    expect(status).toBe(200);
+    expect(body.profile).toMatchObject({ pendingApproval: true });
   });
 
   it("returns the existing profile on later logins without changing it", async () => {

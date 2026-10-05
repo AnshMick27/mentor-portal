@@ -1,5 +1,5 @@
 import "server-only";
-import { jsonError, REMOVED_MESSAGE, WRONG_DOMAIN_MESSAGE } from "@/lib/api/errors";
+import { jsonError, PENDING_MESSAGE, REMOVED_MESSAGE, WRONG_DOMAIN_MESSAGE } from "@/lib/api/errors";
 import { getServerEnv } from "@/lib/config/env";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { storedUserSchema, type Role, type UserProfile } from "@/lib/validation/user";
@@ -46,8 +46,14 @@ export async function verifyIdentity(request: Request): Promise<AuthResult<Ident
  *
  *   const auth = await requireUser(request, ["mentor"]);
  *   if (!auth.ok) return auth.response;
+ *
+ * A student waiting for approval (T48) is refused unless `allowPending` (only onboarding sets it).
  */
-export async function requireUser(request: Request, roles: readonly Role[]): Promise<AuthResult<UserProfile>> {
+export async function requireUser(
+  request: Request,
+  roles: readonly Role[],
+  options: { allowPending?: boolean } = {},
+): Promise<AuthResult<UserProfile>> {
   const identity = await verifyIdentity(request);
   if (!identity.ok) return identity;
   const { uid } = identity.value;
@@ -62,6 +68,7 @@ export async function requireUser(request: Request, roles: readonly Role[]): Pro
   }
 
   if (parsed.data.removed === true) return fail(403, REMOVED_MESSAGE);
+  if (parsed.data.pendingApproval === true && !options.allowPending) return fail(403, PENDING_MESSAGE);
   if (!roles.includes(parsed.data.role)) return fail(403, "You do not have access to this.");
   return { ok: true, value: { uid, ...parsed.data } };
 }

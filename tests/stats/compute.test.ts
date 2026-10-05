@@ -208,6 +208,12 @@ describe("computeTaskStats", () => {
     expect(computeTaskStats(t, withRemoved, []).notSubmittedUids).toEqual(["s1", "s3"]);
   });
 
+  it("leaves out students waiting for approval (T48)", () => {
+    const withPending = users.map((user) => (user.uid === "s3" ? { ...user, pendingApproval: true } : user));
+    expect(countedStudents(withPending).map((user) => user.uid)).toEqual(["s1", "s2"]);
+    expect(computeTaskStats(t, withPending, []).notSubmittedUids).toEqual(["s1", "s2"]);
+  });
+
   it("lists every counted student as not submitted when nobody has finished", () => {
     const stats = computeTaskStats(t, users, [other("t", "error", "s1"), other("t", "queued", "s2")]);
     expect(stats).toEqual({ submittedCount: 0, notSubmittedUids: ["s1", "s2", "s3"], avgScoreByBranch: {} });

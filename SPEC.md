@@ -79,6 +79,7 @@ name, email, role: "student"|"mentor"|"viewer",
 rollNo?: string, branch?: Branch, onboarded: boolean,
 showOnLeaderboard: boolean (default false), createdAt,
 removed?: boolean, removedAt?, removedBy? (uid)   // set by a mentor; see §8.8
+pendingApproval?: boolean, approvedAt?, approvedBy? (uid)   // new students wait for a mentor; see §8.10
 ```
 Branch = `CSE | IT | CSIT | CSE-AIML | CY | CSE-DS | EC | ME | OTHER`
 
@@ -149,7 +150,7 @@ Needs-attention rule: missed ≥ 2 of the last 4 tasks that are past due, OR ave
    - `submissions`: only the owning student, or mentor/viewer.
    - `studentStats/{uid}`: that student, or mentor/viewer.
    - `taskStats`, `config`: mentor/viewer only (students read `config/app` only if needed for leaderboard flag — expose via API instead).
-   - "Provisioned user" = a `users/{uid}` doc exists (created by the server only after the domain check) and is not `removed`. A removed user reads nothing, and `requireUser` refuses them (403).
+   - "Provisioned user" = a `users/{uid}` doc exists (created by the server only after the domain check), is not `removed` and is not `pendingApproval`. A removed or pending user reads nothing; `requireUser` refuses a removed user (403) and a pending one (403) on every route except onboarding.
    - Everything else: denied.
 3. Every API route: verify ID token with Admin SDK → check `email_verified` and domain → load role from `users/{uid}` → authorise. Use one shared helper (`requireUser(roles)`).
 4. Secrets (service account, AI keys, GitHub token, webhook secret) exist only in server env vars. Nothing secret uses the `NEXT_PUBLIC_` prefix. `.env*` files are git-ignored (except `.env.example`).
@@ -166,6 +167,7 @@ Needs-attention rule: missed ≥ 2 of the last 4 tasks that are past due, OR ave
 - `/login`: "Sign in with Google" button (use `hd` hint for the domain, but enforce on the server).
 - After sign-in the client calls `POST /api/me`. The server rejects non-domain emails (and signs them out client-side with a clear message), creates `users/{uid}` on first login with the server-decided role, and returns the profile. On every login the role follows the env lists: an email added to `MENTOR_EMAILS`/`VIEWER_EMAILS` is upgraded, and a mentor/viewer whose email is no longer on either list becomes a student. Name and email are set at first login only. A removed user gets 403 with a plain message and is signed out; `/api/me` never un-removes anyone.
 - Students with `onboarded == false` are sent to `/onboarding` to enter roll number and branch (`POST /api/onboarding`, validated).
+- A student created after T48 starts with `pendingApproval: true`: after onboarding they see only `/pending` ("Waiting for approval") until a mentor approves them (§8.10).
 - Route guards: `/student/*` for students, `/mentor/*` for mentor and viewer. Viewer sees no create/edit controls and the API rejects their writes.
 
 ### 8.2 Task board
@@ -213,6 +215,12 @@ A web page cannot stop a student retyping an answer from another device, so the 
 - Mentors and viewers see the flags as a "Check" chip on the submissions page and the student profile. Students never see flags.
 - Similar submissions (server): the nightly cron compares the latest scored submissions of each code and intro task. Code is normalised (comments and spacing removed, identifiers and literals replaced) and compared by k-gram fingerprints; intros by five-word shingles. Pairs at 80% or more are stored in `taskStats.similarPairs` and listed on the task's submissions page.
 - The privacy page says what is recorded.
+
+### 8.10 Approving new students
+- Every student account created from T48 on starts with `pendingApproval: true`. Accounts without the field (everyone who signed up before) count as approved. Staff are never pending; a mentor/viewer demoted to student (§8.1) is not made pending.
+- A pending student signs in and onboards as usual, then sees only `/pending`: a "Waiting for approval" alert, a "Check again" button and Sign out. They cannot read tasks, submissions or stats (rules and `requireUser`), have no `studentStats`, and are left out of every dashboard, stat, leaderboard and export, like a removed student.
+- `/mentor/students` lists them in a "Waiting for approval" group first, with Approve and Remove (Remove = §8.8). The mentor dashboard shows how many are waiting, linked to that list. Viewers see both, read-only.
+- `POST /api/students/[uid]/approve` (mentor only; staff accounts → 400): deletes `pendingApproval`, sets `approvedAt`/`approvedBy`, then recomputes stats. Approving an approved student changes nothing. A removed student stays removed until restored (restore keeps them pending if they were never approved).
 
 ## 9. Code judge (GitHub Actions)
 

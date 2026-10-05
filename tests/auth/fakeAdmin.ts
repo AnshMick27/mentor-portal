@@ -1,3 +1,4 @@
+import { FieldValue } from "firebase-admin/firestore";
 import { vi } from "vitest";
 
 /** Decoded ID-token fields our code reads. */
@@ -56,7 +57,10 @@ export function createFakeAdmin() {
   function updateDoc(collection: string, id: string, data: Data): void {
     const docs = collectionData(collection);
     if (!docs.has(id)) throw new Error("not found");
-    docs.set(id, { ...docs.get(id), ...data });
+    const next: Data = { ...docs.get(id), ...data };
+    // `FieldValue.delete()` removes the field, as in real Firestore.
+    for (const [key, value] of Object.entries(data)) if (value instanceof FieldValue && value.isEqual(FieldValue.delete())) delete next[key];
+    docs.set(id, next);
   }
 
   let autoId = 0;

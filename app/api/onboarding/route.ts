@@ -4,9 +4,9 @@ import { requireUser } from "@/lib/auth/requireUser";
 import { completeOnboarding } from "@/lib/onboarding/completeOnboarding";
 import { onboardingSchema } from "@/lib/validation/onboarding";
 
-/** Student-only: saves roll number and branch once (SPEC.md §8.1). */
+/** Student-only: saves roll number and branch once (SPEC.md §8.1). Also for students still waiting for approval. */
 export async function POST(request: Request): Promise<Response> {
-  const auth = await requireUser(request, ["student"]);
+  const auth = await requireUser(request, ["student"], { allowPending: true });
   if (!auth.ok) return auth.response;
 
   const body = await parseBody(request, onboardingSchema);

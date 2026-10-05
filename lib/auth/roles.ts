@@ -39,6 +39,7 @@ export type ProvisionPlan =
  * lists (SPEC.md §8.1, T43): added to MENTOR_EMAILS / VIEWER_EMAILS → that staff role; a mentor/viewer on neither
  * list any more → student. A demoted account counts as onboarded only if it already has a roll number and branch
  * (it was a student before); otherwise it goes through onboarding like any new student. Name and email never change.
+ * A NEW student waits for a mentor's approval (`pendingApproval`, T48); staff and demoted staff never do.
  */
 export function planProvision(existing: StoredUser | undefined, identity: Identity, listRole: Role): ProvisionPlan {
   if (!existing) {
@@ -50,6 +51,7 @@ export function planProvision(existing: StoredUser | undefined, identity: Identi
         role: listRole,
         onboarded: isStaffRole(listRole),
         showOnLeaderboard: false,
+        ...(isStaffRole(listRole) ? {} : { pendingApproval: true }),
       },
     };
   }

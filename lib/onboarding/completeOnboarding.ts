@@ -9,7 +9,8 @@ export type OnboardingResult = { ok: true; profile: UserProfile } | { ok: false;
 
 /**
  * Saves roll number and branch, sets `onboarded: true` and creates `studentStats/{uid}`, all in one
- * transaction. Refuses a second onboarding and a roll number another account already uses.
+ * transaction. Refuses a second onboarding and a roll number another account already uses. A student waiting
+ * for approval gets no stats doc yet (T48): approval recomputes it.
  */
 export async function completeOnboarding(uid: string, input: OnboardingInput): Promise<OnboardingResult> {
   const db = getAdminDb();
@@ -31,10 +32,12 @@ export async function completeOnboarding(uid: string, input: OnboardingInput): P
 
     const changes = { rollNo: input.rollNo, branch: input.branch, onboarded: true };
     tx.update(userRef, changes);
-    tx.set(statsRef, {
-      ...initialStudentStats({ name: user.name, showOnLeaderboard: user.showOnLeaderboard, ...input }),
-      updatedAt: FieldValue.serverTimestamp(),
-    });
+    if (user.pendingApproval !== true) {
+      tx.set(statsRef, {
+        ...initialStudentStats({ name: user.name, showOnLeaderboard: user.showOnLeaderboard, ...input }),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
     return { ok: true, profile: { uid, ...user, ...changes } };
   });
 }

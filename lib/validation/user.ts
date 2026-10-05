@@ -20,6 +20,8 @@ export const storedUserSchema = z.object({
   showOnLeaderboard: z.boolean().default(false),
   /** Set by a mentor (T34a): access blocked, data kept, reversible. Absent = active. */
   removed: z.boolean().optional(),
+  /** New students wait for a mentor (T48, SPEC §8.10). Absent = approved (everyone who signed up before T48). */
+  pendingApproval: z.boolean().optional(),
 });
 export type StoredUser = z.infer<typeof storedUserSchema>;
 

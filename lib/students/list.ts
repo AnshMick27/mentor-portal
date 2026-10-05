@@ -11,6 +11,8 @@ export type StudentRow = {
   branch?: Branch;
   onboarded: boolean;
   removed: boolean;
+  /** Waiting for a mentor's approval (T48); absent = approved. */
+  pending?: boolean;
   /** When the account was created (first sign-in); missing on very old docs. */
   joinedAt?: Date;
 };
@@ -21,13 +23,14 @@ const userDocSchema = storedUserSchema.extend({ createdAt: timestampLike.optiona
 export function toStudentRow(uid: string, data: unknown): StudentRow | undefined {
   const parsed = userDocSchema.safeParse(data);
   if (!parsed.success || parsed.data.role !== "student") return undefined;
-  const { name, email, rollNo, branch, onboarded, removed, createdAt } = parsed.data;
+  const { name, email, rollNo, branch, onboarded, removed, pendingApproval, createdAt } = parsed.data;
   return {
     uid,
     name,
     email,
     onboarded,
     removed: removed === true,
+    ...(pendingApproval === true ? { pending: true } : {}),
     ...(rollNo ? { rollNo } : {}),
     ...(branch ? { branch } : {}),
     ...(createdAt ? { joinedAt: createdAt.toDate() } : {}),

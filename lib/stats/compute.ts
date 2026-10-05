@@ -147,7 +147,7 @@ export function computeStudentStats(
 
 /** Students who count for class stats: onboarded, not removed students (never mentors or viewers). */
 export function countedStudents(users: readonly StatsUser[]): StatsUser[] {
-  return users.filter((user) => user.role === "student" && user.onboarded && user.removed !== true);
+  return users.filter((user) => user.role === "student" && user.onboarded && user.removed !== true && user.pendingApproval !== true);
 }
 
 /**

@@ -7,7 +7,7 @@ import type { StudentRow } from "@/lib/students/list";
 import type { IntegrityFlag } from "@/lib/validation/submission";
 import type { Branch } from "@/lib/validation/user";
 
-/** An onboarded, not-removed student: the only ones a task's roster counts (same as the stats). */
+/** An onboarded, approved, not-removed student: the only ones a task's roster counts (same as the stats). */
 export type RosterStudent = StudentRow & { rollNo: string; branch: Branch };
 
 export type SubmittedRow = {
@@ -34,7 +34,7 @@ export type TaskRoster = { total: number; submitted: SubmittedRow[]; notSubmitte
 
 export function rosterStudents(rows: readonly StudentRow[]): RosterStudent[] {
   return rows.flatMap((row) =>
-    row.onboarded && !row.removed && row.rollNo && row.branch ? [{ ...row, rollNo: row.rollNo, branch: row.branch }] : [],
+    row.onboarded && !row.removed && !row.pending && row.rollNo && row.branch ? [{ ...row, rollNo: row.rollNo, branch: row.branch }] : [],
   );
 }
 

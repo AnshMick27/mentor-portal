@@ -57,10 +57,10 @@ describe("planProvision", () => {
     showOnLeaderboard: false,
   };
 
-  it("creates a new student with onboarded false and a lowercase email", () => {
+  it("creates a new student with onboarded false, a lowercase email and waiting for approval (T48)", () => {
     expect(planProvision(undefined, identity, "student")).toEqual({
       action: "create",
-      user: { name: "Stu", email: "stu@college.ac.in", role: "student", onboarded: false, showOnLeaderboard: false },
+      user: { name: "Stu", email: "stu@college.ac.in", role: "student", onboarded: false, showOnLeaderboard: false, pendingApproval: true },
     });
   });
 
@@ -70,6 +70,7 @@ describe("planProvision", () => {
       expect(plan.action).toBe("create");
       expect(plan.user.role).toBe(role);
       expect(plan.user.onboarded).toBe(true);
+      expect(plan.user).not.toHaveProperty("pendingApproval");
     }
   });
 
