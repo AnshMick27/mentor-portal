@@ -501,8 +501,13 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 (none)
 
 ## Questions for Ansh
-- T46b: SPEC §6 puts `integrity` on the submission doc, and students may read their own submissions (rules), so a student who opens browser devtools can see their own counts and flag names (not other students', and the portal never shows them). Built as written. If you want flags hidden from students too, a later task can move them to a staff-only `submissionIntegrity/{id}` collection (a SPEC change). OK as is?
-- Later, if wanted (not in the loop yet): a mentor-saved "AI reference answer" per task to compare against, and a per-student paste allowance for students who need dictation software.
+(none open)
+
+### Answered by Ansh on 2026-10-05
+- Anti-copying plan (T46a–T47) and the SPEC §8.9 edit: approved; flags only, never scored; 25-character insert limit.
+- T46b: students being able to see their own integrity flags via devtools is OK; flags stay on the submission doc.
+- AI reference answer and per-student dictation exception: not for now (see how the current checks work first).
+- Dependabot @grpc/grpc-js alerts #2 and #3 (gRPC server-only): dismissed by Ansh as not used.
 
 ### Answered by Ansh on 2026-10-03
 - T40 Stitch extras (percentile, interview status, mentor actions, turnout tiles, CSV, memory limit…): none for now; the design stays look-only.
