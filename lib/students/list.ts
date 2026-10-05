@@ -44,14 +44,18 @@ export function searchStudents(rows: readonly StudentRow[], search: string): Stu
   return rows.filter((row) => [row.name, row.email, row.rollNo ?? ""].some((field) => field.toLowerCase().includes(needle)));
 }
 
-/** Active and removed students, each by name. */
-export function splitStudents(rows: readonly StudentRow[]): { active: StudentRow[]; removed: StudentRow[] } {
+/** Waiting for approval (T48), active and removed students, each by name. A removed student is only under removed. */
+export function splitStudents(rows: readonly StudentRow[]): { pending: StudentRow[]; active: StudentRow[]; removed: StudentRow[] } {
   const byName = (a: StudentRow, b: StudentRow) => a.name.localeCompare(b.name) || a.email.localeCompare(b.email);
   return {
-    active: rows.filter((row) => !row.removed).sort(byName),
+    pending: rows.filter((row) => !row.removed && row.pending === true).sort(byName),
+    active: rows.filter((row) => !row.removed && row.pending !== true).sort(byName),
     removed: rows.filter((row) => row.removed).sort(byName),
   };
 }
+
+/** `POST /api/students/[uid]/approve` reply (T48). */
+export const approvalResponseSchema = z.object({ student: z.object({ uid: z.string(), pendingApproval: z.literal(false) }) });
 
 /** `POST /api/students/[uid]/remove|restore` reply. */
 export const removalResponseSchema = z.object({ student: z.object({ uid: z.string(), removed: z.boolean() }) });

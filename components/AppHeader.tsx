@@ -19,10 +19,10 @@ const STAFF_NAV: NavItem[] = [
   { href: "/mentor/students", label: "Students" },
 ];
 
-/** Main links for this user; none for a student who has not finished onboarding (those pages would redirect). */
+/** Main links for this user; none for a student who has not finished onboarding or is waiting for approval (those pages would redirect). */
 export function navItemsFor(profile: UserProfile): NavItem[] {
   if (profile.role !== "student") return STAFF_NAV;
-  return profile.onboarded ? STUDENT_NAV : [];
+  return profile.onboarded && profile.pendingApproval !== true ? STUDENT_NAV : [];
 }
 
 /** A home link (`/student`, `/mentor`) is current only on itself; section links also cover their sub-pages. */

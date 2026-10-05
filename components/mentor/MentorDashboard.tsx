@@ -5,6 +5,7 @@ import { cardClasses } from "@/components/ui/Card";
 import { Disclosure } from "@/components/ui/Disclosure";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { inputClasses } from "@/components/ui/Field";
+import { Note } from "@/components/ui/Note";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatScore } from "@/components/ui/Score";
 import { Section } from "@/components/ui/Section";
@@ -91,6 +92,7 @@ export function MentorDashboardView({
   const branches = branchesOf(data.students);
   return (
     <div className="flex flex-col gap-8">
+      <PendingNote count={data.pendingCount ?? 0} />
       <label className="flex flex-col gap-1 text-sm font-medium sm:flex-row sm:items-center sm:gap-3">
         Branch
         <select
@@ -185,6 +187,18 @@ export function MentorDashboardView({
         )}
       </Section>
     </div>
+  );
+}
+
+/** New students waiting for approval (T48), linked to the Students page where they are approved. */
+export function PendingNote({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <Note tone="info" title={count === 1 ? "1 new student is waiting for approval" : `${count} new students are waiting for approval`}>
+      <p>
+        They cannot see any tasks until they are approved. <TextLink href="/mentor/students">Review them on the Students page</TextLink>
+      </p>
+    </Note>
   );
 }
 

@@ -10,6 +10,7 @@ import { StatusChip } from "@/components/ui/StatusChip";
 import { TextLink } from "@/components/ui/TextLink";
 import { formatIst } from "@/lib/dates/ist";
 import { searchStudents, splitStudents, type StudentRow } from "@/lib/students/list";
+import { ApproveStudentButton } from "./ApproveStudentButton";
 import { RemoveStudentButton } from "./RemoveStudentButton";
 
 function Row({ row, canEdit, onChanged }: { row: StudentRow; canEdit: boolean; onChanged: () => void }) {
@@ -24,15 +25,17 @@ function Row({ row, canEdit, onChanged }: { row: StudentRow; canEdit: boolean; o
           {row.rollNo ?? "No roll number"} · {row.branch ?? "—"}
           {row.joinedAt && <> · Joined {formatIst(row.joinedAt.toISOString())}</>}
         </span>
-        {(row.removed || !row.onboarded) && (
+        {(row.removed || !row.onboarded || row.pending === true) && (
           <span className="mt-1 flex flex-wrap gap-2">
             {row.removed && <StatusChip tone="danger">Removed</StatusChip>}
+            {row.pending === true && !row.removed && <StatusChip tone="info">Waiting for approval</StatusChip>}
             {!row.onboarded && <StatusChip tone="warning">Onboarding not finished</StatusChip>}
           </span>
         )}
       </div>
       {canEdit && (
-        <div className="shrink-0 self-start sm:max-w-xs sm:self-center">
+        <div className="flex shrink-0 flex-wrap items-start gap-2 self-start sm:max-w-xs sm:self-center">
+          {row.pending === true && !row.removed && <ApproveStudentButton uid={row.uid} name={row.name} onChanged={onChanged} />}
           <RemoveStudentButton uid={row.uid} name={row.name} removed={row.removed} onChanged={onChanged} />
         </div>
       )}
@@ -79,10 +82,10 @@ export function StudentListHeader({ canEdit }: { canEdit: boolean }) {
   );
 }
 
-/** Every student account, searchable; mentors can remove and restore, viewers only read (T34b). */
+/** Every student account, searchable; mentors approve new students (T48), remove and restore; viewers only read (T34b). */
 export function StudentList({ rows, canEdit, onChanged }: { rows: StudentRow[]; canEdit: boolean; onChanged: () => void }) {
   const [search, setSearch] = useState("");
-  const { active, removed } = splitStudents(searchStudents(rows, search));
+  const { pending, active, removed } = splitStudents(searchStudents(rows, search));
   return (
     <div className="flex flex-col gap-6">
       <label className="flex flex-col gap-1 text-sm font-medium">
@@ -95,6 +98,15 @@ export function StudentList({ rows, canEdit, onChanged }: { rows: StudentRow[]; 
           className={`${inputClasses} font-normal`}
         />
       </label>
+      {(pending.length > 0 || canEdit) && (
+        <Group
+          title="Waiting for approval"
+          rows={pending}
+          empty={search ? "No waiting student matches." : "Nobody is waiting. New students appear here after they sign up."}
+          canEdit={canEdit}
+          onChanged={onChanged}
+        />
+      )}
       <Group
         title="Active"
         rows={active}

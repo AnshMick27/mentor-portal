@@ -23,10 +23,17 @@ export function allStudentStatsQuery(db: Firestore) {
   return query(collection(db, "studentStats"), limit(STUDENT_STATS_LIMIT));
 }
 
+/** Students waiting for approval (T48), removed ones included (filtered below). Equality filters only: no composite index. */
+export function pendingStudentsQuery(db: Firestore) {
+  return query(collection(db, "users"), where("role", "==", "student"), where("pendingApproval", "==", true), limit(STUDENT_STATS_LIMIT));
+}
+
 export type MentorDashboardData = {
   tasks: TaskDto[];
   taskStats: Map<string, StoredTaskStats>;
   students: MentorStudent[];
+  /** New students waiting for approval (T48); absent = none. */
+  pendingCount?: number;
 };
 
 async function loadTaskStats(db: Firestore, taskId: string): Promise<[string, StoredTaskStats] | undefined> {
@@ -39,12 +46,14 @@ async function loadTaskStats(db: Firestore, taskId: string): Promise<[string, St
 
 /**
  * The mentor dashboard reads only precomputed docs (SPEC.md §8.6): the 10 latest published tasks, their
- * taskStats, and every studentStats doc. About 70 reads for a batch of 50; no raw submissions.
+ * taskStats, every studentStats doc, and the students waiting for approval (usually 0–5 reads). About 70 reads for a
+ * batch of 50; no raw submissions.
  */
 export async function loadMentorDashboard(db: Firestore): Promise<MentorDashboardData> {
-  const [taskSnapshot, statsSnapshot] = await Promise.all([
+  const [taskSnapshot, statsSnapshot, pendingSnapshot] = await Promise.all([
     getDocs(recentPublishedTasksQuery(db)),
     getDocs(allStudentStatsQuery(db)),
+    getDocs(pendingStudentsQuery(db)),
   ]);
   const tasks = taskSnapshot.docs.flatMap((d) => taskDocToDto(d.id, d.data()) ?? []);
   const taskStats = await Promise.all(tasks.map((task) => loadTaskStats(db, task.id)));
@@ -53,5 +62,6 @@ export async function loadMentorDashboard(db: Firestore): Promise<MentorDashboar
     if (!parsed.success) console.error(`studentStats/${d.id} does not match the stats schema`);
     return parsed.success ? [{ ...parsed.data, uid: d.id }] : [];
   });
-  return { tasks, taskStats: new Map(taskStats.flatMap((entry) => (entry ? [entry] : []))), students };
+  const pendingCount = pendingSnapshot.docs.filter((d) => d.data().removed !== true).length;
+  return { tasks, taskStats: new Map(taskStats.flatMap((entry) => (entry ? [entry] : []))), students, pendingCount };
 }
