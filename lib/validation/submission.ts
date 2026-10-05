@@ -50,6 +50,31 @@ export const submissionResultSchema = z.object({
 });
 export type SubmissionResult = z.infer<typeof submissionResultSchema>;
 
+/**
+ * Answer-integrity counts the code and intro forms send with a submission (SPEC.md §8.9). Counts only, never
+ * keystrokes. They come from the browser, so they are hints: bounded here, never used for the score.
+ */
+export const integrityCountsSchema = z.strictObject({
+  pastesBlocked: z.number().int().min(0).max(100_000),
+  largestInsert: z.number().int().min(0).max(1_000_000),
+  typedChars: z.number().int().min(0).max(10_000_000),
+  awayCount: z.number().int().min(0).max(100_000),
+  awayMs: z.number().int().min(0).max(30 * 24 * 60 * 60 * 1000),
+  maxCharsPerSec: z.number().min(0).max(100_000),
+});
+export type IntegrityCounts = z.infer<typeof integrityCountsSchema>;
+
+/** Flags the server decides from the counts (lib/submissions/integrityFlags.ts). Mentors see them; scores never change. */
+export const INTEGRITY_FLAGS = ["outside_form", "pastes_blocked", "fast_typing", "more_than_typed", "quick_answer", "long_away"] as const;
+export type IntegrityFlag = (typeof INTEGRITY_FLAGS)[number];
+
+/** `submissions/{id}.integrity` (SPEC.md §6). Counts are absent when the answer was sent outside the form. */
+export const storedIntegritySchema = z.object(integrityCountsSchema.shape).partial().extend({
+  elapsedMs: z.number().int().min(0).optional(),
+  flags: z.array(z.enum(INTEGRITY_FLAGS)),
+});
+export type StoredIntegrity = z.infer<typeof storedIntegritySchema>;
+
 /** `submissions/{submissionId}` as stored (SPEC.md §6). Not strict: unknown extra fields are ignored. */
 export const storedSubmissionSchema = z.object({
   taskId: z.string(),
@@ -64,6 +89,8 @@ export const storedSubmissionSchema = z.object({
   error: z.string().optional(),
   /** Sent after the task's due date: feedback only, never scored (SPEC.md §6, §8.2; T44). */
   late: z.boolean().optional(),
+  /** Code and intro only (SPEC.md §8.9). */
+  integrity: storedIntegritySchema.optional(),
 });
 export type StoredSubmission = z.infer<typeof storedSubmissionSchema>;
 
@@ -91,6 +118,8 @@ export const feedbackRequestSchema = z
     taskId: taskIdSchema,
     type: z.enum(AI_TASK_TYPES),
     content: z.string().trim(),
+    /** Sent by the intro form; ignored for a resume. */
+    integrity: integrityCountsSchema.optional(),
   })
   .superRefine(checkTextLimits);
 export type FeedbackRequest = z.infer<typeof feedbackRequestSchema>;
@@ -103,5 +132,9 @@ export const codeSubmitRequestSchema = z.strictObject({
     .string()
     .refine((code) => code.trim().length > 0, "Write some code before submitting.")
     .refine((code) => utf8Bytes(code) <= MAX_CODE_BYTES, "Code must be at most 32 KB."),
+  integrity: integrityCountsSchema.optional(),
 });
 export type CodeSubmitRequest = z.infer<typeof codeSubmitRequestSchema>;
+
+/** `POST /api/submissions/draft` body: the code or intro form for this task was opened (SPEC.md §8.9). */
+export const draftRequestSchema = z.strictObject({ taskId: taskIdSchema });

@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { changeBetween, createPasteGuard, MAX_TYPED_INSERT, PASTE_INPUT_TYPES, type BeforeInputInfo } from "@/lib/submissions/pasteGuard";
+import {
+  changeBetween,
+  createPasteGuard,
+  MAX_TYPED_INSERT,
+  PASTE_INPUT_TYPES,
+  SPEED_WINDOW_MS,
+  type BeforeInputInfo,
+} from "@/lib/submissions/pasteGuard";
 
 const typed = (inputType: string, text: string | null, extra: Partial<BeforeInputInfo> = {}): BeforeInputInfo => ({
   inputType,
@@ -92,7 +99,7 @@ describe("change", () => {
     const guard = createPasteGuard();
     expect(guard.change("", chars(MAX_TYPED_INSERT), true)).toBe(true);
     expect(guard.change("", "y".repeat(MAX_TYPED_INSERT + 1), true)).toBe(false);
-    expect(guard.counts()).toEqual({ pastesBlocked: 1, largestInsert: MAX_TYPED_INSERT + 1, typedChars: MAX_TYPED_INSERT });
+    expect(guard.counts()).toMatchObject({ pastesBlocked: 1, largestInsert: MAX_TYPED_INSERT + 1, typedChars: MAX_TYPED_INSERT });
   });
 
   it("measures the inserted part, not the length difference (paste over a selection)", () => {
@@ -125,5 +132,48 @@ describe("change", () => {
 
   it("refuses an untrusted change of any size", () => {
     expect(createPasteGuard().change("", "a", false)).toBe(false);
+  });
+});
+
+describe("typing speed (T46b)", () => {
+  function typeAt(guard: ReturnType<typeof createPasteGuard>, advance: (ms: number) => void, letters: number, gapMs: number) {
+    let value = "";
+    for (let i = 0; i < letters; i++) {
+      advance(gapMs);
+      guard.change(value, value + "a", true);
+      value += "a";
+    }
+  }
+  function clock() {
+    let now = 0;
+    return { now: () => now, advance: (ms: number) => void (now += ms) };
+  }
+
+  it("measures a steady typist at about 5 characters a second", () => {
+    const c = clock();
+    const guard = createPasteGuard(c.now);
+    typeAt(guard, c.advance, 100, 200);
+    expect(guard.counts().maxCharsPerSec).toBeCloseTo(5, 0);
+  });
+
+  it(`averages over ${SPEED_WINDOW_MS / 1000} s, so a short burst stays low`, () => {
+    const c = clock();
+    const guard = createPasteGuard(c.now);
+    typeAt(guard, c.advance, 10, 20); // 10 letters in 0.2 s
+    expect(guard.counts().maxCharsPerSec).toBe(2);
+  });
+
+  it("sees an auto-typer that types 40 characters a second", () => {
+    const c = clock();
+    const guard = createPasteGuard(c.now);
+    typeAt(guard, c.advance, 400, 25);
+    expect(guard.counts().maxCharsPerSec).toBeGreaterThan(30);
+  });
+
+  it("counts Tab indents as typed", () => {
+    const guard = createPasteGuard();
+    guard.addTyped(4);
+    guard.addTyped(0);
+    expect(guard.counts().typedChars).toBe(4);
   });
 });

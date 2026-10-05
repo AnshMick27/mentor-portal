@@ -134,7 +134,7 @@ Goal: make the portal safe and understandable for real students, let the mentor 
   - Code box: autocomplete/autocorrect/autocapitalize/spellcheck off. Copy: hints no longer say "Paste"; the forms say pasting is turned off.
   - Acceptance: unit tests for the insert rule; render/event tests for paste, drop, each `beforeinput` type, the 25-character rule (24 allowed, 26 undone), normal typing and Tab indent still working.
 
-- [ ] **T46b — Integrity counts and flags on the server**
+- [x] **T46b — Integrity counts and flags on the server**
   - `POST /api/submissions/draft` (student; writes `drafts/{uid}_{taskId}.openedAt`, server only). The forms call it when they open, and send the counts (incl. tab/window switches and time away, fastest typing speed) with the submit request.
   - The submit APIs validate the counts with a strict zod schema (optional, so old clients still work), compute `elapsedMs` from the draft, decide `integrity.flags` in a pure helper and store `integrity` on the submission. Scores never change.
   - Acceptance: unit tests for every flag; API tests (counts stored, missing counts → "sent outside the form", bad counts → 400, resume untouched); rules tests that clients cannot read or write `drafts`.
@@ -493,11 +493,13 @@ Goal: students and mentors can log in with college Google accounts, get the righ
 - 2026-10-03 — T45 — Privacy page: new "How long it is kept" section ("kept for one year after your batch graduates, then deleted", also for removed accounts); contact line unchanged. RUNBOOK §5 "Deleting a graduated batch (once a year)" (export first, delete users/studentStats/submissions and Auth accounts, rerun stats; no bulk-delete tool yet). 1 new render test.
 - 2026-10-03 — H12 — Portal live with 3 tasks (reported by Ansh). Next: T36 fixes from "Launch feedback".
 - 2026-10-05 — T46a — Paste block in the code and intro boxes (SPEC §8.9, asked by Ansh): `lib/submissions/pasteGuard.ts` (`createPasteGuard`: refuses paste/drop, `beforeinput` paste/drop/yank types, untrusted input and any change adding more than 25 characters, e.g. phone-keyboard clipboard chips; own text copied, cut or deleted in the box may come back; counts pastes blocked, largest insert, typed characters for T46b), `components/student/usePasteGuard.ts` (native `beforeinput` listener + React handlers), `PasteOffNote` (muted hint, amber after a refused paste); code box autocomplete off, hint "Type your code to submit."; resume unchanged. SPEC §3/§6/§8.3/§8.4/§8.9 and T46b–T47 added with Ansh's OK. 25 unit + 4 render tests, 1 test updated for the new copy. Not yet tried in a real browser or phone (pages need sign-in).
+- 2026-10-05 — T46b — Integrity counts and flags on the server: `POST /api/submissions/draft` (student; code/intro only; writes `drafts/{uid}_{taskId}.openedAt`, restarted on each form open), `integrityCountsSchema` (strict, bounded, optional) on the code and intro submit bodies (ignored for a resume, never sent to the AI), `lib/submissions/integrityFlags.ts` (outside_form, pastes_blocked ≥ 3, fast_typing > 15 chars/s over 5 s, more_than_typed > typed × 1.2 + 50, quick_answer > 10 chars/s from the draft for 200+ chars, long_away ≥ 5 min), `integrity` stored by `startSubmission`; the paste guard now measures typing speed and counts Tab indents, `createAwayTracker` counts blur/hidden time; the submit hooks open the draft on mount. RUNBOOK yearly deletion includes `drafts`. 32 new unit/API tests, 20 rules tests (`drafts` fully denied). Scores unchanged.
 
 ## Blockers
 (none)
 
 ## Questions for Ansh
+- T46b: SPEC §6 puts `integrity` on the submission doc, and students may read their own submissions (rules), so a student who opens browser devtools can see their own counts and flag names (not other students', and the portal never shows them). Built as written. If you want flags hidden from students too, a later task can move them to a staff-only `submissionIntegrity/{id}` collection (a SPEC change). OK as is?
 - Later, if wanted (not in the loop yet): a mentor-saved "AI reference answer" per task to compare against, and a per-student paste allowance for students who need dictation software.
 
 ### Answered by Ansh on 2026-10-03

@@ -3,7 +3,7 @@
 import { Note } from "@/components/ui/Note";
 import { submitAvailability } from "@/lib/submissions/availability";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
-import type { AiTaskType } from "@/lib/validation/submission";
+import type { AiTaskType, IntegrityCounts } from "@/lib/validation/submission";
 import type { Language, TaskDto } from "@/lib/validation/task";
 import { CodeSubmitForm } from "./CodeSubmitForm";
 import { FeedbackReady, FeedbackSaved } from "./FeedbackSubmitParts";
@@ -63,7 +63,7 @@ function ClosedNote({ reason }: { reason: string }) {
 function CodeSubmitSection({ task, attemptsUsed, now, submissions = [] }: SectionProps) {
   const { state, submit } = useCodeSubmit(task.id);
   const availability = submitAvailability(task, attemptsUsed, now);
-  const onSubmit = (language: Language, code: string) => void submit(language, code);
+  const onSubmit = (language: Language, code: string, integrity: IntegrityCounts) => void submit(language, code, integrity);
   return (
     <section className="flex flex-col gap-3" aria-labelledby="submit-heading">
       <h2 id="submit-heading" className="text-lg font-semibold">
@@ -89,7 +89,7 @@ function CodeSubmitSection({ task, attemptsUsed, now, submissions = [] }: Sectio
 function AiSubmitSection({ task, type, attemptsUsed, now }: SectionProps & { type: AiTaskType }) {
   const { state, submit } = useFeedbackSubmit(task.id, type);
   const availability = submitAvailability(task, attemptsUsed, now);
-  const onSubmit = (text: string) => void submit(text);
+  const onSubmit = (text: string, integrity?: IntegrityCounts) => void submit(text, integrity);
   return (
     <section className="flex flex-col gap-3" aria-labelledby="submit-heading">
       <h2 id="submit-heading" className="text-lg font-semibold">

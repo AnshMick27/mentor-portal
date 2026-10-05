@@ -1,14 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState, type ChangeEvent, type ClipboardEvent, type DragEvent } from "react";
-import { createPasteGuard, type PasteCounts } from "@/lib/submissions/pasteGuard";
+import { createAwayTracker } from "@/lib/submissions/awayTracker";
+import { createPasteGuard } from "@/lib/submissions/pasteGuard";
+import type { IntegrityCounts } from "@/lib/validation/submission";
 
 /**
  * Wires `createPasteGuard` (SPEC.md §8.9) to a controlled textarea: spread `boxProps` on it and show a note while
  * `blocked` is true. The native `beforeinput` listener is needed because React's `onBeforeInput` has no `inputType`.
+ * While the form is open it also counts time away from the page; `counts()` is what the submit request carries.
  */
 export function usePasteGuard(value: string, setValue: (value: string) => void) {
   const guard = useRef(createPasteGuard());
+  const away = useRef(createAwayTracker());
   const ref = useRef<HTMLTextAreaElement>(null);
   const [blocked, setBlocked] = useState(false);
 
@@ -25,6 +29,21 @@ export function usePasteGuard(value: string, setValue: (value: string) => void) 
     };
     box.addEventListener("beforeinput", onBeforeInput);
     return () => box.removeEventListener("beforeinput", onBeforeInput);
+  }, []);
+
+  useEffect(() => {
+    const tracker = away.current;
+    const onVisibility = () => (document.visibilityState === "hidden" ? tracker.away() : tracker.back());
+    const onBlur = () => tracker.away();
+    const onFocus = () => tracker.back();
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onFocus);
+    };
   }, []);
 
   function transfer(event: ClipboardEvent<HTMLTextAreaElement> | DragEvent<HTMLTextAreaElement>, data: DataTransfer | null, kind: "paste" | "drop") {
@@ -58,5 +77,10 @@ export function usePasteGuard(value: string, setValue: (value: string) => void) 
     onCut: remember,
   };
 
-  return { boxProps, blocked, counts: (): PasteCounts => guard.current.counts() };
+  return {
+    boxProps,
+    blocked,
+    addTyped: (length: number) => guard.current.addTyped(length),
+    counts: (): IntegrityCounts => ({ ...guard.current.counts(), ...away.current.counts() }),
+  };
 }

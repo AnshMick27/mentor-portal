@@ -5,18 +5,25 @@ import { AiDataNote } from "@/components/PrivacyLink";
 import { checkIntroLength } from "@/lib/submissions/wordCount";
 import { MAX_INTRO_CHARS } from "@/lib/submissions/limits";
 import { LimitStatus, PasteOffNote, SubmitFooter, textareaClass } from "./FeedbackSubmitParts";
+import type { IntegrityCounts } from "@/lib/validation/submission";
 import type { FeedbackSubmitState } from "./useFeedbackSubmit";
 import { usePasteGuard } from "./usePasteGuard";
 
 /** Written intro: textarea with a live word count (target 80–250), the 300–2,500 character limit, pasting off. */
-export function IntroSubmitForm({ state, onSubmit }: { state: FeedbackSubmitState; onSubmit: (text: string) => void }) {
+export function IntroSubmitForm({
+  state,
+  onSubmit,
+}: {
+  state: FeedbackSubmitState;
+  onSubmit: (text: string, integrity: IntegrityCounts) => void;
+}) {
   const [text, setText] = useState("");
   const paste = usePasteGuard(text, setText);
   const check = checkIntroLength(text);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSubmit(text);
+    onSubmit(text, paste.counts());
   }
 
   return (

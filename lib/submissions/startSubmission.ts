@@ -3,7 +3,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { attemptsUsed, type SubmissionLike } from "@/lib/submissions/scoring";
 import { taskDocToDto } from "@/lib/tasks/taskDoc";
-import { storedSubmissionSchema } from "@/lib/validation/submission";
+import { storedSubmissionSchema, type StoredIntegrity } from "@/lib/validation/submission";
 import type { Language, TaskDto, TaskType } from "@/lib/validation/task";
 
 export type Refusal = { ok: false; status: number; message: string };
@@ -19,6 +19,8 @@ export type NewSubmission = {
   status: "queued" | "running";
   content: string;
   language?: Language;
+  /** Code and intro only (SPEC.md §8.9). */
+  integrity?: StoredIntegrity;
 };
 
 export function refuse(status: number, message: string): Refusal {
@@ -80,6 +82,7 @@ export async function startSubmission<T extends object>(
       content: sub.content,
       ...(sub.language ? { language: sub.language } : {}),
       ...(late ? { late: true } : {}),
+      ...(sub.integrity ? { integrity: sub.integrity } : {}),
     });
     return { ...extra, ok: true, submissionId: submissionRef.id, attempt, late };
   });

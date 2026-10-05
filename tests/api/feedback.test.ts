@@ -274,3 +274,43 @@ describe("POST /api/feedback — AI failure", () => {
     log.mockRestore();
   });
 });
+
+describe("POST /api/feedback — integrity counts (T46b)", () => {
+  const counts = { pastesBlocked: 1, largestInsert: 30, typedChars: 450, awayCount: 2, awayMs: 4_000, maxCharsPerSec: 6 };
+  const introBody = { taskId: "intro1", type: "intro_written", content: INTRO };
+  const stored = (id: string) => storedSubmissionSchema.parse(submissions().get(id)).integrity;
+
+  it("stores counts, time and flags for an intro", async () => {
+    fakeAdmin.collection("drafts").set("s1_intro1", { uid: "s1", taskId: "intro1", openedAt: Timestamp.fromMillis(Date.now() - 5 * 60_000) });
+    const { status, body } = await post("stu", { ...introBody, integrity: counts });
+    expect(status).toBe(200);
+    expect(stored(body.submission!.id)).toMatchObject({ ...counts, flags: [] });
+    expect(stored(body.submission!.id)?.elapsedMs).toBeGreaterThanOrEqual(5 * 60_000);
+  });
+
+  it("flags an intro sent without counts, and still gives feedback", async () => {
+    const { status, body } = await post("stu", introBody);
+    expect(status).toBe(200);
+    expect(stored(body.submission!.id)).toEqual({ flags: ["outside_form"] });
+    expect(aiMock).toHaveBeenCalledOnce();
+  });
+
+  it("never sends the counts to the AI", async () => {
+    await post("stu", { ...introBody, integrity: counts });
+    expect(JSON.stringify(aiMock.mock.calls[0]![0])).not.toContain("pastesBlocked");
+  });
+
+  it("leaves a resume untouched, even if counts are sent", async () => {
+    const { body: plain } = await post("stu", resumeBody);
+    expect(stored(plain.submission!.id)).toBeUndefined();
+    submissions().clear();
+    const { status, body } = await post("stu", { ...resumeBody, integrity: counts });
+    expect(status).toBe(200);
+    expect(stored(body.submission!.id)).toBeUndefined();
+  });
+
+  it("refuses bad counts with 400", async () => {
+    expect((await post("stu", { ...introBody, integrity: { ...counts, awayMs: "long" } })).status).toBe(400);
+    expect(aiMock).not.toHaveBeenCalled();
+  });
+});

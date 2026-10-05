@@ -15,13 +15,18 @@ export const PASTE_INPUT_TYPES: readonly string[] = ["insertFromPaste", "insertF
 /** Remembered own text is capped so a long session cannot grow it without limit. */
 const OWN_TEXT_CAP = 64_000;
 
+/** Typing speed is measured over this window, so one quick burst does not count as fast typing. */
+export const SPEED_WINDOW_MS = 5_000;
+
 export type PasteCounts = {
   /** User actions that tried to put outside text in and were refused. */
   pastesBlocked: number;
   /** Largest single insert attempted, refused or not. */
   largestInsert: number;
-  /** Characters added by accepted changes. */
+  /** Characters added by accepted changes (and Tab indents). */
   typedChars: number;
+  /** Most characters added in any 5-second window, per second. */
+  maxCharsPerSec: number;
 };
 
 /** The part of `next` that is not in `prev`, found by trimming the common start and end. */
@@ -53,11 +58,16 @@ export type PasteGuard = {
   change(prev: string, next: string, trusted: boolean): boolean;
   /** `copy` / `cut` inside the box: that text may be pasted back. */
   copied(text: string): void;
+  /** Text the form itself added for a key press (Tab indent), counted as typed. */
+  addTyped(length: number): void;
   counts(): PasteCounts;
 };
 
-export function createPasteGuard(): PasteGuard {
-  const counts: PasteCounts = { pastesBlocked: 0, largestInsert: 0, typedChars: 0 };
+/** `clock` returns milliseconds; injectable for tests. */
+export function createPasteGuard(clock: () => number = Date.now): PasteGuard {
+  const counts: PasteCounts = { pastesBlocked: 0, largestInsert: 0, typedChars: 0, maxCharsPerSec: 0 };
+  // Recent accepted inserts, oldest first, for the typing-speed window.
+  const recent: { at: number; length: number }[] = [];
   let ownText = "";
   // A paste we let through: its `beforeinput` may carry no text, so it is matched by this flag.
   let pasteAllowed = false;
@@ -69,6 +79,15 @@ export function createPasteGuard(): PasteGuard {
   const isOwn = (text: string, current: string) => text === "" || current.includes(text) || ownText.includes(text);
   const noteSize = (length: number) => {
     counts.largestInsert = Math.max(counts.largestInsert, length);
+  };
+  const typed = (length: number) => {
+    if (length === 0) return;
+    counts.typedChars += length;
+    const at = clock();
+    recent.push({ at, length });
+    while (recent.length > 0 && (recent[0]?.at ?? at) <= at - SPEED_WINDOW_MS) recent.shift();
+    const inWindow = recent.reduce((sum, entry) => sum + entry.length, 0);
+    counts.maxCharsPerSec = Math.max(counts.maxCharsPerSec, Math.round((inWindow / (SPEED_WINDOW_MS / 1000)) * 10) / 10);
   };
   const refuse = () => {
     counts.pastesBlocked++;
@@ -104,10 +123,11 @@ export function createPasteGuard(): PasteGuard {
       noteSize(inserted.length);
       if (!trusted || (inserted.length > MAX_TYPED_INSERT && !isOwn(inserted, prev))) return refuse();
       remember(removed);
-      counts.typedChars += inserted.length;
+      typed(inserted.length);
       return true;
     },
     copied: remember,
+    addTyped: typed,
     counts: () => ({ ...counts }),
   };
 }

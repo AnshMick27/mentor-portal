@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { inputClasses } from "@/components/ui/Field";
 import { codeSize, insertIndent } from "@/lib/submissions/judgeDisplay";
+import type { IntegrityCounts } from "@/lib/validation/submission";
 import { LANGUAGE_LABEL, type Language } from "@/lib/validation/task";
 import { DisabledReason, ErrorNote, LimitStatus, PasteOffNote, textareaClass } from "./FeedbackSubmitParts";
 import type { CodeSubmitState } from "./useCodeSubmit";
@@ -12,7 +13,7 @@ import { usePasteGuard } from "./usePasteGuard";
 type Props = {
   languages: readonly Language[];
   state: CodeSubmitState;
-  onSubmit: (language: Language, code: string) => void;
+  onSubmit: (language: Language, code: string, integrity: IntegrityCounts) => void;
 };
 
 /** Coding task: language (the task's only), a monospace code box where Tab inserts spaces and pasting is off, a 32 KB counter. */
@@ -36,6 +37,7 @@ export function CodeSubmitForm({ languages, state, onSubmit }: Props) {
       event.preventDefault();
       const box = event.currentTarget;
       const next = insertIndent(box.value, box.selectionStart, box.selectionEnd);
+      paste.addTyped(Math.max(0, next.value.length - box.value.length));
       setCode(next.value);
       requestAnimationFrame(() => box.setSelectionRange(next.cursor, next.cursor));
     }
@@ -44,7 +46,7 @@ export function CodeSubmitForm({ languages, state, onSubmit }: Props) {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSubmit(language, code);
+    onSubmit(language, code, paste.counts());
   }
 
   return (

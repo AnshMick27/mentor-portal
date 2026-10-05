@@ -261,3 +261,4 @@
 - Every `<select>` matches `:read-only`, so never put `read-only:` styles in `inputClasses`; use `[&:is(input):read-only]:`.
 - Without a working sign-in popup (e.g. remote session), preview pages by rendering components with `renderToStaticMarkup` + demo data and the dev server's compiled CSS; never fake an auth session.
 - Paste block (T46a): React `onBeforeInput` is a polyfill without `inputType`, so `usePasteGuard` adds a native `beforeinput` listener. To refuse a change in a controlled textarea, just do not call the setter: React puts the old value back. Composition `beforeinput` is not cancellable, so `change` is the backstop there.
+- Integrity (T46b): thresholds live in `lib/submissions/integrityFlags.ts`; the draft call is in `useCodeSubmit`/`useFeedbackSubmit` (`openDraft`), not in the forms, so the forms need no taskId. `drafts` is denied to every client by the catch-all rule (tests/rules/drafts.test.ts).

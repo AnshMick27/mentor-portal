@@ -9,6 +9,8 @@ import {
   finishFeedbackSubmission,
   startFeedbackSubmission,
 } from "@/lib/submissions/feedbackSubmission";
+import { draftElapsedMs } from "@/lib/submissions/integrity";
+import { buildIntegrity } from "@/lib/submissions/integrityFlags";
 import { onFinished } from "@/lib/submissions/onFinished";
 import { feedbackRequestSchema, type SubmissionResult } from "@/lib/validation/submission";
 
@@ -24,9 +26,16 @@ export async function POST(request: Request): Promise<Response> {
   const body = await parseBody(request, feedbackRequestSchema);
   if (!body.ok) return body.response;
 
+  const now = new Date();
+  // Only the intro is typed in a paste-blocked box; a resume is meant to be pasted (SPEC.md §8.9).
+  const integrity =
+    body.data.type === "intro_written"
+      ? buildIntegrity(body.data.integrity, body.data.content.length, await draftElapsedMs(uid, body.data.taskId, now))
+      : undefined;
+
   let started;
   try {
-    started = await startFeedbackSubmission(uid, body.data, new Date());
+    started = await startFeedbackSubmission(uid, body.data, now, integrity);
   } catch (error) {
     console.error(`POST /api/feedback could not start a submission for uid ${uid}:`, error);
     return jsonError(500, "Could not save your submission. Please try again.");

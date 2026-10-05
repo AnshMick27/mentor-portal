@@ -7,6 +7,7 @@ import {
   storedSubmissionSchema,
   type CodeSubmitRequest,
   type JudgeResult,
+  type StoredIntegrity,
   type SubmissionResult,
 } from "@/lib/validation/submission";
 import { LANGUAGE_LABEL } from "@/lib/validation/task";
@@ -27,8 +28,9 @@ export function startJudgeSubmission(
   uid: string,
   body: CodeSubmitRequest,
   now: Date,
+  integrity?: StoredIntegrity,
 ): Promise<StartResult<{ problemSlug: string }>> {
-  const sub = { uid, taskId: body.taskId, type: "coding", status: "queued", content: body.code, language: body.language } as const;
+  const sub = { uid, taskId: body.taskId, type: "coding", status: "queued", content: body.code, language: body.language, integrity } as const;
   return startSubmission(sub, now, (task) => {
     if (!task.coding) return refuse(500, "This coding task is not set up correctly. Please tell your mentor.");
     if (!task.coding.languages.includes(body.language)) {

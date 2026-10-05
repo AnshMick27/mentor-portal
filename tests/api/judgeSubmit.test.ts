@@ -228,3 +228,42 @@ describe("POST /api/judge/submit — dispatch failure", () => {
     expect((await post("stu", codeBody)).status).toBe(409);
   });
 });
+
+describe("POST /api/judge/submit — integrity counts (T46b)", () => {
+  const counts = { pastesBlocked: 0, largestInsert: 4, typedChars: 60, awayCount: 0, awayMs: 0, maxCharsPerSec: 5 };
+  const stored = (id: string) => storedSubmissionSchema.parse(submissions().get(id)).integrity;
+
+  it("stores the counts, the time since the form opened, and no flags for a typed answer", async () => {
+    fakeAdmin.collection("drafts").set("s1_code1", { uid: "s1", taskId: "code1", openedAt: Timestamp.fromMillis(Date.now() - 10 * MINUTE) });
+    const { status, body } = await post("stu", { ...codeBody, integrity: counts });
+    expect(status).toBe(202);
+    const integrity = stored(body.submission!.id);
+    expect(integrity).toMatchObject({ ...counts, flags: [] });
+    expect(integrity?.elapsedMs).toBeGreaterThanOrEqual(10 * MINUTE);
+  });
+
+  it("flags code sent without counts as sent outside the form, and still accepts it", async () => {
+    const { status, body } = await post("stu", codeBody);
+    expect(status).toBe(202);
+    expect(stored(body.submission!.id)).toEqual({ flags: ["outside_form"] });
+  });
+
+  it("flags a long answer sent seconds after the form opened (server time)", async () => {
+    fakeAdmin.collection("drafts").set("s1_code1", { uid: "s1", taskId: "code1", openedAt: Timestamp.fromMillis(Date.now() - 5_000) });
+    const code = "print(1)\n".repeat(40); // 360 chars in 5 s
+    const { body } = await post("stu", { ...codeBody, code, integrity: { ...counts, typedChars: 360 } });
+    expect(stored(body.submission!.id)?.flags).toEqual(["quick_answer"]);
+  });
+
+  it("refuses bad or extra counts with 400 and stores nothing", async () => {
+    expect((await post("stu", { ...codeBody, integrity: { ...counts, pastesBlocked: -1 } })).status).toBe(400);
+    expect((await post("stu", { ...codeBody, integrity: { ...counts, keystrokes: [] } })).status).toBe(400);
+    expect(submissions().size).toBe(0);
+  });
+
+  it("never changes the score: the judge result is stored as usual", async () => {
+    const { body } = await post("stu", { ...codeBody, integrity: { ...counts, pastesBlocked: 9 } });
+    expect(stored(body.submission!.id)?.flags).toEqual(["pastes_blocked"]);
+    expect(dispatchMock).toHaveBeenCalledOnce();
+  });
+});

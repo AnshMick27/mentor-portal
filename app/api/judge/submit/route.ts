@@ -2,6 +2,8 @@ import { jsonError } from "@/lib/api/errors";
 import { parseBody } from "@/lib/api/parseBody";
 import { requireUser } from "@/lib/auth/requireUser";
 import { dispatchJudge } from "@/lib/judge/dispatch";
+import { draftElapsedMs } from "@/lib/submissions/integrity";
+import { buildIntegrity } from "@/lib/submissions/integrityFlags";
 import {
   DISPATCH_FAILED_MESSAGE,
   failJudgeDispatch,
@@ -19,9 +21,13 @@ export async function POST(request: Request): Promise<Response> {
   const body = await parseBody(request, codeSubmitRequestSchema);
   if (!body.ok) return body.response;
 
+  const now = new Date();
+  const elapsedMs = await draftElapsedMs(uid, body.data.taskId, now);
+  const integrity = buildIntegrity(body.data.integrity, body.data.code.length, elapsedMs);
+
   let started;
   try {
-    started = await startJudgeSubmission(uid, body.data, new Date());
+    started = await startJudgeSubmission(uid, body.data, now, integrity);
   } catch (error) {
     console.error(`POST /api/judge/submit could not start a submission for uid ${uid}:`, error);
     return jsonError(500, "Could not save your submission. Please try again.");

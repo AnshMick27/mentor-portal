@@ -149,7 +149,7 @@ calendar reminder one year after each batch's graduation, then:
 
 1. Download the **Excel export** and keep it somewhere private (it is the only copy left afterwards).
 2. Firebase console → Firestore: for every student of that batch, delete their `users/{uid}` and
-   `studentStats/{uid}` docs and every `submissions` doc with their `uid`. The portal has no bulk-delete button:
+   `studentStats/{uid}` docs and every `submissions` and `drafts` doc with their `uid`. The portal has no bulk-delete button:
    for a whole batch, ask Claude for a one-off script that runs against the real project after you check its
    list of students.
 3. Firebase console → Authentication → Users: delete the same accounts.

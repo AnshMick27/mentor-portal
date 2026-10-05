@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { apiFetch } from "@/lib/api/client";
-import { codeSubmitRequestSchema } from "@/lib/validation/submission";
+import { codeSubmitRequestSchema, type IntegrityCounts } from "@/lib/validation/submission";
 import type { Language } from "@/lib/validation/task";
 
 export type CodeSubmitState =
@@ -19,14 +19,16 @@ const sentReplySchema = z.object({ submission: z.object({ id: z.string() }) });
 
 /**
  * Sends code to `POST /api/judge/submit`, validating locally first with the server's schema. The result
- * arrives later through the live attempt history, so success here only means "queued".
+ * arrives later through the live attempt history, so success here only means "queued". Opening the form starts
+ * the server's answer clock (SPEC.md §8.9).
  */
 export function useCodeSubmit(taskId: string) {
   const { getIdToken } = useAuth();
   const [state, setState] = useState<CodeSubmitState>({ status: "idle" });
+  useEffect(() => openDraft(getIdToken, taskId), [getIdToken, taskId]);
 
-  async function submit(language: Language, code: string) {
-    const parsed = codeSubmitRequestSchema.safeParse({ taskId, language, code });
+  async function submit(language: Language, code: string, integrity?: IntegrityCounts) {
+    const parsed = codeSubmitRequestSchema.safeParse({ taskId, language, code, integrity });
     if (!parsed.success) {
       setState({ status: "error", message: parsed.error.issues[0]?.message ?? "Please check your code." });
       return;
@@ -42,4 +44,9 @@ export function useCodeSubmit(taskId: string) {
   }
 
   return { state, submit };
+}
+
+/** Starts the server's answer clock for a code or intro task. Best effort: a failure only means no time is measured. */
+export function openDraft(getIdToken: () => Promise<string | null>, taskId: string): void {
+  void apiFetch(getIdToken, "/api/submissions/draft", { method: "POST", body: { taskId } });
 }
