@@ -8,6 +8,7 @@ const storedTaskSchema = z.object({
   type: z.enum(TASK_TYPES),
   description: z.string(),
   dueAt: timestampLike,
+  lateUntil: timestampLike.optional(),
   status: z.enum(TASK_STATUSES),
   maxAttempts: z.number(),
   coding: codingSchema.optional(),
@@ -23,12 +24,13 @@ export function taskDocToDto(id: string, data: unknown): TaskDto | undefined {
     console.error(`tasks/${id} does not match the task schema`);
     return undefined;
   }
-  const { dueAt, createdAt, updatedAt, coding, ...rest } = parsed.data;
+  const { dueAt, lateUntil, createdAt, updatedAt, coding, ...rest } = parsed.data;
   return {
     id,
     ...rest,
     ...(coding ? { coding } : {}),
     dueAt: dueAt.toDate().toISOString(),
+    ...(lateUntil ? { lateUntil: lateUntil.toDate().toISOString() } : {}),
     createdAt: createdAt.toDate().toISOString(),
     updatedAt: updatedAt.toDate().toISOString(),
   };

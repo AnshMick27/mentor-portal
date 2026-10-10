@@ -71,11 +71,18 @@ describe("intro submit area", () => {
 
 describe("closed submit area", () => {
   it("keeps the form open after the due date, saying first that late work is not scored (T44)", () => {
-    const html = render(introTask, 0, new Date("2026-11-01T00:00:00Z"));
+    const html = render(introTask, 0, new Date("2026-10-08T00:00:00Z"));
     expect(html).toContain("This task is past its due date. You will get feedback, but it will not be scored.");
+    expect(html).toContain("Late work is accepted until 12 Oct 2026, 11:59 pm IST.");
     expect(html).toContain("<textarea");
     expect(html).not.toContain("Your best score counts");
     expect(html.indexOf("past its due date")).toBeLessThan(html.indexOf("<textarea"));
+  });
+
+  it("closes the form once late work has closed, with the date (T49)", () => {
+    const html = render(introTask, 0, new Date("2026-11-01T00:00:00Z"));
+    expect(html).toContain("This task closed on 12 Oct 2026, 11:59 pm IST. It no longer takes submissions.");
+    expect(html).not.toContain("<textarea");
   });
 
   it("shows no late note before the due date", () => {

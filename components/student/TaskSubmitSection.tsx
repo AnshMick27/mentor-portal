@@ -1,6 +1,7 @@
 "use client";
 
 import { Note } from "@/components/ui/Note";
+import { formatIst } from "@/lib/dates/ist";
 import { submitAvailability } from "@/lib/submissions/availability";
 import type { SubmissionView } from "@/lib/submissions/submissionDoc";
 import type { AiTaskType, IntegrityCounts } from "@/lib/validation/submission";
@@ -21,11 +22,15 @@ export function AttemptsLeft({ count, late = false }: { count: number; late?: bo
   return <p className="text-sm text-muted">{late ? `${count} attempts left.` : `${count} attempts left. Your best score counts.`}</p>;
 }
 
-/** Past the due date (SPEC.md §8.2, T44): the form stays open, and the student knows up front it will not be scored. */
-export function LateNote() {
+/**
+ * Past the due date (SPEC.md §8.2, T44): the form stays open until `lateUntil` (T49), and the student knows up front
+ * it will not be scored and when it closes.
+ */
+export function LateNote({ lateUntil }: { lateUntil: string }) {
   return (
     <Note tone="warning" title="Past the due date">
-      This task is past its due date. You will get feedback, but it will not be scored.
+      This task is past its due date. You will get feedback, but it will not be scored. Late work is accepted until{" "}
+      {formatIst(lateUntil)}.
     </Note>
   );
 }
@@ -71,7 +76,7 @@ function CodeSubmitSection({ task, attemptsUsed, now, submissions = [] }: Sectio
       </h2>
       {availability.open ? (
         <>
-          {availability.late && <LateNote />}
+          {availability.late && <LateNote lateUntil={availability.lateUntil} />}
           <AttemptsLeft count={availability.attemptsLeft} late={availability.late} />
           <CodeSubmitForm languages={task.coding?.languages ?? []} state={state} onSubmit={onSubmit} />
           <SentStatus state={state} submissions={submissions} now={now} />
@@ -99,7 +104,7 @@ function AiSubmitSection({ task, type, attemptsUsed, now }: SectionProps & { typ
       {state.status === "saved" && <FeedbackSaved />}
       {availability.open ? (
         <>
-          {availability.late && <LateNote />}
+          {availability.late && <LateNote lateUntil={availability.lateUntil} />}
           <AttemptsLeft count={availability.attemptsLeft} late={availability.late} />
           {type === "resume" ? (
             <ResumeSubmitForm state={state} onSubmit={onSubmit} />

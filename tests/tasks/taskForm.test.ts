@@ -66,6 +66,17 @@ describe("task form conversion", () => {
     expect(taskInputSchema.safeParse(formToTaskInput({ ...taskToForm(codingDto), dueAtLocal: "" })).success).toBe(false);
   });
 
+  it("maps the late cutoff both ways: blank = default window, set = IST (T49)", () => {
+    const form = taskToForm({ ...codingDto, lateUntil: "2026-10-08T18:29:00.000Z" });
+    expect(form.lateUntilLocal).toBe("2026-10-08T23:59");
+    expect(taskInputSchema.parse(formToTaskInput(form)).lateUntil).toBe("2026-10-08T23:59:00+05:30");
+    expect(taskToForm(codingDto).lateUntilLocal).toBe("");
+    const blank = taskInputSchema.parse(formToTaskInput(taskToForm(codingDto)));
+    expect(blank.lateUntil).toBeUndefined();
+    expect(taskToPatch(blank).lateUntil).toBeNull();
+    expect(taskInputSchema.safeParse(formToTaskInput({ ...form, lateUntilLocal: "2026-10-05T23:58" })).success).toBe(false);
+  });
+
   it("builds a PATCH body that clears coding for non-coding tasks", () => {
     const resume = taskInputSchema.parse(formToTaskInput({ ...taskToForm(codingDto), type: "resume" }));
     expect(taskToPatch(resume)).toMatchObject({ type: "resume", coding: null });

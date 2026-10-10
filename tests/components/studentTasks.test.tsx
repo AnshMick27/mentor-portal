@@ -76,12 +76,21 @@ describe("StudentTaskDetail", () => {
 
   it("says 'Was due' after the deadline", () => {
     const late = renderToStaticMarkup(
-      <StudentTaskDetail task={codingTask} submissions={[]} now={new Date("2026-11-01T00:00:00Z")} />,
+      <StudentTaskDetail task={codingTask} submissions={[]} now={new Date("2026-10-08T00:00:00Z")} />,
     );
     expect(late).toContain("Was due 5 Oct 2026, 11:59 pm IST");
     expect(late).toContain(">Missed</span>");
     // Late work is still accepted (feedback only, T44), so the shortcut to the form stays.
     expect(late).toContain("Go to submit");
+  });
+
+  it("drops the submit shortcut once late work has closed (T49)", () => {
+    const closed = renderToStaticMarkup(
+      <StudentTaskDetail task={codingTask} submissions={[]} now={new Date("2026-11-01T00:00:00Z")} />,
+    );
+    expect(closed).toContain(">Missed</span>");
+    expect(closed).not.toContain("Go to submit");
+    expect(closed).toContain("This task closed on 12 Oct 2026, 11:59 pm IST.");
   });
 
   it("marks late attempts and a late-only task (T44)", () => {

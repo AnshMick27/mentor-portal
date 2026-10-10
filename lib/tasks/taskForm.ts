@@ -8,6 +8,8 @@ export type TaskFormState = {
   description: string;
   /** `datetime-local` value, always meant as IST. */
   dueAtLocal: string;
+  /** `datetime-local` value (IST) late work closes; blank = `LATE_GRACE_DAYS` after the due date (T49). */
+  lateUntilLocal: string;
   /** Blank = the per-type default. */
   maxAttempts: string;
   status: TaskStatus;
@@ -23,6 +25,7 @@ export function emptyTaskForm(): TaskFormState {
     type: "coding",
     description: "",
     dueAtLocal: "",
+    lateUntilLocal: "",
     maxAttempts: "",
     status: "draft",
     problemSlug: "",
@@ -39,6 +42,7 @@ export function taskToForm(task: TaskDto): TaskFormState {
     type: task.type,
     description: task.description,
     dueAtLocal: toIstInputValue(task.dueAt),
+    lateUntilLocal: task.lateUntil ? toIstInputValue(task.lateUntil) : "",
     maxAttempts: String(task.maxAttempts),
     status: task.status,
     problemSlug: task.coding?.problemSlug ?? empty.problemSlug,
@@ -60,6 +64,8 @@ export function formToTaskInput(form: TaskFormState): TaskInput {
     type: form.type,
     description: form.description,
     dueAt: fromIstInputValue(form.dueAtLocal) ?? "",
+    // Blank → default window; a junk value is sent as "" so the schema reports it.
+    lateUntil: form.lateUntilLocal.trim() === "" ? undefined : (fromIstInputValue(form.lateUntilLocal) ?? ""),
     status: form.status,
     maxAttempts: optionalNumber(form.maxAttempts),
     coding:
@@ -74,7 +80,10 @@ export function formToTaskInput(form: TaskFormState): TaskInput {
   };
 }
 
-/** PATCH body from a validated task: `coding: null` clears coding settings for non-coding tasks. */
+/**
+ * PATCH body from a validated task: `coding: null` clears coding settings for non-coding tasks, `lateUntil: null`
+ * goes back to the default late window.
+ */
 export function taskToPatch(task: ValidTask): TaskPatch {
-  return { ...task, coding: task.coding ?? null };
+  return { ...task, coding: task.coding ?? null, lateUntil: task.lateUntil ?? null };
 }

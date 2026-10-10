@@ -69,6 +69,8 @@ const taskFields = {
     .max(20000, "Description must be at most 20,000 characters."),
   /** ISO 8601 with a time zone, e.g. `2026-10-05T23:59:00+05:30`. */
   dueAt: z.iso.datetime({ offset: true, message: "Due date must be a valid date and time." }),
+  /** Last moment late work is accepted (SPEC.md §8.2, T49). Absent = `LATE_GRACE_DAYS` after `dueAt`. */
+  lateUntil: z.iso.datetime({ offset: true, message: "Late work date must be a valid date and time." }),
   status: z.enum(TASK_STATUSES),
   maxAttempts: z
     .number()
@@ -78,7 +80,22 @@ const taskFields = {
   coding: codingSchema,
 };
 
-type TaskShapeCheck = { type: TaskType; coding?: unknown };
+type TaskShapeCheck = { type: TaskType; coding?: unknown; dueAt: string; lateUntil?: string };
+
+/** Late work closes this many days after the due date unless the mentor sets `lateUntil` (T49). */
+export const LATE_GRACE_DAYS = 7;
+
+/** The last moment (ms) a late attempt is accepted: `lateUntil`, or `LATE_GRACE_DAYS` after `dueAt`. */
+export function lateCutoff(task: { dueAt: string; lateUntil?: string }): number {
+  return task.lateUntil ? Date.parse(task.lateUntil) : Date.parse(task.dueAt) + LATE_GRACE_DAYS * 24 * 60 * 60 * 1000;
+}
+
+/** Late work can only close after the due date. */
+function checkLateAfterDue(task: TaskShapeCheck, ctx: z.RefinementCtx): void {
+  if (task.lateUntil !== undefined && Date.parse(task.lateUntil) < Date.parse(task.dueAt)) {
+    ctx.addIssue({ code: "custom", path: ["lateUntil"], message: "Late work must close on or after the due date." });
+  }
+}
 
 /** Coding settings are required for coding tasks and not allowed for the others. */
 function checkCodingMatchesType(task: TaskShapeCheck, ctx: z.RefinementCtx): void {
@@ -96,16 +113,19 @@ export const taskInputSchema = z
     ...taskFields,
     status: taskFields.status.default("draft"),
     maxAttempts: taskFields.maxAttempts.optional(),
+    lateUntil: taskFields.lateUntil.optional(),
     coding: taskFields.coding.optional(),
   })
   .superRefine(checkCodingMatchesType)
+  .superRefine(checkLateAfterDue)
   .transform((task) => ({ ...task, maxAttempts: task.maxAttempts ?? DEFAULT_MAX_ATTEMPTS[task.type] }));
 export type TaskInput = z.input<typeof taskInputSchema>;
 export type ValidTask = z.output<typeof taskInputSchema>;
 
 /**
  * PATCH body: any subset of the fields (e.g. `{ status: "published" }`). `coding: null` removes the coding
- * settings (needed when changing a coding task to another type). The merged task is re-validated in full.
+ * settings (needed when changing a coding task to another type); `lateUntil: null` goes back to the default
+ * window. The merged task is re-validated in full.
  */
 export const taskPatchSchema = z
   .strictObject({
@@ -113,6 +133,7 @@ export const taskPatchSchema = z
     type: taskFields.type,
     description: taskFields.description,
     dueAt: taskFields.dueAt,
+    lateUntil: taskFields.lateUntil.nullable(),
     status: taskFields.status,
     maxAttempts: taskFields.maxAttempts,
     coding: taskFields.coding.nullable(),
@@ -128,6 +149,7 @@ export const taskDtoSchema = z.object({
   type: z.enum(TASK_TYPES),
   description: z.string(),
   dueAt: z.string(),
+  lateUntil: z.string().optional(),
   status: z.enum(TASK_STATUSES),
   maxAttempts: z.number(),
   coding: codingSchema.optional(),

@@ -208,6 +208,29 @@ describe("GET/PATCH /api/tasks/[id]", () => {
     expect(fakeAdmin.collection("tasks").get("c1")).not.toHaveProperty("coding");
   });
 
+  it("stores lateUntil as a Timestamp, returns it as ISO, and clears it with null (T49)", async () => {
+    const set = await callPatch("mentor", "t1", { lateUntil: "2026-09-25T23:59:00+05:30" });
+    expect(set.status).toBe(200);
+    expect(set.body.task?.lateUntil).toBe("2026-09-25T18:29:00.000Z");
+    expect(fakeAdmin.collection("tasks").get("t1")?.lateUntil).toBeInstanceOf(Timestamp);
+    expect((await callGet("mentor", "t1")).body.task?.lateUntil).toBe("2026-09-25T18:29:00.000Z");
+    expect((await callPatch("mentor", "t1", { title: "Renamed" })).body.task?.lateUntil).toBe("2026-09-25T18:29:00.000Z");
+
+    const cleared = await callPatch("mentor", "t1", { lateUntil: null });
+    expect(cleared.body.task).not.toHaveProperty("lateUntil");
+    expect(fakeAdmin.collection("tasks").get("t1")).not.toHaveProperty("lateUntil");
+  });
+
+  it("400s a lateUntil before the due date, on create and on edit", async () => {
+    const created = await callCreate("mentor", { ...resumeTask, lateUntil: "2026-10-05T23:58:00+05:30" });
+    expect(created.status).toBe(400);
+    expect(created.body.error).toBe("Late work must close on or after the due date.");
+    expect((await callPatch("mentor", "t1", { lateUntil: "2026-09-19T10:00:00Z" })).status).toBe(400);
+    // Moving the due date past an existing lateUntil is refused too.
+    await callPatch("mentor", "t1", { lateUntil: "2026-09-25T10:00:00Z" });
+    expect((await callPatch("mentor", "t1", { dueAt: "2026-09-26T10:00:00Z" })).status).toBe(400);
+  });
+
   it("400s patches with unknown fields and leaves the task unchanged", async () => {
     expect((await callPatch("mentor", "t1", { createdBy: "evil" })).status).toBe(400);
     expect((await callPatch("mentor", "t1", {})).status).toBe(400);

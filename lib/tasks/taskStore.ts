@@ -24,10 +24,25 @@ function tasks() {
   return getAdminDb().collection("tasks");
 }
 
-/** Firestore data for a validated task. `coding` is omitted (not undefined) for non-coding tasks. */
+/** Firestore data for a validated task. `coding` and `lateUntil` are omitted (not undefined) when unset. */
 function toStored(task: ValidTask) {
-  const { coding, dueAt, ...rest } = task;
-  return { ...rest, ...(coding ? { coding } : {}), dueAt: Timestamp.fromDate(new Date(dueAt)) };
+  const { coding, dueAt, lateUntil, ...rest } = task;
+  return {
+    ...rest,
+    ...(coding ? { coding } : {}),
+    dueAt: Timestamp.fromDate(new Date(dueAt)),
+    ...(lateUntil ? { lateUntil: Timestamp.fromDate(new Date(lateUntil)) } : {}),
+  };
+}
+
+/** A validated task's fields as the API returns them: dates as UTC ISO, `lateUntil` omitted when unset. */
+function toDtoFields(task: ValidTask) {
+  const { dueAt, lateUntil, ...rest } = task;
+  return {
+    ...rest,
+    dueAt: new Date(dueAt).toISOString(),
+    ...(lateUntil ? { lateUntil: new Date(lateUntil).toISOString() } : {}),
+  };
 }
 
 /** All tasks, drafts included, latest due date first. Mentor/viewer only (enforced by the route). */
@@ -59,7 +74,7 @@ export async function createTask(task: ValidTask, createdBy: string): Promise<Ta
   const now = Timestamp.now();
   await ref.create({ ...toStored(task), createdBy, createdAt: now, updatedAt: now });
   const at = now.toDate().toISOString();
-  return { ...task, dueAt: new Date(task.dueAt).toISOString(), id: ref.id, createdBy, createdAt: at, updatedAt: at };
+  return { ...toDtoFields(task), id: ref.id, createdBy, createdAt: at, updatedAt: at };
 }
 
 /** Applies a patch to a stored task, giving a full task to re-validate with `taskInputSchema`. */
@@ -69,7 +84,8 @@ export function mergeTaskPatch(existing: TaskDto, patch: TaskPatch): TaskInput {
   // A coding task changed to another type drops its coding settings unless the patch sends new ones.
   const coding =
     patch.coding === null ? undefined : (patch.coding ?? (type === "coding" ? existing.coding : undefined));
-  return { title, description, dueAt, status, maxAttempts, ...patch, type, coding };
+  const lateUntil = patch.lateUntil === null ? undefined : (patch.lateUntil ?? existing.lateUntil);
+  return { title, description, dueAt, status, maxAttempts, ...patch, type, coding, lateUntil };
 }
 
 /**
@@ -110,9 +126,9 @@ export async function updateTask(id: string, patch: TaskPatch): Promise<TaskUpda
       return { ok: false, status: 409, message: typeChanged ? TYPE_LOCKED : PROBLEM_LOCKED };
     }
 
-    const dueAt = new Date(merged.data.dueAt).toISOString();
+    const fields = toDtoFields(merged.data);
     const affectsStats =
-      existing.status !== merged.data.status || existing.type !== merged.data.type || existing.dueAt !== dueAt;
+      existing.status !== merged.data.status || existing.type !== merged.data.type || existing.dueAt !== fields.dueAt;
     const now = Timestamp.now();
     const createdAt = Timestamp.fromDate(new Date(existing.createdAt));
     tx.set(ref, { ...toStored(merged.data), createdBy: existing.createdBy, createdAt, updatedAt: now });
@@ -120,8 +136,7 @@ export async function updateTask(id: string, patch: TaskPatch): Promise<TaskUpda
       ok: true,
       affectsStats,
       task: {
-        ...merged.data,
-        dueAt,
+        ...fields,
         id,
         createdBy: existing.createdBy,
         createdAt: existing.createdAt,

@@ -171,6 +171,12 @@ describe("POST /api/judge/submit — refusals", () => {
     expect(dispatchMock).toHaveBeenCalledOnce();
   });
 
+  it("refuses code once late work has closed and never dispatches it (T49)", async () => {
+    fakeAdmin.collection("tasks").set("code1", task({ dueAt: Timestamp.fromMillis(Date.now() - 8 * 24 * 60 * MINUTE) }));
+    await expectRefused(codeBody, 409, /This task closed on/);
+    expect(dispatchMock).not.toHaveBeenCalled();
+  });
+
   it("refuses a language the task does not allow", async () => {
     await expectRefused({ ...codeBody, language: "java" }, 400, /Java is not allowed/);
   });

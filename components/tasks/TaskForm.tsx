@@ -13,6 +13,7 @@ import { formToTaskInput, taskToPatch, type TaskFormState } from "@/lib/tasks/ta
 import {
   DEFAULT_MAX_ATTEMPTS,
   LANGUAGE_LABEL,
+  LATE_GRACE_DAYS,
   LANGUAGES,
   TASK_TYPE_LABEL,
   TASK_TYPES,
@@ -29,6 +30,7 @@ export type TaskFieldKey =
   | "type"
   | "description"
   | "dueAtLocal"
+  | "lateUntilLocal"
   | "maxAttempts"
   | "problemSlug"
   | "languages"
@@ -41,6 +43,7 @@ const TOP_LEVEL_KEYS: Record<string, TaskFieldKey> = {
   type: "type",
   description: "description",
   dueAt: "dueAtLocal",
+  lateUntil: "lateUntilLocal",
   maxAttempts: "maxAttempts",
 };
 const CODING_KEYS: Record<string, TaskFieldKey> = {
@@ -186,6 +189,23 @@ export function TaskForm(props: Props) {
             type="datetime-local"
             value={form.dueAtLocal}
             onChange={(e) => update("dueAtLocal", e.target.value)}
+            className={inputClass}
+          />
+        )}
+      </Field>
+
+      <Field
+        label="Late work accepted until (IST)"
+        hint={`After the due date students can still send work for feedback (not scored). Leave blank for ${LATE_GRACE_DAYS} days after the due date.`}
+        error={fieldErrors.lateUntilLocal}
+      >
+        {(control) => (
+          <input
+            {...control}
+            type="datetime-local"
+            value={form.lateUntilLocal}
+            min={form.dueAtLocal || undefined}
+            onChange={(e) => update("lateUntilLocal", e.target.value)}
             className={inputClass}
           />
         )}

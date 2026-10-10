@@ -179,6 +179,21 @@ describe("POST /api/feedback — task checks", () => {
     expect(submissions().size).toBe(2);
   });
 
+  it("refuses late work after the default 7-day window and after a mentor's lateUntil (T49)", async () => {
+    fakeAdmin.collection("tasks").set("resume1", task({ dueAt: Timestamp.fromMillis(Date.now() - 8 * DAY) }));
+    const closed = await post("stu", resumeBody);
+    expect(closed.status).toBe(409);
+    expect(closed.body.error).toMatch(/^This task closed on .* IST\. It no longer takes submissions\.$/);
+
+    const dueAt = Timestamp.fromMillis(Date.now() - 2 * DAY);
+    fakeAdmin.collection("tasks").set("resume1", task({ dueAt, lateUntil: Timestamp.fromMillis(Date.now() - 1000) }));
+    expect((await post("stu", resumeBody)).status).toBe(409);
+    fakeAdmin.collection("tasks").set("resume1", task({ dueAt, lateUntil: Timestamp.fromMillis(Date.now() + DAY) }));
+    expect((await post("stu", resumeBody)).status).toBe(200);
+    expect(submissions().size).toBe(1);
+    expect(aiMock).toHaveBeenCalledOnce();
+  });
+
   it("does not mark on-time work late", async () => {
     const { body } = await post("stu", resumeBody);
     expect(body.submission).toMatchObject({ late: false });

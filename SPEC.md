@@ -87,6 +87,7 @@ Branch = `CSE | IT | CSIT | CSE-AIML | CY | CSE-DS | EC | ME | OTHER`
 ```
 title, type: "coding"|"resume"|"intro_written",
 description (markdown), dueAt, status: "draft"|"published",
+lateUntil?  (last moment late work is accepted; absent = dueAt + 7 days; never before dueAt),
 maxAttempts (default: coding 5, resume 3, intro_written 3),
 createdBy (uid), createdAt, updatedAt,
 coding?: { problemSlug, languages: ("cpp"|"java"|"python")[],
@@ -174,7 +175,7 @@ Needs-attention rule: missed ≥ 2 of the last 4 tasks that are past due, OR ave
 - Mentor: create, edit, publish/unpublish and delete tasks (`/mentor/tasks`, `/mentor/tasks/new`, `/mentor/tasks/[id]`). Description in markdown. For coding: problem slug (must match a folder in the judge repo), allowed languages, sample tests, time limit. A task's type and problem slug are locked once it has any submission. Deleting a task (`DELETE /api/tasks/[id]`, mentor only) removes the task and its `taskStats`; students' submissions are kept but stop counting.
 - Per-task submissions page (`/mentor/tasks/[id]/submissions`, mentor and viewer): who has and has not submitted, with a branch filter.
 - Student: list of published tasks grouped as "Due soon", "Submitted", "Missed"; each shows type, due date (IST), attempts used / max, best score. "Due soon" also holds submitted tasks that are still open with attempts left (the student can improve); a task moves to "Submitted" once it is closed or out of attempts.
-- Late submissions: after `dueAt` a student may still submit (same attempt limit), clearly marked "Late: feedback only, not scored". The submission has `late: true`, gets normal feedback, and never counts (see the scoring rule in §6). Mentors see a "Late" tag on it.
+- Late submissions: after `dueAt` a student may still submit (same attempt limit) until the task's late cutoff (`lateUntil`, set by the mentor; blank = 7 days after `dueAt`), clearly marked "Late: feedback only, not scored" with the cutoff shown. After the cutoff the task is closed and the server refuses submissions. The submission has `late: true`, gets normal feedback, and never counts (see the scoring rule in §6). Mentors see a "Late" tag on it.
 
 ### 8.3 Coding task (student view)
 - Problem description + sample tests, language selector, code editor (a plain monospace textarea is fine for v1; a lightweight editor can come later), Submit button. Pasting into the code box is blocked (§8.9).
