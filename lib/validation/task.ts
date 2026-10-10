@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const TASK_TYPES = ["coding", "resume", "intro_written"] as const;
+export const TASK_TYPES = ["coding", "resume", "intro_written", "scenario"] as const;
 export const TASK_STATUSES = ["draft", "published"] as const;
 export const LANGUAGES = ["cpp", "java", "python"] as const;
 
@@ -14,12 +14,13 @@ export function isValidTaskId(id: string): boolean {
 }
 
 /** SPEC.md §6 defaults when a mentor does not set maxAttempts. */
-export const DEFAULT_MAX_ATTEMPTS: Record<TaskType, number> = { coding: 5, resume: 3, intro_written: 3 };
+export const DEFAULT_MAX_ATTEMPTS: Record<TaskType, number> = { coding: 5, resume: 3, intro_written: 3, scenario: 3 };
 
 export const TASK_TYPE_LABEL: Record<TaskType, string> = {
   coding: "Coding",
   resume: "Resume",
   intro_written: "Written intro",
+  scenario: "Scenario",
 };
 
 export const LANGUAGE_LABEL: Record<Language, string> = { cpp: "C++", java: "Java", python: "Python" };
@@ -78,9 +79,14 @@ const taskFields = {
     .min(1, "Max attempts must be between 1 and 10.")
     .max(10, "Max attempts must be between 1 and 10."),
   coding: codingSchema,
+  /**
+   * Scenario only (T50): what a strong answer covers, for the AI grader. Never on the task doc, which students can
+   * read: it lives in `taskSecrets/{taskId}` and only the server and the mentor API see it.
+   */
+  gradingNotes: z.string().trim().max(4000, "Grading notes must be at most 4,000 characters."),
 };
 
-type TaskShapeCheck = { type: TaskType; coding?: unknown; dueAt: string; lateUntil?: string };
+type TaskShapeCheck = { type: TaskType; coding?: unknown; gradingNotes?: string; dueAt: string; lateUntil?: string };
 
 /** Late work closes this many days after the due date unless the mentor sets `lateUntil` (T49). */
 export const LATE_GRACE_DAYS = 7;
@@ -88,6 +94,13 @@ export const LATE_GRACE_DAYS = 7;
 /** The last moment (ms) a late attempt is accepted: `lateUntil`, or `LATE_GRACE_DAYS` after `dueAt`. */
 export function lateCutoff(task: { dueAt: string; lateUntil?: string }): number {
   return task.lateUntil ? Date.parse(task.lateUntil) : Date.parse(task.dueAt) + LATE_GRACE_DAYS * 24 * 60 * 60 * 1000;
+}
+
+/** Grading notes belong to scenario tasks only. */
+function checkNotesMatchType(task: TaskShapeCheck, ctx: z.RefinementCtx): void {
+  if (task.type !== "scenario" && task.gradingNotes !== undefined) {
+    ctx.addIssue({ code: "custom", path: ["gradingNotes"], message: "Only scenario tasks have grading notes." });
+  }
 }
 
 /** Late work can only close after the due date. */
@@ -115,17 +128,24 @@ export const taskInputSchema = z
     maxAttempts: taskFields.maxAttempts.optional(),
     lateUntil: taskFields.lateUntil.optional(),
     coding: taskFields.coding.optional(),
+    gradingNotes: taskFields.gradingNotes.optional(),
   })
   .superRefine(checkCodingMatchesType)
+  .superRefine(checkNotesMatchType)
   .superRefine(checkLateAfterDue)
-  .transform((task) => ({ ...task, maxAttempts: task.maxAttempts ?? DEFAULT_MAX_ATTEMPTS[task.type] }));
+  .transform(({ gradingNotes, ...task }) => ({
+    ...task,
+    // Blank notes are the same as none.
+    ...(gradingNotes ? { gradingNotes } : {}),
+    maxAttempts: task.maxAttempts ?? DEFAULT_MAX_ATTEMPTS[task.type],
+  }));
 export type TaskInput = z.input<typeof taskInputSchema>;
 export type ValidTask = z.output<typeof taskInputSchema>;
 
 /**
  * PATCH body: any subset of the fields (e.g. `{ status: "published" }`). `coding: null` removes the coding
  * settings (needed when changing a coding task to another type); `lateUntil: null` goes back to the default
- * window. The merged task is re-validated in full.
+ * window, `gradingNotes: null` removes the notes. The merged task is re-validated in full.
  */
 export const taskPatchSchema = z
   .strictObject({
@@ -137,6 +157,7 @@ export const taskPatchSchema = z
     status: taskFields.status,
     maxAttempts: taskFields.maxAttempts,
     coding: taskFields.coding.nullable(),
+    gradingNotes: taskFields.gradingNotes.nullable(),
   })
   .partial()
   .refine((patch) => Object.keys(patch).length > 0, "Nothing to update.");
@@ -153,6 +174,8 @@ export const taskDtoSchema = z.object({
   status: z.enum(TASK_STATUSES),
   maxAttempts: z.number(),
   coding: codingSchema.optional(),
+  /** Only in the mentor API's replies (from `taskSecrets`), never in Firestore task docs. */
+  gradingNotes: z.string().optional(),
   createdBy: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),

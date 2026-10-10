@@ -24,11 +24,33 @@ function tasks() {
   return getAdminDb().collection("tasks");
 }
 
-/** Firestore data for a validated task. `coding` and `lateUntil` are omitted (not undefined) when unset. */
+/**
+ * `taskSecrets/{taskId}`: scenario grading notes (T50). Students can read task docs, so anything they must not see
+ * lives here; the rules deny every client (SPEC.md §7).
+ */
+function secrets() {
+  return getAdminDb().collection("taskSecrets");
+}
+
+/** The scenario grading notes of a task, if any. Server only (the feedback route and the mentor API). */
+export async function getGradingNotes(taskId: string): Promise<string | undefined> {
+  const snapshot = await secrets().doc(taskId).get();
+  const notes: unknown = snapshot.data()?.gradingNotes;
+  return typeof notes === "string" && notes ? notes : undefined;
+}
+
+/**
+ * Firestore data for a validated task. `coding` and `lateUntil` are omitted (not undefined) when unset;
+ * `gradingNotes` never goes on the task doc.
+ */
 function toStored(task: ValidTask) {
-  const { coding, dueAt, lateUntil, ...rest } = task;
+  const { title, type, description, status, maxAttempts, coding, dueAt, lateUntil } = task;
   return {
-    ...rest,
+    title,
+    type,
+    description,
+    status,
+    maxAttempts,
     ...(coding ? { coding } : {}),
     dueAt: Timestamp.fromDate(new Date(dueAt)),
     ...(lateUntil ? { lateUntil: Timestamp.fromDate(new Date(lateUntil)) } : {}),
@@ -63,16 +85,21 @@ export async function taskHasSubmissions(taskId: string): Promise<boolean> {
   return !(await submissionsFor(taskId).limit(1).get()).empty;
 }
 
+/** One task for the mentor API, with its grading notes. */
 export async function getTask(id: string): Promise<TaskResult> {
-  const snapshot = await tasks().doc(id).get();
+  const [snapshot, gradingNotes] = await Promise.all([tasks().doc(id).get(), getGradingNotes(id)]);
   const task = snapshot.exists ? taskDocToDto(id, snapshot.data()) : undefined;
-  return task ? { ok: true, task } : NOT_FOUND;
+  return task ? { ok: true, task: { ...task, ...(gradingNotes ? { gradingNotes } : {}) } } : NOT_FOUND;
 }
 
 export async function createTask(task: ValidTask, createdBy: string): Promise<TaskDto> {
   const ref = tasks().doc();
   const now = Timestamp.now();
-  await ref.create({ ...toStored(task), createdBy, createdAt: now, updatedAt: now });
+  // The task and its grading notes are written together, so a scenario task never exists without them.
+  await getAdminDb().runTransaction(async (tx) => {
+    tx.create(ref, { ...toStored(task), createdBy, createdAt: now, updatedAt: now });
+    if (task.gradingNotes) tx.set(secrets().doc(ref.id), { gradingNotes: task.gradingNotes });
+  });
   const at = now.toDate().toISOString();
   return { ...toDtoFields(task), id: ref.id, createdBy, createdAt: at, updatedAt: at };
 }
@@ -85,7 +112,10 @@ export function mergeTaskPatch(existing: TaskDto, patch: TaskPatch): TaskInput {
   const coding =
     patch.coding === null ? undefined : (patch.coding ?? (type === "coding" ? existing.coding : undefined));
   const lateUntil = patch.lateUntil === null ? undefined : (patch.lateUntil ?? existing.lateUntil);
-  return { title, description, dueAt, status, maxAttempts, ...patch, type, coding, lateUntil };
+  // Same for grading notes: they only belong to a scenario task.
+  const gradingNotes =
+    patch.gradingNotes === null ? undefined : (patch.gradingNotes ?? (type === "scenario" ? existing.gradingNotes : undefined));
+  return { title, description, dueAt, status, maxAttempts, ...patch, type, coding, lateUntil, gradingNotes };
 }
 
 /**
@@ -100,6 +130,7 @@ export async function deleteTask(id: string): Promise<{ ok: true } | TaskError> 
     if (!snapshot.exists) return NOT_FOUND;
     tx.delete(ref);
     tx.delete(db.collection("taskStats").doc(id));
+    tx.delete(db.collection("taskSecrets").doc(id));
     return { ok: true };
   });
 }
@@ -109,9 +140,12 @@ export async function updateTask(id: string, patch: TaskPatch): Promise<TaskUpda
   const db = getAdminDb();
   const ref = tasks().doc(id);
   return db.runTransaction(async (tx): Promise<TaskUpdateResult> => {
-    const snapshot = await tx.get(ref);
-    const existing = snapshot.exists ? taskDocToDto(id, snapshot.data()) : undefined;
-    if (!existing) return NOT_FOUND;
+    const secretRef = db.collection("taskSecrets").doc(id);
+    const [snapshot, secret] = await Promise.all([tx.get(ref), tx.get(secretRef)]);
+    const stored = snapshot.exists ? taskDocToDto(id, snapshot.data()) : undefined;
+    if (!stored) return NOT_FOUND;
+    const notes: unknown = secret.data()?.gradingNotes;
+    const existing = typeof notes === "string" && notes ? { ...stored, gradingNotes: notes } : stored;
 
     const merged = taskInputSchema.safeParse(mergeTaskPatch(existing, patch));
     if (!merged.success) {
@@ -132,6 +166,8 @@ export async function updateTask(id: string, patch: TaskPatch): Promise<TaskUpda
     const now = Timestamp.now();
     const createdAt = Timestamp.fromDate(new Date(existing.createdAt));
     tx.set(ref, { ...toStored(merged.data), createdBy: existing.createdBy, createdAt, updatedAt: now });
+    if (merged.data.gradingNotes) tx.set(secretRef, { gradingNotes: merged.data.gradingNotes });
+    else if (secret.exists) tx.delete(secretRef);
     return {
       ok: true,
       affectsStats,

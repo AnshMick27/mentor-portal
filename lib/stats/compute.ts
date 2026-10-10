@@ -20,7 +20,7 @@ export const ATTENTION_MIN_MISSED = 2;
 export const ATTENTION_MIN_SCORES = 2;
 export const ATTENTION_SCORE_BELOW = 5;
 
-const AI_TYPES: ReadonlySet<TaskType> = new Set(["resume", "intro_written"]);
+const AI_TYPES: ReadonlySet<TaskType> = new Set(["resume", "intro_written", "scenario"]);
 
 /** Scores have one decimal, so summing whole tenths keeps the mean exact before the final rounding. */
 function toTenths(score: number): number {

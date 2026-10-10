@@ -77,6 +77,18 @@ describe("task form conversion", () => {
     expect(taskInputSchema.safeParse(formToTaskInput({ ...form, lateUntilLocal: "2026-10-05T23:58" })).success).toBe(false);
   });
 
+  it("sends grading notes for scenario tasks only, and null to clear them (T50)", () => {
+    const scenarioForm = { ...taskToForm(codingDto), type: "scenario" as const, gradingNotes: "Owns the mistake." };
+    const scenario = taskInputSchema.parse(formToTaskInput(scenarioForm));
+    expect(scenario.gradingNotes).toBe("Owns the mistake.");
+    expect(scenario.coding).toBeUndefined();
+    // Notes typed earlier are not sent once the type changes.
+    const resume = taskInputSchema.parse(formToTaskInput({ ...scenarioForm, type: "resume" }));
+    expect(resume.gradingNotes).toBeUndefined();
+    expect(taskToPatch(resume).gradingNotes).toBeNull();
+    expect(taskToForm({ ...codingDto, type: "scenario", gradingNotes: "N" }).gradingNotes).toBe("N");
+  });
+
   it("builds a PATCH body that clears coding for non-coding tasks", () => {
     const resume = taskInputSchema.parse(formToTaskInput({ ...taskToForm(codingDto), type: "resume" }));
     expect(taskToPatch(resume)).toMatchObject({ type: "resume", coding: null });

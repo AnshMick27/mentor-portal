@@ -1,4 +1,4 @@
-import { MAX_INTRO_CHARS, MIN_INTRO_CHARS } from "./limits";
+import { MAX_INTRO_CHARS, MAX_SCENARIO_CHARS, MIN_INTRO_CHARS, MIN_SCENARIO_CHARS } from "./limits";
 
 /** SPEC.md §8.4: the written intro should be 80–250 words (advice only; the server enforces characters). */
 export const INTRO_TARGET_MIN_WORDS = 80;
@@ -35,4 +35,12 @@ export function checkIntroLength(text: string): IntroLengthCheck {
   if (chars < MIN_INTRO_CHARS) charError = `Write at least ${MIN_INTRO_CHARS} characters (${chars} so far).`;
   else if (chars > MAX_INTRO_CHARS) charError = `Keep it to ${MAX_INTRO_CHARS.toLocaleString("en-IN")} characters (${chars} now).`;
   return { words, chars, wordHint, wordsInTarget, charError };
+}
+
+/** The scenario answer box's character check (T50), same rules and words as the intro's. */
+export function scenarioCharError(text: string): string | undefined {
+  const chars = text.trim().length;
+  if (chars < MIN_SCENARIO_CHARS) return `Write at least ${MIN_SCENARIO_CHARS} characters (${chars} so far).`;
+  if (chars > MAX_SCENARIO_CHARS) return `Keep it to ${MAX_SCENARIO_CHARS.toLocaleString("en-IN")} characters (${chars} now).`;
+  return undefined;
 }

@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { AiTaskType } from "@/lib/validation/submission";
 import introWritten from "./intro_written.json";
 import resume from "./resume.json";
+import scenario from "./scenario.json";
 
 /**
  * Rubrics are plain JSON (SPEC.md §10) so they can be edited without touching code. They are validated
@@ -26,6 +27,7 @@ export type Rubric = z.infer<typeof rubricSchema>;
 const RUBRICS: Record<AiTaskType, Rubric> = {
   resume: rubricSchema.parse(resume),
   intro_written: rubricSchema.parse(introWritten),
+  scenario: rubricSchema.parse(scenario),
 };
 
 export function getRubric(type: AiTaskType): Rubric {

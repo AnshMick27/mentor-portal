@@ -329,3 +329,56 @@ describe("POST /api/feedback — integrity counts (T46b)", () => {
     expect(aiMock).not.toHaveBeenCalled();
   });
 });
+
+describe("POST /api/feedback — scenario answers (T50)", () => {
+  const ANSWER = "I would first tell my lead about the bug and how it affects the release. ".repeat(4).trim();
+  const counts = { pastesBlocked: 0, largestInsert: 1, typedChars: ANSWER.length, awayCount: 0, awayMs: 0, maxCharsPerSec: 5 };
+  const scenarioBody = { taskId: "sc1", type: "scenario", content: ANSWER, integrity: counts };
+  const QUESTION = "A bug is found an hour before release. What do you do?";
+
+  beforeEach(() => {
+    fakeAdmin.collection("tasks").set("sc1", task({ type: "scenario", title: "Release bug", description: QUESTION }));
+  });
+
+  it("grades the answer against the question and the hidden grading notes", async () => {
+    fakeAdmin.collection("taskSecrets").set("sc1", { gradingNotes: "Tells the lead early; does not hide the bug." });
+    const { status, body } = await post("stu", scenarioBody);
+    expect(status).toBe(200);
+    expect(body.submission).toMatchObject({ attempt: 1, status: "done" });
+    expect(aiMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "scenario",
+        content: ANSWER,
+        context: { question: QUESTION, gradingNotes: "Tells the lead early; does not hide the bug." },
+      }),
+    );
+    expect(aiMock.mock.calls[0]?.[0].rubric.title).toBe("Scenario answer");
+  });
+
+  it("works without grading notes, and never sends a question for other types", async () => {
+    await post("stu", scenarioBody);
+    expect(aiMock.mock.calls[0]?.[0].context).toEqual({ question: QUESTION, gradingNotes: undefined });
+    await post("stu", resumeBody);
+    expect(aiMock.mock.calls[1]?.[0]).not.toHaveProperty("context");
+  });
+
+  it("stores integrity counts and flags, like an intro", async () => {
+    const { body } = await post("stu", scenarioBody);
+    const integrity = storedSubmissionSchema.parse(submissions().get(body.submission!.id)).integrity;
+    expect(integrity).toMatchObject({ typedChars: ANSWER.length, flags: expect.any(Array) });
+  });
+
+  it("refuses answers under 200 or over 5,000 characters without calling the AI", async () => {
+    expect((await post("stu", { ...scenarioBody, content: "x".repeat(199) })).body.error).toBe(
+      "Your answer must be between 200 and 5,000 characters.",
+    );
+    expect((await post("stu", { ...scenarioBody, content: "x".repeat(5001) })).status).toBe(400);
+    expect((await post("stu", { ...scenarioBody, content: "x".repeat(200) })).status).toBe(200);
+    expect(aiMock).toHaveBeenCalledOnce();
+  });
+
+  it("refuses a scenario answer sent to another task type", async () => {
+    expect((await post("stu", { ...scenarioBody, taskId: "intro1" })).status).toBe(400);
+    expect(submissions().size).toBe(0);
+  });
+});

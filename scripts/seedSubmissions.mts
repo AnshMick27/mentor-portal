@@ -1,6 +1,6 @@
 // Demo submissions for the local emulators (T23). Pure, like seedData.mts; imports use `.ts` extensions.
 import { codingScore } from "../lib/submissions/scoring.ts";
-import type { Criterion, StoredSubmission, SubmissionResult } from "../lib/validation/submission.ts";
+import type { AiTaskType, Criterion, StoredSubmission, SubmissionResult } from "../lib/validation/submission.ts";
 import type { Language, TaskType } from "../lib/validation/task.ts";
 
 /** A submission doc as the seed builds it: a real Date for `createdAt` (seed.mts converts it to a Timestamp). */
@@ -16,9 +16,10 @@ type SeedTaskRef = { id: string; type: TaskType; dueAt: string };
 
 const DAY = 86_400_000;
 
-const CRITERIA: Record<"resume" | "intro_written", string[]> = {
+const CRITERIA: Record<AiTaskType, string[]> = {
   resume: ["Format and length", "Projects", "Action verbs and quantified results", "Grammar and consistency"],
   intro_written: ["Structure", "Clarity", "Tone", "Relevance to placements"],
+  scenario: ["Understanding of the situation", "Approach and reasoning", "Practicality", "Communication"],
 };
 
 const CONTENT: Record<TaskType, string> = {
@@ -30,10 +31,13 @@ const CONTENT: Record<TaskType, string> = {
     "Good morning. I am a final-year B.Tech student at Acropolis. I enjoy building small web apps and have " +
     "solved over 200 problems on coding platforms. My best project is a canteen ordering app used by 400 " +
     "students a day. I am looking for a role where I can grow as a backend developer and learn from a strong team.",
+  scenario:
+    "First I would tell my lead about the bug and its impact before the release, then reproduce it, write a fix with " +
+    "a test, and ask a teammate to review it. If the fix is risky I would suggest releasing without that feature.",
 };
 
 /** Criteria scores spread around the overall score (one decimal, kept inside 0–10). */
-function criteria(type: "resume" | "intro_written", score: number): Criterion[] {
+function criteria(type: AiTaskType, score: number): Criterion[] {
   const offsets = [0.5, -0.5, 0.3, -0.3];
   return CRITERIA[type].map((name, i) => ({
     name,
@@ -42,7 +46,7 @@ function criteria(type: "resume" | "intro_written", score: number): Criterion[] 
   }));
 }
 
-function aiResult(type: "resume" | "intro_written", score: number): SubmissionResult {
+function aiResult(type: AiTaskType, score: number): SubmissionResult {
   const strong = score >= 7;
   return {
     score,

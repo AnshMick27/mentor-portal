@@ -10,6 +10,10 @@ export const MAX_RESUME_CHARS = 12_000;
 export const MIN_INTRO_CHARS = 300;
 export const MAX_INTRO_CHARS = 2_500;
 
+/** Scenario answer (T50): 200–5,000 characters. */
+export const MIN_SCENARIO_CHARS = 200;
+export const MAX_SCENARIO_CHARS = 5_000;
+
 /** SPEC.md §9.5: a submission still queued/running after this long counts as an error. */
 export const JUDGE_TIMEOUT_MS = 10 * 60 * 1000;
 export const TIMED_OUT_ERROR = "Judge timed out, attempt not counted";

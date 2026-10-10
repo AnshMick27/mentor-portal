@@ -3,7 +3,7 @@ import { createAnthropicModel } from "@/lib/ai/anthropic";
 import { AiFeedbackError, aiFeedbackSchema, type Feedback, type FeedbackModel } from "@/lib/ai/feedback";
 import { createGeminiModel } from "@/lib/ai/gemini";
 import { createGroqModel } from "@/lib/ai/groq";
-import { buildPrompt } from "@/lib/ai/prompt";
+import { buildPrompt, type TaskContext } from "@/lib/ai/prompt";
 import type { Rubric } from "@/lib/ai/rubrics";
 import { getServerEnv, type ServerEnv } from "@/lib/config/env";
 import type { AiTaskType } from "@/lib/validation/submission";
@@ -55,7 +55,8 @@ export function createModelWithFallback(env: AiEnv, fetchFn?: typeof fetch): Fee
   };
 }
 
-export type FeedbackInput = { type: AiTaskType; rubric: Rubric; content: string };
+/** `context`: scenario tasks only (the question and the mentor's grading notes, T50). */
+export type FeedbackInput = { type: AiTaskType; rubric: Rubric; content: string; context?: TaskContext };
 
 const MAX_TRIES = 2;
 
@@ -68,7 +69,7 @@ export async function generateFeedback(
   input: FeedbackInput,
   model: FeedbackModel = createModelWithFallback(getServerEnv()),
 ): Promise<Feedback> {
-  const prompt = buildPrompt(input.type, input.rubric, input.content);
+  const prompt = buildPrompt(input.type, input.rubric, input.content, input.context);
   let lastProblem = "no reply";
 
   for (let attempt = 1; attempt <= MAX_TRIES; attempt++) {

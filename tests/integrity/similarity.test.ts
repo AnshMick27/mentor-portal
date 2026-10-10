@@ -199,6 +199,16 @@ describe("taskSimilarPairs", () => {
     expect(pairs).toEqual([{ uidA: "s1", uidB: "s2", submissionIdA: "a1", submissionIdB: "b1", percent: 100 }]);
   });
 
+  it("compares scenario answers as prose, like intros (T50)", () => {
+    const prose = (id: string, uid: string, content: string) => ({ ...attempt(id, uid, content, 1), language: undefined });
+    const pairs = taskSimilarPairs({ id: "t1", type: "scenario" }, new Set(["s1", "s2", "s3"]), [
+      prose("a1", "s1", intro),
+      prose("b1", "s2", introCopy),
+      prose("c1", "s3", introOwn),
+    ]);
+    expect(pairs?.map((p) => `${p.uidA}-${p.uidB}`)).toEqual(["s1-s2"]);
+  });
+
   it("never compares a resume task", () => {
     expect(taskSimilarPairs({ id: "t1", type: "resume" }, new Set(["s1"]), [])).toBeUndefined();
   });

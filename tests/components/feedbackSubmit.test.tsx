@@ -21,6 +21,7 @@ const base: Omit<TaskDto, "type" | "title" | "maxAttempts"> = {
 };
 const resumeTask: TaskDto = { ...base, type: "resume", title: "Resume review", maxAttempts: 3 };
 const introTask: TaskDto = { ...base, type: "intro_written", title: "Introduce yourself", maxAttempts: 3 };
+const scenarioTask: TaskDto = { ...base, type: "scenario", title: "Release day bug", maxAttempts: 3 };
 const now = new Date("2026-10-01T00:00:00Z");
 /** `count` finished attempts on the task. */
 const done = (task: TaskDto, count: number): SubmissionView[] =>
@@ -66,6 +67,24 @@ describe("intro submit area", () => {
     expect(html).toContain("0 words · Aim for at least 80 words.");
     expect(html).toContain("Write at least 300 characters (0 so far).");
     expect(html).toContain("3 attempts left");
+  });
+});
+
+describe("scenario submit area (T50)", () => {
+  const html = render(scenarioTask);
+
+  it("has its own heading and a labelled, paste-blocked answer box with the 200–5,000 limit", () => {
+    expect(html).toContain("Submit your answer");
+    expect(html).toMatch(/<label[^>]*for="scenario-text"/);
+    expect(html).toMatch(/<textarea[^>]*id="scenario-text"/);
+    expect(html).toContain('id="scenario-paste"');
+    expect(html).toContain("Write at least 200 characters (0 so far).");
+    expect(html).toContain("0 words");
+    expect(html).toMatch(/<button type="submit" disabled=""/);
+  });
+
+  it("never shows grading notes to students, even if a task object carried them", () => {
+    expect(render({ ...scenarioTask, gradingNotes: "SECRET-NOTES" })).not.toContain("SECRET-NOTES");
   });
 });
 

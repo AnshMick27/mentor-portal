@@ -231,6 +231,44 @@ describe("GET/PATCH /api/tasks/[id]", () => {
     expect((await callPatch("mentor", "t1", { dueAt: "2026-09-26T10:00:00Z" })).status).toBe(400);
   });
 
+  it("keeps scenario grading notes out of the task doc, in taskSecrets (T50)", async () => {
+    const scenario = { ...resumeTask, type: "scenario", title: "Release bug", gradingNotes: "  Tells the lead early.  " };
+    const created = await callCreate("mentor", scenario);
+    expect(created.status).toBe(201);
+    const id = created.body.task!.id;
+    expect(created.body.task).toMatchObject({ type: "scenario", maxAttempts: 3, gradingNotes: "Tells the lead early." });
+    expect(fakeAdmin.collection("tasks").get(id)).not.toHaveProperty("gradingNotes");
+    expect(fakeAdmin.collection("taskSecrets").get(id)).toEqual({ gradingNotes: "Tells the lead early." });
+    expect((await callGet("mentor", id)).body.task?.gradingNotes).toBe("Tells the lead early.");
+    expect((await callGet("viewer", id)).body.task?.gradingNotes).toBe("Tells the lead early.");
+
+    const edited = await callPatch("mentor", id, { title: "Release day bug" });
+    expect(edited.body.task?.gradingNotes).toBe("Tells the lead early.");
+    expect(fakeAdmin.collection("tasks").get(id)).not.toHaveProperty("gradingNotes");
+
+    await callPatch("mentor", id, { gradingNotes: null });
+    expect(fakeAdmin.collection("taskSecrets").has(id)).toBe(false);
+  });
+
+  it("refuses grading notes on other types and drops them when a scenario changes type", async () => {
+    const bad = await callCreate("mentor", { ...resumeTask, gradingNotes: "x" });
+    expect(bad.status).toBe(400);
+    expect(bad.body.error).toBe("Only scenario tasks have grading notes.");
+
+    seedTask("s1", { type: "scenario" });
+    fakeAdmin.collection("taskSecrets").set("s1", { gradingNotes: "Old notes" });
+    const changed = await callPatch("mentor", "s1", { type: "intro_written" });
+    expect(changed.status).toBe(200);
+    expect(changed.body.task).not.toHaveProperty("gradingNotes");
+    expect(fakeAdmin.collection("taskSecrets").has("s1")).toBe(false);
+  });
+
+  it("treats blank grading notes as none", async () => {
+    const created = await callCreate("mentor", { ...resumeTask, type: "scenario", gradingNotes: "   " });
+    expect(created.body.task).not.toHaveProperty("gradingNotes");
+    expect(fakeAdmin.collection("taskSecrets").size).toBe(0);
+  });
+
   it("400s patches with unknown fields and leaves the task unchanged", async () => {
     expect((await callPatch("mentor", "t1", { createdBy: "evil" })).status).toBe(400);
     expect((await callPatch("mentor", "t1", {})).status).toBe(400);
@@ -333,12 +371,14 @@ describe("DELETE /api/tasks/[id] (T37)", () => {
 
   it("deletes the task and its stats, keeps submissions, and recomputes", async () => {
     fakeAdmin.collection("taskStats").set("t1", { submittedCount: 1 });
+    fakeAdmin.collection("taskSecrets").set("t1", { gradingNotes: "notes" });
     fakeAdmin.collection("submissions").set("s-1", { taskId: "t1", uid: "s1", status: "done" });
     const { status, body } = await callDelete("mentor", "t1");
     expect(status).toBe(200);
     expect(body.deleted).toBe(true);
     expect(fakeAdmin.collection("tasks").get("t1")).toBeUndefined();
     expect(fakeAdmin.collection("taskStats").get("t1")).toBeUndefined();
+    expect(fakeAdmin.collection("taskSecrets").get("t1")).toBeUndefined();
     expect(fakeAdmin.collection("submissions").get("s-1")).toMatchObject({ taskId: "t1" });
     expect(recomputeMock).toHaveBeenCalledWith("DELETE /api/tasks/t1");
     expect((await callDelete("mentor", "t1")).status).toBe(404);

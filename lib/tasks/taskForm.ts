@@ -17,6 +17,8 @@ export type TaskFormState = {
   languages: Language[];
   sampleTests: { input: string; output: string }[];
   timeLimitMs: string;
+  /** Scenario only: hidden notes for the AI grader (T50). */
+  gradingNotes: string;
 };
 
 export function emptyTaskForm(): TaskFormState {
@@ -32,6 +34,7 @@ export function emptyTaskForm(): TaskFormState {
     languages: ["cpp", "java", "python"],
     sampleTests: [{ input: "", output: "" }],
     timeLimitMs: "2000",
+    gradingNotes: "",
   };
 }
 
@@ -49,6 +52,7 @@ export function taskToForm(task: TaskDto): TaskFormState {
     languages: task.coding?.languages ?? empty.languages,
     sampleTests: task.coding?.sampleTests ?? empty.sampleTests,
     timeLimitMs: task.coding ? String(task.coding.timeLimitMs) : empty.timeLimitMs,
+    gradingNotes: task.gradingNotes ?? "",
   };
 }
 
@@ -77,13 +81,15 @@ export function formToTaskInput(form: TaskFormState): TaskInput {
             timeLimitMs: optionalNumber(form.timeLimitMs) ?? Number.NaN,
           }
         : undefined,
+    // Notes typed for a scenario stay in the form if the type changes, but only a scenario sends them.
+    gradingNotes: form.type === "scenario" ? form.gradingNotes : undefined,
   };
 }
 
 /**
  * PATCH body from a validated task: `coding: null` clears coding settings for non-coding tasks, `lateUntil: null`
- * goes back to the default late window.
+ * goes back to the default late window, `gradingNotes: null` removes blank or non-scenario notes.
  */
 export function taskToPatch(task: ValidTask): TaskPatch {
-  return { ...task, coding: task.coding ?? null, lateUntil: task.lateUntil ?? null };
+  return { ...task, coding: task.coding ?? null, lateUntil: task.lateUntil ?? null, gradingNotes: task.gradingNotes ?? null };
 }

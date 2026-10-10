@@ -8,10 +8,18 @@ import type { FeedbackRequest, StoredIntegrity, SubmissionResult } from "@/lib/v
 export const AI_FAILED_MESSAGE =
   "We could not get AI feedback right now. This attempt was not counted — please try again in a few minutes.";
 
-/** Checks the task and the attempt limit, then creates the submission as `running` (one transaction). */
-export function startFeedbackSubmission(uid: string, body: FeedbackRequest, now: Date, integrity?: StoredIntegrity): Promise<StartResult> {
+/**
+ * Checks the task and the attempt limit, then creates the submission as `running` (one transaction). `question` is
+ * the task description as read in that transaction, which a scenario answer is graded against (T50).
+ */
+export function startFeedbackSubmission(
+  uid: string,
+  body: FeedbackRequest,
+  now: Date,
+  integrity?: StoredIntegrity,
+): Promise<StartResult<{ question: string }>> {
   const sub = { uid, taskId: body.taskId, type: body.type, status: "running", content: body.content, integrity } as const;
-  return startSubmission(sub, now, () => ({ ok: true }));
+  return startSubmission(sub, now, (task) => ({ ok: true, question: task.description }));
 }
 
 /** AI feedback → the stored `result` (SPEC.md §6). */

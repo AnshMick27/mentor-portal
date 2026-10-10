@@ -81,6 +81,24 @@ describe("task form labels and controls", () => {
   });
 });
 
+describe("scenario grading notes (T50)", () => {
+  it("shows the hidden notes field for scenario tasks only, with the stored notes", () => {
+    const scenario = renderToStaticMarkup(
+      <TaskForm mode="new" initial={{ ...emptyTaskForm(), type: "scenario", gradingNotes: "Tells the lead early." }} />,
+    );
+    expect(scenario).toContain("Grading notes (hidden from students)");
+    expect(scenario).toContain("Tells the lead early.");
+    expect(scenario).toContain('<option value="scenario" selected="">Scenario</option>');
+    expect(renderToStaticMarkup(<TaskForm mode="new" initial={{ ...emptyTaskForm(), type: "intro_written" }} />)).not.toContain(
+      "Grading notes",
+    );
+  });
+
+  it("maps a gradingNotes error to its field", () => {
+    expect(taskFieldErrors([{ path: ["gradingNotes"], message: "Too long." }]).fields).toEqual({ gradingNotes: "Too long." });
+  });
+});
+
 describe("leave confirm", () => {
   it("asks before throwing edits away, with a clear way to stay", () => {
     const html = renderToStaticMarkup(<LeaveConfirm onLeave={noop} onStay={noop} />);

@@ -119,6 +119,7 @@ describe("classSkillAverages", () => {
       { type: "coding", label: "Coding", average: 6.8, students: 3 }, // (9 + 4 + 7.5) / 3 = 6.83
       { type: "resume", label: "Resume", average: 6, students: 1 },
       { type: "intro_written", label: "Written intro", students: 0 },
+      { type: "scenario", label: "Scenario", students: 0 },
     ]);
     expect(classSkillAverages(students, "IT")[0]).toEqual({ type: "coding", label: "Coding", average: 4, students: 1 });
   });

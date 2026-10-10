@@ -10,6 +10,7 @@ import { CodeSubmitForm } from "./CodeSubmitForm";
 import { FeedbackReady, FeedbackSaved } from "./FeedbackSubmitParts";
 import { IntroSubmitForm } from "./IntroSubmitForm";
 import { ResumeSubmitForm } from "./ResumeSubmitForm";
+import { ScenarioSubmitForm } from "./ScenarioSubmitForm";
 import { JudgeStatus } from "./SubmissionHistory";
 import { useCodeSubmit, type CodeSubmitState } from "./useCodeSubmit";
 import { useFeedbackSubmit } from "./useFeedbackSubmit";
@@ -91,6 +92,12 @@ function CodeSubmitSection({ task, attemptsUsed, now, submissions = [] }: Sectio
   );
 }
 
+const SUBMIT_HEADING: Record<AiTaskType, string> = {
+  resume: "Submit your resume",
+  intro_written: "Submit your introduction",
+  scenario: "Submit your answer",
+};
+
 function AiSubmitSection({ task, type, attemptsUsed, now }: SectionProps & { type: AiTaskType }) {
   const { state, submit } = useFeedbackSubmit(task.id, type);
   const availability = submitAvailability(task, attemptsUsed, now);
@@ -98,7 +105,7 @@ function AiSubmitSection({ task, type, attemptsUsed, now }: SectionProps & { typ
   return (
     <section className="flex flex-col gap-3" aria-labelledby="submit-heading">
       <h2 id="submit-heading" className="text-lg font-semibold">
-        {type === "resume" ? "Submit your resume" : "Submit your introduction"}
+        {SUBMIT_HEADING[type]}
       </h2>
       {state.status === "done" && <FeedbackReady result={state.result} late={state.late} />}
       {state.status === "saved" && <FeedbackSaved />}
@@ -108,6 +115,8 @@ function AiSubmitSection({ task, type, attemptsUsed, now }: SectionProps & { typ
           <AttemptsLeft count={availability.attemptsLeft} late={availability.late} />
           {type === "resume" ? (
             <ResumeSubmitForm state={state} onSubmit={onSubmit} />
+          ) : type === "scenario" ? (
+            <ScenarioSubmitForm state={state} onSubmit={onSubmit} />
           ) : (
             <IntroSubmitForm state={state} onSubmit={onSubmit} />
           )}

@@ -1,0 +1,30 @@
+{
+  "title": "Scenario answer",
+  "criteria": [
+    {
+      "name": "Understanding of the situation",
+      "weight": 20,
+      "guidance": "Identifies the real problem, the people involved and the constraints in the scenario, without missing key facts or inventing new ones."
+    },
+    {
+      "name": "Approach and reasoning",
+      "weight": 30,
+      "guidance": "Gives a clear plan of action and explains why each step makes sense; weighs options and trade-offs instead of jumping to one answer."
+    },
+    {
+      "name": "Practicality",
+      "weight": 20,
+      "guidance": "The actions are realistic for a fresher in a real workplace: concrete, in a sensible order, and they would actually resolve the situation."
+    },
+    {
+      "name": "Professionalism",
+      "weight": 15,
+      "guidance": "Shows ownership, honesty, teamwork and respect for others; escalates or communicates with the right people at the right time."
+    },
+    {
+      "name": "Communication",
+      "weight": 15,
+      "guidance": "Well organised and easy to follow, with correct grammar and no filler."
+    }
+  ]
+}

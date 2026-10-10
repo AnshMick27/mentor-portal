@@ -3,7 +3,9 @@ import {
   MAX_CODE_BYTES,
   MAX_INTRO_CHARS,
   MAX_RESUME_CHARS,
+  MAX_SCENARIO_CHARS,
   MIN_INTRO_CHARS,
+  MIN_SCENARIO_CHARS,
   utf8Bytes,
 } from "@/lib/submissions/limits";
 import { isValidTaskId, LANGUAGES, TASK_TYPES } from "@/lib/validation/task";
@@ -13,7 +15,7 @@ export const SUBMISSION_STATUSES = ["queued", "running", "done", "error"] as con
 export type SubmissionStatus = (typeof SUBMISSION_STATUSES)[number];
 
 /** Task types whose submissions are marked by the AI (SPEC.md §10). */
-export const AI_TASK_TYPES = ["resume", "intro_written"] as const;
+export const AI_TASK_TYPES = ["resume", "intro_written", "scenario"] as const;
 export type AiTaskType = (typeof AI_TASK_TYPES)[number];
 
 /** Same 0–10 scale everywhere (SPEC.md §6), one decimal place. */
@@ -50,8 +52,13 @@ export const submissionResultSchema = z.object({
 });
 export type SubmissionResult = z.infer<typeof submissionResultSchema>;
 
+/** AI tasks typed in a paste-blocked box (intro, scenario answer, T50): integrity counts and the draft timer apply. */
+export function isTypedAnswer(type: AiTaskType): type is "intro_written" | "scenario" {
+  return type !== "resume";
+}
+
 /**
- * Answer-integrity counts the code and intro forms send with a submission (SPEC.md §8.9). Counts only, never
+ * Answer-integrity counts the code, intro and scenario forms send with a submission (SPEC.md §8.9). Counts only, never
  * keystrokes. They come from the browser, so they are hints: bounded here, never used for the score.
  */
 export const integrityCountsSchema = z.strictObject({
@@ -109,16 +116,18 @@ function checkTextLimits(body: { type: AiTaskType; content: string }, ctx: z.Ref
       path: ["content"],
       message: "Your introduction must be between 300 and 2,500 characters.",
     });
+  } else if (body.type === "scenario" && (length < MIN_SCENARIO_CHARS || length > MAX_SCENARIO_CHARS)) {
+    ctx.addIssue({ code: "custom", path: ["content"], message: "Your answer must be between 200 and 5,000 characters." });
   }
 }
 
-/** `POST /api/feedback` body (resume or written intro). Content is trimmed before the limits apply. */
+/** `POST /api/feedback` body (resume, written intro or scenario answer). Content is trimmed before the limits apply. */
 export const feedbackRequestSchema = z
   .strictObject({
     taskId: taskIdSchema,
     type: z.enum(AI_TASK_TYPES),
     content: z.string().trim(),
-    /** Sent by the intro form; ignored for a resume. */
+    /** Sent by the intro and scenario forms; ignored for a resume. */
     integrity: integrityCountsSchema.optional(),
   })
   .superRefine(checkTextLimits);

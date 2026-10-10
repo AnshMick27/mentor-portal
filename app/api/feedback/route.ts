@@ -12,12 +12,13 @@ import {
 import { draftElapsedMs } from "@/lib/submissions/integrity";
 import { buildIntegrity } from "@/lib/submissions/integrityFlags";
 import { onFinished } from "@/lib/submissions/onFinished";
-import { feedbackRequestSchema, type SubmissionResult } from "@/lib/validation/submission";
+import { getGradingNotes } from "@/lib/tasks/taskStore";
+import { feedbackRequestSchema, isTypedAnswer, type SubmissionResult } from "@/lib/validation/submission";
 
 /** A slow AI reply (plus one retry) must not be cut off by the platform's default function timeout. */
 export const maxDuration = 60;
 
-/** Student only: submit a resume or written intro and get AI feedback (SPEC.md §8.4, §10). */
+/** Student only: submit a resume, written intro or scenario answer and get AI feedback (SPEC.md §8.4, §10). */
 export async function POST(request: Request): Promise<Response> {
   const auth = await requireUser(request, ["student"]);
   if (!auth.ok) return auth.response;
@@ -27,9 +28,9 @@ export async function POST(request: Request): Promise<Response> {
   if (!body.ok) return body.response;
 
   const now = new Date();
-  // Only the intro is typed in a paste-blocked box; a resume is meant to be pasted (SPEC.md §8.9).
+  // Intros and scenario answers are typed in a paste-blocked box; a resume is meant to be pasted (SPEC.md §8.9).
   const integrity =
-    body.data.type === "intro_written"
+    isTypedAnswer(body.data.type)
       ? buildIntegrity(body.data.integrity, body.data.content.length, await draftElapsedMs(uid, body.data.taskId, now))
       : undefined;
 
@@ -41,14 +42,18 @@ export async function POST(request: Request): Promise<Response> {
     return jsonError(500, "Could not save your submission. Please try again.");
   }
   if (!started.ok) return jsonError(started.status, started.message);
-  const { submissionId, attempt, late } = started;
+  const { submissionId, attempt, late, question } = started;
 
   let result: SubmissionResult | undefined;
   try {
+    // A scenario answer is graded against its question and the mentor's hidden notes (T50).
+    const context =
+      body.data.type === "scenario" ? { question, gradingNotes: await getGradingNotes(body.data.taskId) } : undefined;
     const feedback = await generateFeedback({
       type: body.data.type,
       rubric: getRubric(body.data.type),
       content: body.data.content,
+      ...(context ? { context } : {}),
     });
     result = feedbackToResult(feedback);
   } catch (error) {

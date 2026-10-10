@@ -4,6 +4,7 @@ const TONE: Record<TaskType, string> = {
   coding: "bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100",
   resume: "bg-orange-100 text-orange-900 dark:bg-orange-900 dark:text-orange-100",
   intro_written: "bg-teal-100 text-teal-900 dark:bg-teal-900 dark:text-teal-100",
+  scenario: "bg-purple-100 text-purple-900 dark:bg-purple-900 dark:text-purple-100",
 };
 
 /** The task's kind as a small square tag ("Coding"), kept apart from the round status chips (Stitch design, T40b). */

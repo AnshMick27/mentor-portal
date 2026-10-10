@@ -7,6 +7,7 @@ import { apiFetch } from "@/lib/api/client";
 import {
   feedbackRequestSchema,
   submissionResultSchema,
+  isTypedAnswer,
   type AiTaskType,
   type IntegrityCounts,
   type SubmissionResult,
@@ -26,16 +27,16 @@ export type FeedbackSubmitState =
   | { status: "saved" }
   | { status: "done"; result: SubmissionResult; late: boolean };
 
-/** Sends resume/intro text to `POST /api/feedback`; validates locally first with the same schema as the server. */
+/** Sends resume/intro/scenario text to `POST /api/feedback`; validates locally first with the same schema as the server. */
 export function useFeedbackSubmit(taskId: string, type: AiTaskType) {
   const { getIdToken } = useAuth();
   const [state, setState] = useState<FeedbackSubmitState>({ status: "idle" });
   useEffect(() => {
-    if (type === "intro_written") openDraft(getIdToken, taskId);
+    if (isTypedAnswer(type)) openDraft(getIdToken, taskId);
   }, [getIdToken, taskId, type]);
 
   async function submit(content: string, integrity?: IntegrityCounts) {
-    const parsed = feedbackRequestSchema.safeParse({ taskId, type, content, ...(type === "intro_written" ? { integrity } : {}) });
+    const parsed = feedbackRequestSchema.safeParse({ taskId, type, content, ...(isTypedAnswer(type) ? { integrity } : {}) });
     if (!parsed.success) {
       setState({ status: "error", message: parsed.error.issues[0]?.message ?? "Please check your text." });
       return;

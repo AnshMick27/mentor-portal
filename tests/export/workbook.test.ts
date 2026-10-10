@@ -103,12 +103,12 @@ describe("buildExportWorkbook", () => {
     const sheet = rows(SHEET_NAMES.students);
     expect(sheet[0]).toEqual([
       "Name", "Roll no", "Branch", "Email", "Tasks due", "Submitted", "Missed",
-      "Coding avg", "Resume avg", "Written intro avg", "Overall avg", "Needs attention", "Reason",
+      "Coding avg", "Resume avg", "Written intro avg", "Scenario avg", "Overall avg", "Needs attention", "Reason",
     ]);
-    expect(sheet[1]).toEqual(["Asha Verma", "0827CS1", "CSE", "asha@college.ac.in", 2, 2, 0, 10, 7.5, undefined, 8.8, "No", ""]);
+    expect(sheet[1]).toEqual(["Asha Verma", "0827CS1", "CSE", "asha@college.ac.in", 2, 2, 0, 10, 7.5, undefined, undefined, 8.8, "No", ""]);
     expect(sheet[2]?.[0]).toBe("Zara Khan");
-    expect(sheet[2]?.[11]).toBe("Yes");
-    expect(sheet[2]?.[12]).toBe("Missed 2 of the last 2 tasks");
+    expect(sheet[2]?.[12]).toBe("Yes");
+    expect(sheet[2]?.[13]).toBe("Missed 2 of the last 2 tasks");
     expect(sheet).toHaveLength(3);
   });
 

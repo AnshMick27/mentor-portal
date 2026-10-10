@@ -103,7 +103,8 @@ export type SimilarPair = { uidA: string; uidB: string; submissionIdA: string; s
  * Every pair of students (one entry each) at `SIMILAR_PERCENT` or more, highest first, at most `MAX_PAIRS`.
  * Code is only compared within one language. Order inside a pair follows the input order, so output is stable.
  */
-export function findSimilarPairs(type: "coding" | "intro_written", entries: readonly SimilarityEntry[]): SimilarPair[] {
+/** Intros and scenario answers are both prose and are compared the same way. */
+export function findSimilarPairs(type: "coding" | "intro_written" | "scenario", entries: readonly SimilarityEntry[]): SimilarPair[] {
   const prints = entries.flatMap((entry) => {
     if (type === "coding") {
       if (!entry.language) return [];

@@ -11,6 +11,7 @@ const LINE_STYLE: Record<TaskType, { color: string; dash?: string; dot: "circle"
   coding: { color: "#2563eb", dot: "circle" },
   resume: { color: "#16a34a", dash: "6 4", dot: "square" },
   intro_written: { color: "#ea580c", dash: "2 4", dot: "diamond" },
+  scenario: { color: "#9333ea", dash: "10 3 2 3", dot: "circle" },
 };
 
 const AXIS_TICK = { fill: "currentColor", fontSize: 12, opacity: 0.75 };

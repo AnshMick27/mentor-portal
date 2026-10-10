@@ -35,7 +35,8 @@ export type TaskFieldKey =
   | "problemSlug"
   | "languages"
   | "timeLimitMs"
-  | "sampleTests";
+  | "sampleTests"
+  | "gradingNotes";
 export type TaskFieldErrors = Partial<Record<TaskFieldKey, string>>;
 
 const TOP_LEVEL_KEYS: Record<string, TaskFieldKey> = {
@@ -45,6 +46,7 @@ const TOP_LEVEL_KEYS: Record<string, TaskFieldKey> = {
   dueAt: "dueAtLocal",
   lateUntil: "lateUntilLocal",
   maxAttempts: "maxAttempts",
+  gradingNotes: "gradingNotes",
 };
 const CODING_KEYS: Record<string, TaskFieldKey> = {
   problemSlug: "problemSlug",
@@ -226,6 +228,28 @@ export function TaskForm(props: Props) {
         )}
       </Field>
       </div>
+
+      {form.type === "scenario" && (
+        <fieldset className={cardClasses({ padding: "none", className: "flex flex-col gap-5 p-4 sm:p-6" })}>
+          <legend className="float-left mb-1 w-full text-lg font-semibold">Scenario grading</legend>
+          <Field
+            label="Grading notes (hidden from students)"
+            hint="What a strong answer covers. Only the AI grader and mentors see this; put the scenario and the question in the description."
+            error={fieldErrors.gradingNotes}
+          >
+            {(control) => (
+              <textarea
+                {...control}
+                value={form.gradingNotes}
+                onChange={(e) => update("gradingNotes", e.target.value)}
+                rows={6}
+                maxLength={4000}
+                className={textareaClass}
+              />
+            )}
+          </Field>
+        </fieldset>
+      )}
 
       {isCoding && (
         <fieldset className={cardClasses({ padding: "none", className: "flex flex-col gap-5 p-4 sm:p-6" })}>
