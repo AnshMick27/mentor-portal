@@ -10,6 +10,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatScore } from "@/components/ui/Score";
 import { Section } from "@/components/ui/Section";
 import { Stat } from "@/components/ui/Stat";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { TaskTypeTag } from "@/components/ui/TaskTypeTag";
 import { TextLink } from "@/components/ui/TextLink";
 import {
@@ -23,7 +24,7 @@ import {
 } from "@/lib/dashboard/mentor";
 import type { MentorDashboardData } from "@/lib/dashboard/mentorQueries";
 import { formatIst } from "@/lib/dates/ist";
-import { TASK_TYPE_LABEL } from "@/lib/validation/task";
+import { lateCutoff, TASK_TYPE_LABEL } from "@/lib/validation/task";
 
 
 const score = (value: number | undefined) => (value === undefined ? "—" : value.toFixed(1));
@@ -34,6 +35,15 @@ function StudentLink({ student }: { student: StudentRef }) {
   );
 }
 
+/** "Closed", or until when late work is still taken (T51); nothing while the task is before its due date. */
+function PhaseChip({ row }: { row: TaskStatusRow }) {
+  if (row.phase === "closed") return <StatusChip tone="neutral">Closed</StatusChip>;
+  if (row.phase === "late") {
+    return <StatusChip tone="warning">Late work until {formatIst(new Date(lateCutoff(row.task)).toISOString())}</StatusChip>;
+  }
+  return null;
+}
+
 function TaskStatus({ row }: { row: TaskStatusRow }) {
   return (
     <li className={cardClasses({ padding: "none", className: "flex flex-col gap-3 p-4 sm:p-6" })}>
@@ -42,6 +52,9 @@ function TaskStatus({ row }: { row: TaskStatusRow }) {
           <span className="font-semibold break-words">{row.task.title}</span>
           <span className="text-sm text-muted">
             {TASK_TYPE_LABEL[row.task.type]} · Due {formatIst(row.task.dueAt)}
+          </span>
+          <span className="mt-1">
+            <PhaseChip row={row} />
           </span>
         </div>
         <TaskTypeTag type={row.task.type} />
@@ -81,12 +94,14 @@ export function MentorDashboardView({
   data,
   branch,
   onBranch,
+  now = new Date(),
 }: {
   data: MentorDashboardData;
   branch: BranchFilter;
   onBranch: (branch: BranchFilter) => void;
+  now?: Date;
 }) {
-  const rows = taskStatusRows(data.tasks, data.taskStats, data.students, branch);
+  const rows = taskStatusRows(data.tasks, data.taskStats, data.students, branch, now);
   const attention = needsAttentionList(data.students, branch);
   const skills = classSkillAverages(data.students, branch);
   const branches = branchesOf(data.students);

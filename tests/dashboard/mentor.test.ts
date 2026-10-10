@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   branchesOf,
+  taskPhase,
   classSkillAverages,
   inBranch,
   needsAttentionList,
@@ -12,6 +13,8 @@ import type { TaskDto } from "@/lib/validation/task";
 import type { Branch } from "@/lib/validation/user";
 
 const ts = { toDate: () => new Date("2026-10-01T00:00:00Z") };
+/** Before the due date of `task()` (30 Sep 2026, 11:59 pm IST). */
+const NOW = new Date("2026-09-25T00:00:00Z");
 
 function student(uid: string, name: string, branch: Branch, extra: Partial<MentorStudent> = {}): MentorStudent {
   return {
@@ -77,7 +80,7 @@ describe("taskStatusRows", () => {
   ]);
 
   it("counts submitted vs not for the whole class, joins names and sorts them, skips unknown uids", () => {
-    const [row] = taskStatusRows([task("t1")], statsByTask, students, "all");
+    const [row] = taskStatusRows([task("t1")], statsByTask, students, "all", NOW);
     expect(row).toMatchObject({ total: 4, submitted: 2, average: 6.5, hasStats: true });
     expect(row?.notSubmitted).toEqual([
       { uid: "s4", name: "Kabir", rollNo: "R-s4" },
@@ -86,19 +89,53 @@ describe("taskStatusRows", () => {
   });
 
   it("narrows counts, non-submitters and the average to one branch", () => {
-    const [cse] = taskStatusRows([task("t1")], statsByTask, students, "CSE");
+    const [cse] = taskStatusRows([task("t1")], statsByTask, students, "CSE", NOW);
     expect(cse).toMatchObject({ total: 2, submitted: 1, average: 9 });
     expect(cse?.notSubmitted.map((s) => s.uid)).toEqual(["s3"]);
-    const [ec] = taskStatusRows([task("t1")], statsByTask, students, "EC");
+    const [ec] = taskStatusRows([task("t1")], statsByTask, students, "EC", NOW);
     expect(ec).toMatchObject({ total: 0, submitted: 0, notSubmitted: [] });
     expect(ec?.average).toBeUndefined();
   });
 
   it("marks tasks without a stats doc and keeps the given task order", () => {
-    const rows = taskStatusRows([task("t2"), task("t1")], statsByTask, students, "all");
+    const rows = taskStatusRows([task("t2"), task("t1")], statsByTask, students, "all", NOW);
     expect(rows.map((r) => [r.task.id, r.hasStats])).toEqual([
       ["t2", false],
       ["t1", true],
+    ]);
+  });
+});
+
+describe("taskPhase (T51)", () => {
+  const due = Date.parse(task("t").dueAt);
+  const day = 24 * 60 * 60 * 1000;
+
+  it("is open up to the due date, late until the cutoff (default 7 days), then closed", () => {
+    expect(taskPhase(task("t"), new Date(due))).toBe("open");
+    expect(taskPhase(task("t"), new Date(due + 1))).toBe("late");
+    expect(taskPhase(task("t"), new Date(due + 7 * day))).toBe("late");
+    expect(taskPhase(task("t"), new Date(due + 7 * day + 1))).toBe("closed");
+  });
+
+  it("uses the mentor's lateUntil", () => {
+    const custom = { ...task("t"), lateUntil: new Date(due + day).toISOString() };
+    expect(taskPhase(custom, new Date(due + day + 1))).toBe("closed");
+  });
+
+  it("puts closed tasks after open and late ones, each group in the given order", () => {
+    const now = new Date(Date.parse("2026-10-10T00:00:00Z"));
+    const tasks = [
+      { ...task("open"), dueAt: "2026-10-15T18:29:00.000Z" },
+      { ...task("closed-new"), dueAt: "2026-10-01T18:29:00.000Z", lateUntil: "2026-10-02T18:29:00.000Z" },
+      { ...task("late"), dueAt: "2026-10-05T18:29:00.000Z" },
+      { ...task("closed-old"), dueAt: "2026-09-20T18:29:00.000Z" },
+    ];
+    const rows = taskStatusRows(tasks, new Map(), students, "all", now);
+    expect(rows.map((r) => [r.task.id, r.phase])).toEqual([
+      ["open", "open"],
+      ["late", "late"],
+      ["closed-new", "closed"],
+      ["closed-old", "closed"],
     ]);
   });
 });

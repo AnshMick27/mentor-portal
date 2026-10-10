@@ -38,8 +38,8 @@ const data: MentorDashboardData = {
   students,
 };
 
-const render = (branch: "all" | "IT" | "CSIT", d = data) =>
-  renderToStaticMarkup(<MentorDashboardView data={d} branch={branch} onBranch={() => undefined} />);
+const render = (branch: "all" | "IT" | "CSIT", d = data, now = new Date("2026-09-20T00:00:00Z")) =>
+  renderToStaticMarkup(<MentorDashboardView data={d} branch={branch} onBranch={() => undefined} now={now} />);
 
 describe("MentorDashboardView", () => {
   it("shows task status with an expandable, linked list of non-submitters", () => {
@@ -67,6 +67,14 @@ describe("MentorDashboardView", () => {
     expect(itBranch).toContain('<option value="CSIT">');
     expect(itBranch).not.toContain('<option value="ME">');
     expect(render("CSIT")).toContain("0</span> of 1 submitted · Average —");
+  });
+
+  it("marks closed tasks and says until when late work is taken (T51)", () => {
+    expect(render("all")).not.toContain("Closed");
+    expect(render("all", data, new Date("2026-09-25T00:00:00Z"))).toMatch(/Late work until 30 Sept? 2026, 11:59 pm IST/);
+    const closed = render("all", data, new Date("2026-10-10T00:00:00Z"));
+    expect(closed).toContain(">Closed</span>");
+    expect(closed).not.toContain("Late work until");
   });
 
   it("has empty states when there are no tasks or students", () => {

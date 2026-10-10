@@ -200,7 +200,7 @@ Needs-attention rule: missed ≥ 2 of the last 4 tasks that are past due, OR ave
 - Leaderboard: only if `leaderboardEnabled`; top 10 only; only students who opted in (`showOnLeaderboard`); show name and average only.
 
 ### 8.6 Mentor dashboard (`/mentor`)
-- Task status: for each recent task, submitted / not submitted counts, and the list of who has not submitted.
+- Task status: for each recent task, submitted / not submitted counts, and the list of who has not submitted. A task past its due date shows "Late work until …" while it still takes late work, and "Closed" after its late cutoff; closed tasks are listed after the others.
 - Needs attention: students flagged by the rule in section 6, with the reason.
 - Class overview: average score per task and per skill; filter by branch.
 - Student profile (`/mentor/students/[uid]`): all tasks, attempts, scores, feedback.

@@ -1,6 +1,6 @@
 import { averageScore } from "@/lib/stats/compute";
 import type { StoredStudentStats, StoredTaskStats } from "@/lib/validation/stats";
-import { TASK_TYPE_LABEL, TASK_TYPES, type TaskDto, type TaskType } from "@/lib/validation/task";
+import { lateCutoff, TASK_TYPE_LABEL, TASK_TYPES, type TaskDto, type TaskType } from "@/lib/validation/task";
 import { BRANCHES, type Branch } from "@/lib/validation/user";
 
 /** One student as the mentor dashboard sees them: their stats doc plus uid. */
@@ -11,8 +11,17 @@ export type BranchFilter = Branch | "all";
 
 export type StudentRef = { uid: string; name: string; rollNo: string };
 
+/** Where a task is in its life (T51): before the due date, taking late work (T44, T49), or closed. */
+export type TaskPhase = "open" | "late" | "closed";
+
+export function taskPhase(task: Pick<TaskDto, "dueAt" | "lateUntil">, now: Date): TaskPhase {
+  if (now.getTime() <= Date.parse(task.dueAt)) return "open";
+  return now.getTime() <= lateCutoff(task) ? "late" : "closed";
+}
+
 export type TaskStatusRow = {
   task: TaskDto;
+  phase: TaskPhase;
   /** Students counted for this row (all onboarded students, or those of the chosen branch). */
   total: number;
   submitted: number;
@@ -37,7 +46,7 @@ export function branchesOf(students: readonly { branch: Branch }[]): Branch[] {
 }
 
 /**
- * Task status per task, newest due date first as given. Non-submitters come from `taskStats.notSubmittedUids`
+ * Task status per task, newest due date first as given, closed tasks after the rest (T51). Non-submitters come from `taskStats.notSubmittedUids`
  * joined with the students' stats docs (names, roll numbers, branch); uids without a stats doc are skipped.
  */
 export function taskStatusRows(
@@ -45,12 +54,14 @@ export function taskStatusRows(
   statsByTask: ReadonlyMap<string, StoredTaskStats>,
   students: readonly MentorStudent[],
   branch: BranchFilter,
+  now: Date,
 ): TaskStatusRow[] {
   const counted = inBranch(students, branch);
   const countedByUid = new Map(counted.map((student) => [student.uid, student]));
-  return tasks.map((task) => {
+  const rows = tasks.map((task): TaskStatusRow => {
+    const phase = taskPhase(task, now);
     const stats = statsByTask.get(task.id);
-    if (!stats) return { task, total: counted.length, submitted: 0, notSubmitted: [], hasStats: false };
+    if (!stats) return { task, phase, total: counted.length, submitted: 0, notSubmitted: [], hasStats: false };
     const notSubmitted = stats.notSubmittedUids
       .flatMap((uid) => {
         const student = countedByUid.get(uid);
@@ -60,6 +71,7 @@ export function taskStatusRows(
     const average = branch === "all" ? stats.avgScore : stats.avgScoreByBranch[branch];
     return {
       task,
+      phase,
       total: counted.length,
       submitted: counted.length - notSubmitted.length,
       notSubmitted,
@@ -67,6 +79,8 @@ export function taskStatusRows(
       hasStats: true,
     };
   });
+  // Array sort is stable, so each group keeps the newest-due-first order.
+  return rows.sort((a, b) => Number(a.phase === "closed") - Number(b.phase === "closed"));
 }
 
 export type AttentionRow = StudentRef & { branch: Branch; reason: string };
